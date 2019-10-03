@@ -2711,18 +2711,36 @@ s32 SEQ_UI_Encoder_Handler(u32 encoder, s32 incrementer)
   else if( incrementer < -3 )
     incrementer = -3;
 
+  //#########################################################
+  //# RIO: Using the BPM DataWheel in MUTE and PATTERN SCREEN
+  //#########################################################
+
+  // Original:
   // encoder 17 increments BPM
-  if( encoder == 17 ) {
+  // if( encoder == 17 ) {
+
+  if( (encoder == 17) || ((encoder == 0) && ((ui_page == SEQ_UI_PAGE_MUTE) || (ui_page == SEQ_UI_PAGE_PATTERN)) ) ) { //RIO: changed to BPM in MUTE and PATTERN PAGE
     u16 value = (u16)(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num]*10);
     if( SEQ_UI_Var16_Inc(&value, 25, 3000, incrementer) ) { // at 384ppqn, the minimum BPM rate is ca. 2.5
       // set new BPM
       seq_core_bpm_preset_tempo[seq_core_bpm_preset_num] = (float)value/10.0;
       SEQ_CORE_BPM_Update(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num], seq_core_bpm_preset_ramp[seq_core_bpm_preset_num]);
       //store_file_required = 1;
-      seq_ui_display_update_req = 1;      
+
+      // RIO: print BPM on LCD
+      float bpm = seq_core_bpm_preset_tempo[seq_core_bpm_preset_num];
+      char str[6];
+      sprintf(str, "%3d.%d", (int)bpm, (int)(10*bpm)%10);
+      SEQ_UI_Msg(SEQ_UI_MSG_USER, 500, "BPM", str);
+
+      seq_ui_display_update_req = 1;    
     }
     return 0;
   }
+
+  //#########################################################
+  //# RIO: END MODIFICATION
+  //#########################################################
 
   if( seq_ui_button_state.SCRUB && encoder == 0 ) {
     // if sequencer isn't already running, continue it (don't restart)

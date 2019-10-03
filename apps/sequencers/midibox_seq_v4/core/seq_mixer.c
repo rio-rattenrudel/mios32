@@ -283,11 +283,19 @@ s32 SEQ_MIXER_Clear(void)
     for(par=0; par<SEQ_MIXER_NUM_PARAMETERS; ++par)
       seq_mixer_value[chn][par] = 0;
 
+    //###################################################
+    //# RIO: Set Default Mixer Map CCs (Bank #32 on CC4)
+    //###################################################
+
     seq_mixer_value[chn][SEQ_MIXER_PAR_CHANNEL] = chn & 0xf;
-    seq_mixer_value[chn][SEQ_MIXER_PAR_CC1_NUM] = 16;
-    seq_mixer_value[chn][SEQ_MIXER_PAR_CC2_NUM] = 17;
-    seq_mixer_value[chn][SEQ_MIXER_PAR_CC3_NUM] = 18;
-    seq_mixer_value[chn][SEQ_MIXER_PAR_CC4_NUM] = 19;
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CC1_NUM] = 21;   //RIO: Original: 16
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CC2_NUM] = 40;   //RIO: Original: 17
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CC3_NUM] = 41;   //RIO: Original: 18
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CC4_NUM] = 32;   //RIO: Original: 19
+
+    //###################################################
+    //# RIO: END MODIFICATION
+    //###################################################
   }
 
   return 0; // no error

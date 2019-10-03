@@ -994,10 +994,23 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
 	}
       } break;
 
+      //#################################################
+      //# RIO: Display update & Separate Dump Call
+      //#################################################
+
       case SEQ_MIDI_IN_EXT_CTRL_MIXER_MAP: {
+	SEQ_MIXER_NumSet(value);
 	SEQ_MIXER_Load(value);
-	SEQ_MIXER_SendAll();	
+	seq_ui_display_update_req = 1;  // RIO: added for update
       } break;
+
+      case SEQ_MIDI_IN_EXT_CTRL_MIXER_DUMP: {  // RIO: seperate dump
+	if (value) SEQ_MIXER_SendAll();
+      } break;
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
 
       case SEQ_MIDI_IN_EXT_CTRL_BANK_G1:
       case SEQ_MIDI_IN_EXT_CTRL_BANK_G2:

@@ -3467,8 +3467,12 @@ s32 SEQ_UI_LED_Handler_Periodic()
     SEQ_LED_PinSet(seq_hwcfg_led.beat, beat_led_on);
   }
 
+  //###################################################
+  //# RIO: Disable Board LEDs
+  //###################################################
+
   // mirror to green status LED (inverted, so that LED is normaly on)
-  MIOS32_BOARD_LED_Set(0x00000001, sequencer_running ? (beat_led_on ? 1 : 0) : 1);
+  //MIOS32_BOARD_LED_Set(0x00000001, sequencer_running ? (beat_led_on ? 1 : 0) : 1);
 
   // measure LED
   SEQ_LED_PinSet(seq_hwcfg_led.measure, measure_led_on);
@@ -3476,14 +3480,18 @@ s32 SEQ_UI_LED_Handler_Periodic()
   // mirror to red status LED
   //MIOS32_BOARD_LED_Set(0x00000002, measure_led_on ? 2 : 0);
   // now used for SD Card indicator
-  MIOS32_BOARD_LED_Set(0x00000002, FILE_SDCardAvailable() ? 2 : 0);
+  //MIOS32_BOARD_LED_Set(0x00000002, FILE_SDCardAvailable() ? 2 : 0);
 
 
   // MIDI IN/OUT LEDs
   SEQ_LED_PinSet(seq_hwcfg_led.midi_in_combined, seq_midi_port_in_combined_ctr);
-  MIOS32_BOARD_LED_Set(0x00000004, seq_midi_port_in_combined_ctr ? 4 : 0);
+  //MIOS32_BOARD_LED_Set(0x00000004, seq_midi_port_in_combined_ctr ? 4 : 0);
   SEQ_LED_PinSet(seq_hwcfg_led.midi_out_combined, seq_midi_port_out_combined_ctr);  
-  MIOS32_BOARD_LED_Set(0x00000008, seq_midi_port_out_combined_ctr ? 8 : 0);
+  //MIOS32_BOARD_LED_Set(0x00000008, seq_midi_port_out_combined_ctr ? 8 : 0);
+
+  //###################################################
+  //# RIO: END MODIFICATION
+  //###################################################
 
   // don't continue if no new step has been generated and GP LEDs haven't changed
   if( !seq_core_step_update_req && prev_ui_gp_leds == ui_gp_leds && sequencer_running ) // sequencer running check: workaround - as long as sequencer not running, we won't get an step update request!

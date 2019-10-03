@@ -954,6 +954,10 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
 	seq_core_global_scale = value;
 	break;
 
+      //#################################################
+      //# RIO: Display update
+      //#################################################
+
       case SEQ_MIDI_IN_EXT_CTRL_PATTERN_G1:
       case SEQ_MIDI_IN_EXT_CTRL_PATTERN_G2:
       case SEQ_MIDI_IN_EXT_CTRL_PATTERN_G3:
@@ -968,7 +972,12 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
 	  SEQ_PATTERN_Change(group, pattern, 0);
 	}
 	portEXIT_CRITICAL();
+        seq_ui_display_update_req = 1;  // RIO: added for update
       } break;
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
 
       case SEQ_MIDI_IN_EXT_CTRL_SONG: {
 	if( value < SEQ_SONG_NUM && value != SEQ_SONG_NumGet() ) {

@@ -1012,6 +1012,10 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
       //# RIO: END MODIFICATION
       //#################################################
 
+      //#################################################
+      //# RIO: Bank Change should be set, but not change
+      //#################################################
+
       case SEQ_MIDI_IN_EXT_CTRL_BANK_G1:
       case SEQ_MIDI_IN_EXT_CTRL_BANK_G2:
       case SEQ_MIDI_IN_EXT_CTRL_BANK_G3:
@@ -1023,10 +1027,14 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
 	  pattern.bank = value;
 	  pattern.DISABLED = 0;
 	  pattern.SYNCHED = 0;
-	  SEQ_PATTERN_Change(group, pattern, 0);
+	  seq_pattern[group] = pattern;
 	}
 	portEXIT_CRITICAL();
       } break;
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
 
       case SEQ_MIDI_IN_EXT_CTRL_ALL_NOTES_OFF: {
 	if( value == 0 ) {

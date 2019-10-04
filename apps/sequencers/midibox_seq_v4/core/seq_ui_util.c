@@ -131,6 +131,35 @@ static s32 SCROLL_Track(u8 track, u16 first_step, s32 incrementer);
 static s32 SEQ_UI_UTIL_MuteAllTracks(void);
 static s32 SEQ_UI_UTIL_UnMuteAllTracks(void);
 
+//#################################################
+//# RIO: Little Remote Functions
+//#################################################
+
+s32 COPY_Ext_Track(u8 track, u8 begin, u8 end) {
+    copypaste_begin = begin;
+    copypaste_end = end;
+    return COPY_Track(track);
+}
+
+s32 PASTE_Ext_Track(u8 track) {
+    return PASTE_Track(track, PASTE_CLEAR_MODE_TRACK);
+}
+
+s32 MOVE_Ext_StoreStep(u8 track, u16 step, u8 buffer, u8 clr_triggers) {
+    return MOVE_StoreStep(track, step, buffer, clr_triggers);
+}
+
+s32 MOVE_Ext_RestoreStep(u8 track, u16 step, u8 buffer) {
+    return MOVE_RestoreStep(track, step, buffer);
+}
+
+s32 SCROLL_Ext_Track(u8 track, u16 first_step, s32 incrementer) {
+    return SCROLL_Track(track, first_step, incrementer);
+}
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Local LED handler function

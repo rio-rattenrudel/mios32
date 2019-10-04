@@ -22,7 +22,9 @@
 // number of transport/arpeggiator busses
 #define SEQ_MIDI_IN_NUM_BUSSES 4
 
-
+//#################################################
+//# RIO: Little Remote Assignments
+//#################################################
 // External controller assignments
 // They have to be aligned with the strings returned by the SEQ_MIDI_IN_ExtCtrlStr() function!
 #define SEQ_MIDI_IN_EXT_CTRL_MORPH          0
@@ -30,33 +32,49 @@
 #define SEQ_MIDI_IN_EXT_CTRL_SONG           2
 #define SEQ_MIDI_IN_EXT_CTRL_PHRASE         3
 #define SEQ_MIDI_IN_EXT_CTRL_MIXER_MAP      4
-#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G1     5
-#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G2     6
-#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G3     7
-#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G4     8
-#define SEQ_MIDI_IN_EXT_CTRL_BANK_G1        9
-#define SEQ_MIDI_IN_EXT_CTRL_BANK_G2       10
-#define SEQ_MIDI_IN_EXT_CTRL_BANK_G3       11
-#define SEQ_MIDI_IN_EXT_CTRL_BANK_G4       12
-#define SEQ_MIDI_IN_EXT_CTRL_ALL_NOTES_OFF 13
-#define SEQ_MIDI_IN_EXT_CTRL_PLAY          14
-#define SEQ_MIDI_IN_EXT_CTRL_RECORD        15
+#define SEQ_MIDI_IN_EXT_CTRL_MIXER_DUMP     5
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G1     6
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G2     7
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G3     8
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G4     9
+#define SEQ_MIDI_IN_EXT_CTRL_BANK_G1       10
+#define SEQ_MIDI_IN_EXT_CTRL_BANK_G2       11
+#define SEQ_MIDI_IN_EXT_CTRL_BANK_G3       12
+#define SEQ_MIDI_IN_EXT_CTRL_BANK_G4       13
+#define SEQ_MIDI_IN_EXT_CTRL_ALL_NOTES_OFF 14
+#define SEQ_MIDI_IN_EXT_CTRL_PLAY          15
+#define SEQ_MIDI_IN_EXT_CTRL_RECORD        16
+// RIO: Little Remote
+#define SEQ_MIDI_IN_EXT_CTRL_LITTLE_REMOTE 17
+#define SEQ_MIDI_IN_EXT_CTRL_LSTEP_REMOTE  18
+#define SEQ_MIDI_IN_EXT_CTRL_LLIVE_REMOTE  19
+#define SEQ_MIDI_IN_EXT_CTRL_LTEST_REMOTE  20
+#define SEQ_MIDI_IN_EXT_CTRL_LNOFF_REMOTE  21
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_MUTE  22
+#define SEQ_MIDI_IN_EXT_CTRL_LSVEL_REMOTE  23
+#define SEQ_MIDI_IN_EXT_CTRL_LSLEN_REMOTE  24
+#define SEQ_MIDI_IN_EXT_CTRL_CLOCK_TEMPO   25
 
+// RIO: new numbers (original:16)
 // number of external controllers which listen to CC (at the beginning of the list)
-#define SEQ_MIDI_IN_EXT_CTRL_NUM_IX_CC     16
+#define SEQ_MIDI_IN_EXT_CTRL_NUM_IX_CC     26
 
 // not listen to CC
-#define SEQ_MIDI_IN_EXT_CTRL_NRPN_ENABLED  16
-#define SEQ_MIDI_IN_EXT_CTRL_PC_MODE       17
+#define SEQ_MIDI_IN_EXT_CTRL_NRPN_ENABLED  26
+#define SEQ_MIDI_IN_EXT_CTRL_PC_MODE       27
 
 // extra CC handling (we listen to 16 CCs)
-#define SEQ_MIDI_IN_EXT_CTRL_MUTES         18
+#define SEQ_MIDI_IN_EXT_CTRL_MUTES         28
 
 // extra CC handling (we listen to 16 CCs)
-#define SEQ_MIDI_IN_EXT_CTRL_STEPS         19
+#define SEQ_MIDI_IN_EXT_CTRL_STEPS         29
 
 // total number of external controllers
-#define SEQ_MIDI_IN_EXT_CTRL_NUM           20
+#define SEQ_MIDI_IN_EXT_CTRL_NUM           30
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
 
 
 // program change modes

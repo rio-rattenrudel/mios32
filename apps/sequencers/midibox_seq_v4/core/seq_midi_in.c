@@ -18,6 +18,16 @@
 #include <mios32.h>
 #include "tasks.h"
 
+//########################
+//# RIO: Little Remote
+//########################
+
+#include <string.h>
+
+//########################
+//# RIO: END MODIFICATION
+//########################
+
 #include <notestack.h>
 #include <seq_bpm.h>
 
@@ -36,6 +46,16 @@
 #include "seq_hwcfg.h"
 #include "seq_file_b.h"
 
+//########################
+//# RIO: Little Remote
+//########################
+
+#include "seq_ui_util.h"    // RIO: added utils
+#include "seq_par.h"        // RIO: added NOTEs / Parameter
+
+//########################
+//# RIO: END MODIFICATION
+//########################
 
 /////////////////////////////////////////////////////////////////////////////
 // for optional debugging messages via DEBUG_MSG (defined in mios32_config.h)
@@ -161,6 +181,17 @@ static u8 remote_active;
 // for automatic note-stack reset
 static u8 last_bus_received_from_loopback;
 
+//########################
+//# RIO: Little Remote
+//########################
+
+static u16 lastnew_step;
+static u8 lastplayednote;
+static u8 lastplayedtransposed;
+
+//########################
+//# RIO: END MODIFICATION
+//########################
 
 /////////////////////////////////////////////////////////////////////////////
 // Initialisation
@@ -186,6 +217,10 @@ s32 SEQ_MIDI_IN_Init(u32 mode)
   seq_midi_in_ext_ctrl_port = 0; // off
   seq_midi_in_ext_ctrl_out_port = 0; // off
 
+  //#################################################
+  //# RIO: Little Remote Assignments
+  //#################################################
+
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_MORPH] = 1;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_SCALE] = 3;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_G1] = 112;
@@ -195,11 +230,21 @@ s32 SEQ_MIDI_IN_Init(u32 mode)
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_SONG] = 102;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PHRASE] = 103;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_MIXER_MAP] = 111;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_MIXER_DUMP] = 110;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_BANK_G1] = 116;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_BANK_G2] = 117;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_BANK_G3] = 118;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_BANK_G4] = 119;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_ALL_NOTES_OFF] = 123;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LITTLE_REMOTE] = 80;  //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSTEP_REMOTE] = 81;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LLIVE_REMOTE] = 82;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LTEST_REMOTE] = 83;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LNOFF_REMOTE] = 84;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_MUTE] = 85;   //RIO: added Pattern Mute
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSVEL_REMOTE] = 86;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSLEN_REMOTE] = 87;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_CLOCK_TEMPO] = 88;    //RIO: added Clock Tempo
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_NRPN_ENABLED] = 1;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PC_MODE] = SEQ_MIDI_IN_EXT_CTRL_PC_MODE_OFF;
   seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_MUTES] = 128;
@@ -214,10 +259,26 @@ s32 SEQ_MIDI_IN_Init(u32 mode)
     seq_midi_in_sect_note[i] = 0x30 + 12*i;
 
   seq_midi_in_remote.ALL = 0;
-  seq_midi_in_remote.value = 96; // C-6 (some MIDI monitors display C-5)
+  seq_midi_in_remote.value = 115; // C-7 (some MIDI monitors display C-6)
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
 
   remote_active = 0;
   last_bus_received_from_loopback = 0x00;
+
+  //########################
+  //# RIO: Little Remote
+  //########################
+  
+  lastnew_step = 0xFFFF;
+  lastplayednote = 0xFF;
+  lastplayedtransposed = 0xFF;
+
+  //########################
+  //# RIO: END MODIFICATION
+  //########################
 
   return 0; // no error
 }
@@ -228,6 +289,10 @@ s32 SEQ_MIDI_IN_Init(u32 mode)
 /////////////////////////////////////////////////////////////////////////////
 const char *SEQ_MIDI_IN_ExtCtrlStr(u8 ext_ctrl)
 {
+  //#################################################
+  //# RIO: Little Remote Assignments
+  //#################################################
+
   const char* ext_ctrl_str[SEQ_MIDI_IN_EXT_CTRL_NUM] = {
   //<--------------->
     "Morph Value",
@@ -235,6 +300,7 @@ const char *SEQ_MIDI_IN_ExtCtrlStr(u8 ext_ctrl)
     "Song Number",
     "Song Phrase",
     "Mixer Map",
+    "Mixer Map Dump",
     "Pattern G1",
     "Pattern G2",
     "Pattern G3",
@@ -246,11 +312,24 @@ const char *SEQ_MIDI_IN_ExtCtrlStr(u8 ext_ctrl)
     "All Notes Off",
     "Play/Stop",
     "Record",
+    "Little Remote",    // RIO: little remote added
+    "Little Re. Step",  // RIO: little remote added
+    "Little Re. Live",  // RIO: little remote added
+    "Little Re. Test",  // RIO: little remote added
+    "Little Re. NOff",  // RIO: little remote added
+    "Pattern Mute",     // RIO: added Pattern Mute
+    "Little Re. SVel",  // RIO: little remote added
+    "Little Re. SLen",  // RIO: little remote added
+    "Clock Tempo",      // RIO: added Clock Tempo
     "NRPNs",
     "PrgChange Mode",
-    "Mutes(first CC)",
+    "Mutes(first CC)",  // RIO: values 1&2
     "Steps(first CC)",
   };
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
 
   if( ext_ctrl >= SEQ_MIDI_IN_EXT_CTRL_NUM )
     return "Invalid Ctrl.";
@@ -937,8 +1016,372 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
       SEQ_CC_MIDI_Set(track, nrpn_lsb, value);
     }
     break;
+
+    //#################################################
+    //# RIO: BPM Assignments
+    //#################################################
+
+    case 0x58: // CLOCK TEMPO - BPM (063..190)
+      bpm = value+63;
+
+      // set new BPM
+      seq_core_bpm_preset_tempo[seq_core_bpm_preset_num] = bpm;
+      SEQ_CORE_BPM_Update(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num], seq_core_bpm_preset_ramp[seq_core_bpm_preset_num]);
+
+      break;
+
+    //#################################################
+    //# RIO: END MODIFICATION
+    //#################################################
   }
 
+  //#################################################
+  //# RIO: Little Remote Assignments
+  //#################################################
+
+  u8 little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LITTLE_REMOTE];
+
+  u16 new_step = ui_selected_step;
+  u8 visible_track = SEQ_UI_VisibleTrackGet();
+  int num_steps = SEQ_TRG_NumStepsGet(visible_track);
+  u8 num_p_layers = SEQ_PAR_NumLayersGet(visible_track);
+  u8 new_value = 0;
+  u8 track;
+  int x;
+
+  if (little_cc == cc) {
+
+      // Switch to Editview
+      if (ui_page != SEQ_UI_PAGE_EDIT) SEQ_UI_PageSet(SEQ_UI_PAGE_EDIT);
+
+      // set/clear encoder fast function if required
+      SEQ_UI_InitEncSpeed(1); // auto config
+
+
+      switch (value) {
+
+          case 1:     // STEP < >
+          case 2:
+          case 21:    // LEN <
+          case 22:    // LEN >
+                      if (value == 1 || value == 21) x = -1;
+                      if (value == 2 || value == 22) x = 1;
+
+                      if (value == 21) {
+                        SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, 71);    // LEN
+                        seq_ui_display_update_req = 1;
+                      }
+
+                      if (value == 22) {
+                        SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, 95);    // LEN
+                        seq_ui_display_update_req = 1;
+                      }
+
+                      if( SEQ_UI_Var16_Inc(&new_step, 0, num_steps-1, x) )
+                        SEQ_UI_SelectedStepSet(new_step);
+                      break;
+
+          case 3:     // TOGGLE NOTE
+                      new_value = SEQ_TRG_Get(visible_track, ui_selected_step, ui_selected_trg_layer, ui_selected_instrument) ? 0 : 1;
+                      for(track=0; track<SEQ_CORE_NUM_TRACKS; ++track) {
+                          if( SEQ_UI_IsSelectedTrack(track) )
+                              SEQ_TRG_Set(track, ui_selected_step, ui_selected_trg_layer, ui_selected_instrument, new_value);
+                      }
+                      break;
+
+          case 4:     // STEPVIEW < >
+          case 5:
+                      if (value == 4) {
+                          x = ui_selected_step_view - 1;
+                          if( x >= 0 ) {
+                              ui_selected_step_view = x;
+                              new_value = 1;
+                          }
+                      }
+
+                      if (value == 5) {
+                          x = ui_selected_step_view + 1;
+                          if( (16*x) < num_steps ) {
+                              ui_selected_step_view = x;
+                              new_value = 1;
+                          }
+                      }
+
+                      if (new_value) {
+                          // select step within view
+                          if( !seq_ui_button_state.CHANGE_ALL_STEPS ) // don't change the selected step if ALL function is active, otherwise the ramp can't be changed over multiple views
+                              ui_selected_step = (ui_selected_step_view << 4) | (ui_selected_step & 0xf);
+                      }
+                      break;
+
+
+          case 26:    seq_ui_button_state.SELECT_PRESSED = 1; // CLEAR SELECTED LAYER
+          case 6:                                             // CLEAR TRACK
+                      // update undo buffer
+                      SEQ_UI_UTIL_UndoUpdate(visible_track);
+
+                      // clear steps
+                      new_value = seq_core_options.PASTE_CLR_ALL ? 0 : 1;
+                      SEQ_LAYER_CopyPreset(visible_track, new_value, 0, 0);
+
+                      memset((u8 *)&seq_trg_layer_value[visible_track], 0, SEQ_TRG_MAX_BYTES);
+                      seq_ui_button_state.SELECT_PRESSED = 0;
+                      break;
+
+          case 27:    // COPY SELECTED LAYER 4
+          case 28:    // COPY SELECTED LAYER 8
+          case 29:    // COPY SELECTED LAYER 16
+                      seq_ui_button_state.SELECT_PRESSED = 1;
+
+          case 7:     // COPY4
+          case 8:     // COPY8
+          case 9:     // COPY16
+
+                      if (value > 20) value-=20;
+
+                      if (value == 7) new_step = ui_selected_step+3;
+                      if (value == 8) new_step = ui_selected_step+7;
+                      if (value == 9) new_step = ui_selected_step+15;
+                      if (new_step > num_steps) new_step = num_steps - ui_selected_step -1;
+                      COPY_Ext_Track(visible_track,ui_selected_step,new_step);
+                      seq_ui_button_state.SELECT_PRESSED = 0;
+                      break;
+
+
+          case 30:    seq_ui_button_state.SELECT_PRESSED = 1; // PASTE SELECTED LAYER
+          case 10:                                            // PASTE TRACK
+
+                      // update undo buffer
+                      SEQ_UI_UTIL_UndoUpdate(visible_track);
+                      PASTE_Ext_Track(visible_track);
+                      seq_ui_button_state.SELECT_PRESSED = 0;
+                      break;
+
+          case 11:    // MOVE
+          case 12:
+                      if (value == 11) x = -1;
+                      if (value == 12) x = 1;
+
+                      // update undo buffer
+                      SEQ_UI_UTIL_UndoUpdate(visible_track);
+
+                      if (lastnew_step != ui_selected_step) {
+
+                          // store current step value in buffer
+                          MOVE_Ext_StoreStep(visible_track, ui_selected_step, 0, 0);
+
+                          // store it also in "old" record and disable current value (clear all triggers)
+                          MOVE_Ext_StoreStep(visible_track, ui_selected_step, 1, 1);
+
+                      }
+
+                      if( SEQ_UI_Var16_Inc(&new_step, 0, num_steps-1, x) ) {
+
+                        // restore old value
+                        MOVE_Ext_RestoreStep(visible_track, ui_selected_step, 1);
+                        // set new visible step/view
+                        SEQ_UI_SelectedStepSet(new_step); // this will change ui_selected_step
+                        // store "new" old value w/o disabling triggers
+                        MOVE_Ext_StoreStep(visible_track, new_step, 1, 0);
+                        // restore moved value in new step step
+                        MOVE_Ext_RestoreStep(visible_track, new_step, 0);
+
+                      }
+                      lastnew_step = new_step;
+                      break;
+
+
+          case 13:    // SCROLL 1 and then TOGGLE 0 First : INSERT
+          case 14:    // TOGGLE 0 First and SCROLL -1     : DELETE
+
+                      if (value == 13) SCROLL_Ext_Track(visible_track, ui_selected_step, 1);
+
+                      for(track=0; track<SEQ_CORE_NUM_TRACKS; ++track) {
+                          if( SEQ_UI_IsSelectedTrack(track) )
+                              SEQ_TRG_Set(track, ui_selected_step, ui_selected_trg_layer, ui_selected_instrument, 0);
+                      }
+
+                      if (value == 14) SCROLL_Ext_Track(visible_track, ui_selected_step, -1);
+                      break;
+
+          case 15:    // NEXT TRACK
+          case 16:    // PREV TRACK
+
+                      // switch to next track
+                      if ((value == 15) && (visible_track < (SEQ_CORE_NUM_TRACKS - 1)) ) visible_track++;
+
+                      // switch to previous track
+                      if ((value == 16) && (visible_track >= 1 ) ) visible_track--;
+
+                      ui_selected_tracks = (1 << visible_track);
+                      ui_selected_group = visible_track / 4;
+                      break;
+
+          case 17:    // MUTE TRACK
+          case 18:    // UNMUTE TRACK
+
+                      portENTER_CRITICAL();
+
+                      u16 mask = 1 << visible_track;
+                      u16 *muted = (u16 *)&seq_core_trk_muted;
+
+                      if (value == 17)       *muted |= mask;
+                      if (value == 18)       *muted &= ~mask;
+
+                      portEXIT_CRITICAL();
+                      break;
+
+          case 19:    // NEXT LAYER
+
+                      if( ++ui_selected_par_layer >= num_p_layers )   ui_selected_par_layer = 0;
+
+                      // set/clear encoder fast function if required
+                      SEQ_UI_InitEncSpeed(1); // auto config
+                      break;
+
+          case 20:    // PREV LAYER
+
+                      if( ui_selected_par_layer == 0 )                ui_selected_par_layer = num_p_layers - 1;
+                      else                                            --ui_selected_par_layer;
+
+                      // set/clear encoder fast function if required
+                      SEQ_UI_InitEncSpeed(1); // auto config
+                      break;
+
+      }
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSTEP_REMOTE];
+  if (little_cc == cc) {
+      value &= 0x7f; // to avoid array overwrites
+      new_step = ui_selected_step;
+      SEQ_PAR_Set(visible_track, new_step, 0, ui_selected_instrument, value); // NOTE
+      if(!SEQ_TRG_GateGet(visible_track, new_step, 0) ) {
+        SEQ_PAR_Set(visible_track, new_step, 1, ui_selected_instrument, 100); // VEL      
+        SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, 71);  // LEN
+      }
+      SEQ_TRG_GateSet(visible_track, new_step, 0, 1);                         // ENABLE GATE
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSVEL_REMOTE];
+  if (little_cc == cc) {
+      value &= 0x7f; // to avoid array overwrites
+      new_step = ui_selected_step;
+      SEQ_PAR_Set(visible_track, new_step, 1, ui_selected_instrument, value); // VEL
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSLEN_REMOTE];
+  if (little_cc == cc) {
+      value &= 0x7f; // to avoid array overwrites
+      new_step = ui_selected_step;
+      SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, value); // LEN
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LLIVE_REMOTE];
+  if (little_cc == cc ||
+      seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LTEST_REMOTE] == cc ||
+      seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LNOFF_REMOTE] == cc) {
+
+      value &= 0x7f; // to avoid array overwrites
+
+      // Pickup the node
+      mios32_midi_package_t p;
+      mios32_midi_package_t e;
+      seq_core_trk_t *t = &seq_core_trk[visible_track];
+      seq_cc_trk_t *tcc = &seq_cc_trk[visible_track];
+
+      p.note = value;
+      p.type = NoteOn;
+      p.event = NoteOn;
+      p.velocity = 100;
+
+      // transpose
+      SEQ_CORE_Transpose(visible_track, ui_selected_instrument, t, tcc, &p);
+
+      if (seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LNOFF_REMOTE] == cc) {
+
+          // set note off
+          p.type = NoteOff;
+          p.event = NoteOff;
+
+          // pickup the stored transpose note
+          if (value == lastplayednote) {
+              if (lastplayedtransposed != 0xFF) {
+                  p.note = lastplayedtransposed;
+                  lastplayedtransposed = 0xFF;
+              }
+          }
+
+      } else {
+
+          // check the stored note
+          if (lastplayedtransposed != 0xFF) {
+              // set note off
+              e.note = lastplayedtransposed;
+              e.type = NoteOff;
+              e.event = NoteOff;
+              e.velocity = 100;
+
+              // send
+              SEQ_LIVE_PlayEvent(visible_track, e);
+          }
+
+          // set new note on
+          lastplayednote = value;
+          lastplayedtransposed = p.note;
+      }
+
+      // send
+      SEQ_LIVE_PlayEvent(visible_track, p);
+
+
+      // storage
+      if (little_cc == cc) {
+          new_step = ui_selected_step;
+          if (SEQ_BPM_IsRunning()) {
+              new_step = seq_core_trk[visible_track].step;
+              MIOS32_IRQ_Disable();
+          }
+          SEQ_PAR_Set(visible_track, new_step, 0, ui_selected_instrument, value); // NOTE
+          SEQ_PAR_Set(visible_track, new_step, 1, ui_selected_instrument, 100);   // VEL
+          SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, 71);    // LEN
+          SEQ_TRG_GateSet(visible_track, new_step, 0, 1);                         // ENABLE GATE
+          if (SEQ_BPM_IsRunning()) MIOS32_IRQ_Enable();
+          seq_ui_display_update_req = 1;
+      }
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_MUTE];
+  if (little_cc == cc) {
+      portENTER_CRITICAL();
+      if( value & 0x01 )  seq_core_trk_muted |= 0x000F;
+      else                seq_core_trk_muted &= ~0x000F;
+
+      if( value & 0x02 )  seq_core_trk_muted |= 0x00F0;
+      else                seq_core_trk_muted &= ~0x00F0;
+
+      if( value & 0x04 )  seq_core_trk_muted |= 0x0F00;
+      else                seq_core_trk_muted &= ~0x0F00;
+
+      if( value & 0x08 )  seq_core_trk_muted |= 0xF000;
+      else                seq_core_trk_muted &= ~0xF000;
+      portEXIT_CRITICAL();
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
 
   // search for matching CCs
   int i;

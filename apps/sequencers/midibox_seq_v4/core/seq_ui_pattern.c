@@ -226,6 +226,16 @@ static s32 Button_Handler(seq_ui_button_t button, s32 depressed)
 	selected_pattern[group].pattern = selected_pattern[ui_selected_group].pattern;
     }
 
+    //#################################################
+    //# RIO: Visual Updates for playing pattern
+    //#################################################
+
+    seq_pattern[ui_selected_group] = selected_pattern[ui_selected_group];
+
+    //#################################################
+    //# RIO: END MODIFICATION
+    //#################################################
+
     return 1; // value always changed
   }
 
@@ -331,6 +341,18 @@ static s32 LCD_Handler(u8 high_prio)
   } else {
     ///////////////////////////////////////////////////////////////////////////
     u8 group;
+
+    //#################################################
+    //# RIO: Visual Updates for playing pattern
+    //#################################################
+
+    for(group=0; group<SEQ_CORE_NUM_GROUPS; ++group)
+        selected_pattern[group] = seq_pattern[group];
+
+    //#################################################
+    //# RIO: END MODIFICATION
+    //#################################################
+
     for(group=0; group<4; ++group) {
       SEQ_LCD_CursorSet(20*group, 0);
       if( group % 1 )
@@ -367,11 +389,22 @@ static s32 LCD_Handler(u8 high_prio)
       else
 	SEQ_LCD_PrintString("!!"); // covers the case that bank is not available, or that pattern number too high
 
+      //########################################################################################################
+      //# RIO: Added seq_pattern_req[group] compare, because of my additional code above in the button function
+      //########################################################################################################
+
       if( selected_pattern[group].pattern != seq_pattern[group].pattern ||
-	  selected_pattern[group].bank != seq_pattern[group].bank )
+	  selected_pattern[group].bank != seq_pattern[group].bank ||
+	  seq_pattern_req[group].pattern != seq_pattern[group].pattern ||
+	  seq_pattern_req[group].bank != seq_pattern[group].bank)
+
 	SEQ_LCD_PrintChar('*');
       else
 	SEQ_LCD_PrintChar(seq_ui_button_state.SELECT_PRESSED ? '<' : ' '); // to show that changes will be taken over immediately
+
+      //########################################################################################################
+      //# RIO: END MODIFICATION
+      //########################################################################################################
 
       if( !(group % 1) ) {
 	SEQ_LCD_CursorSet(20*group+19, 1);

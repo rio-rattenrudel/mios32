@@ -26,11 +26,20 @@
 // Local types
 /////////////////////////////////////////////////////////////////////////////
 
+//###########################################################################
+//# RIO: Added Spezial Behaviour LFO (rstcount for increment spirals, delay)
+//###########################################################################
+
 typedef struct {
   u16 step_ctr;
   u16 pos;
+  u16 rstcount; // RIO: added rstcount
+  u8  delayed;  // RIO: added delayflag
 } seq_lfo_t;
 
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Local variables
@@ -58,6 +67,9 @@ s32 SEQ_LFO_Init(u32 mode)
   return 0; // no error
 }
 
+//###########################################################################
+//# RIO: Added Spezial Behaviour LFO (rstcount for increment spirals, delay)
+//###########################################################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Initializes the LFO of a given track
@@ -68,6 +80,11 @@ s32 SEQ_LFO_ResetTrk(u8 track)
 
   lfo->step_ctr = 0;
   lfo->pos = 0;
+  lfo->rstcount = 0;                                                        // RIO: added rstcount
+
+  seq_cc_trk_t *tcc = &seq_cc_trk[track];
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200)    lfo->delayed = 1;   // RIO: added delayed
+  else                                                  lfo->delayed = 0;
 
   return 0; // no error
 }
@@ -88,27 +105,59 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
   if( (bpm_tick % 96) == 0 && lfo->step_ctr != 65535) // @384 ppqn (reference bpm_tick resolution)
     ++lfo->step_ctr;
 
+  // RIO: delay
+  u8 delvalue = 0;
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) {
+    delvalue = tcc->lfo_phase-100;
+    if (lfo->delayed) {
+      if( lfo->step_ctr >= delvalue ) {
+          lfo->delayed = 0;
+          lfo->step_ctr = 0;
+      }
+    }
+  }
 
   // increment waveform position
-  if( lfo->step_ctr > tcc->lfo_steps_rst ) {
+  if( lfo->step_ctr > tcc->lfo_steps_rst - delvalue) {                              // RIO: added delvalue to reset
     if( tcc->lfo_enable_flags.ONE_SHOT ) {
       // oneshot mode: halt LFO counter
       lfo->step_ctr = 65535;
-      lfo->pos = 65535;
+
+      //lfo->pos = 65535;                                                           // ORIGINAL
+      if (tcc->lfo_phase <= 100) lfo->pos = tcc->lfo_phase * 655;                   // RIO: setup phase in oneshot
+      else                       lfo->pos = 65535;
+
     } else {
+
       // reset step counter and LFO position
       lfo->step_ctr = 0;
-      lfo->pos = tcc->lfo_phase * 655; // possible phase offset: 0%..99%
+
+      lfo->rstcount++;                                                              // RIO: increment rstcount
+      //lfo->pos = tcc->lfo_phase * 655; // possible phase offset: 0%..99%          // ORIGINAL
+      if (tcc->lfo_phase <= 100) lfo->pos = tcc->lfo_phase * 655 * lfo->rstcount;   // RIO: added rstcount
+      else                       lfo->pos = 0;
+
     }
+    if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) lfo->delayed = 1;            // RIO: set again delay
+
   } else {
+
+    if (lfo->delayed) return 0;                                                     // RIO: no LFO increment
+
     // increment waveform pointer
     u32 lfo_ticks = (u32)(tcc->lfo_steps+1) * 96; // @384 ppqn (reference bpm_tick resolution)
     u32 inc = 65536 / lfo_ticks;
     lfo->pos += inc;
+
   }
 
   return 0; // no error
 }
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
+
 
 
 /////////////////////////////////////////////////////////////////////////////

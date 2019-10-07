@@ -383,7 +383,40 @@ static s32 LCD_Handler(u8 high_prio)
 
   ///////////////////////////////////////////////////////////////////////////
   SEQ_LCD_CursorSet(0, 0);
-  SEQ_LCD_PrintString("Trk. Wave Amp. Phs. Steps Rst OneShot   Note Vel. Len.  CC   ExtraCC# Offs. PPQN");
+
+  //##############################
+  //# RIO: Display Header adapted
+  //##############################
+
+  // Original:
+  //SEQ_LCD_PrintString("Trk. Wave Amp. Phs. Steps Rst OneShot   Note Vel. Len.  CC   ExtraCC# Offs. PPQN");
+
+  char buffer1[5];
+  char buffer2[5];
+  char ch = ' ';
+
+  u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_WAVEFORM);
+  if ( value >= SEQ_LFO_WAVEFORM___V2 && value <=SEQ_LFO_WAVEFORM_A4A4) sprintf(buffer1, "R+Q+");
+  else                                                                  sprintf(buffer1, "Wave");
+
+  if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 200) {
+    if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 7)) {
+      if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 6)) sprintf(buffer2, "FupA");
+      else                                                               sprintf(buffer2, "FdnA");
+    } else {
+      if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 6)) sprintf(buffer2, "FupR");
+      else                                                               sprintf(buffer2, "FdnR");
+    }
+  }
+  else if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 100)           sprintf(buffer2, "Dly.");
+  else                                                                  sprintf(buffer2, "Phs.");
+
+  SEQ_LCD_PrintFormattedString("Trk. %s%cAmp. %s Steps Rst OneShot   Note Vel. Len.  CC   ExtraCC# Offs. PPQN",buffer1,ch,buffer2);
+
+  //##############################
+  //# RIO: END MODIFICATION
+  //##############################
+
 
   ///////////////////////////////////////////////////////////////////////////
   SEQ_LCD_CursorSet(0, 1);
@@ -534,13 +567,28 @@ static s32 LCD_Handler(u8 high_prio)
     SEQ_LCD_PrintFormattedString("%4d ", value);
   }
 
+
+  //###########################
+  //# RIO: Delay and FadeOut
+  //###########################
+
   ///////////////////////////////////////////////////////////////////////////
   if( ui_selected_item == ITEM_PHASE && ui_cursor_flash ) {
     SEQ_LCD_PrintSpaces(6);
   } else {
-    SEQ_LCD_PrintFormattedString("%3d%%  ", SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE));
+  	// Original:
+    // SEQ_LCD_PrintFormattedString("%3d%%  ", SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE));
+
+    u8 tmp = SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE);   // RIO: added Delay and FadeOut
+    if      (tmp > 200) SEQ_LCD_PrintFormattedString("%3d   ", tmp-200);
+    else if (tmp > 100) SEQ_LCD_PrintFormattedString("%3d   ", tmp-100);
+    else                SEQ_LCD_PrintFormattedString("%3d%%  ", tmp);
   }
 
+  //###########################
+  //# RIO: END MODIFICATION
+  //###########################
+  
   ///////////////////////////////////////////////////////////////////////////
   if( ui_selected_item == ITEM_STEPS && ui_cursor_flash ) {
     SEQ_LCD_PrintSpaces(5);

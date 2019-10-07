@@ -1,4 +1,10 @@
 // $Id$
+//########################################################################################################
+//# RIO: LFO expanded with special waveforms (Saw Quantized and Amp Multiplikator + Quantizer), Reverse, 
+//       Phase set to 250 + Bugfix LED Offset
+//       adapted source from original version 4.080 (without ITEM_DISABLE_EXTRA_CC)
+//########################################################################################################
+
 /*
  * LFO Fx page
  *
@@ -24,12 +30,22 @@
 #include "seq_cc_labels.h"
 #include "seq_lfo.h"
 
+//#################################################
+//# RIO: Added Running?
+//#################################################
+
+#include "seq_bpm.h"
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
 
 /////////////////////////////////////////////////////////////////////////////
 // Local definitions
 /////////////////////////////////////////////////////////////////////////////
 
-#define NUM_OF_ITEMS       15
+#define NUM_OF_ITEMS       14
 #define ITEM_GXTY          0
 #define ITEM_WAVEFORM      1
 #define ITEM_AMPLITUDE     2
@@ -41,10 +57,9 @@
 #define ITEM_ENABLE_VELOCITY 8
 #define ITEM_ENABLE_LENGTH 9
 #define ITEM_ENABLE_CC     10
-#define ITEM_DISABLE_EXTRA_CC 11
-#define ITEM_CC            12
-#define ITEM_CC_OFFSET     13
-#define ITEM_CC_PPQN       14
+#define ITEM_CC            11
+#define ITEM_CC_OFFSET     12
+#define ITEM_CC_PPQN       13
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -75,8 +90,7 @@ static s32 LED_Handler(u16 *gp_leds)
     case ITEM_ENABLE_LENGTH: *gp_leds = 0x0400; break;
     case ITEM_ENABLE_CC: *gp_leds = 0x0800; break;
     case ITEM_CC: *gp_leds = 0x1000; break;
-    case ITEM_DISABLE_EXTRA_CC: *gp_leds = 0x2000; break;
-    case ITEM_CC_OFFSET: *gp_leds = 0x4000; break;
+    case ITEM_CC_OFFSET: *gp_leds = 0x2000; break;
     case ITEM_CC_PPQN: *gp_leds = 0x8000; break;
   }
 
@@ -151,6 +165,9 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       break;
 
     case SEQ_UI_ENCODER_GP13:
+      return -1; // not mapped
+
+    case SEQ_UI_ENCODER_GP14:
       // CC number selection now has to be confirmed with GP button
       if( ui_selected_item != ITEM_CC ) {
 	edit_cc_number = SEQ_CC_Get(visible_track, SEQ_CC_LFO_CC);
@@ -172,10 +189,6 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       }
       break;
 
-    case SEQ_UI_ENCODER_GP14:
-      ui_selected_item = ITEM_DISABLE_EXTRA_CC;
-      break;
-
     case SEQ_UI_ENCODER_GP15:
       ui_selected_item = ITEM_CC_OFFSET;
       break;
@@ -188,9 +201,55 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
   // for GP encoders and Datawheel
   switch( ui_selected_item ) {
     case ITEM_GXTY:          return SEQ_UI_GxTyInc(incrementer);
-    case ITEM_WAVEFORM:      return SEQ_UI_CC_Inc(SEQ_CC_LFO_WAVEFORM, 0, 22, incrementer);
-    case ITEM_AMPLITUDE:     return SEQ_UI_CC_Inc(SEQ_CC_LFO_AMPLITUDE, 0, 255, incrementer);
-    case ITEM_PHASE:         return SEQ_UI_CC_Inc(SEQ_CC_LFO_PHASE, 0, 99, incrementer);
+    case ITEM_WAVEFORM:      {
+      //#################################################
+      //# RIO: TOGGLE REVERSE
+      //#################################################
+
+      u8 wave = SEQ_CC_Get(visible_track, SEQ_CC_LFO_WAVEFORM);
+      if ( wave >= SEQ_LFO_WAVEFORM___V2 && wave <=SEQ_LFO_WAVEFORM_A4A4) {
+          u8 mask = 1 << 5;
+          u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
+          if( incrementer == 0 ) SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
+      }
+      return SEQ_UI_CC_Inc(SEQ_CC_LFO_WAVEFORM, 0, 121, incrementer);    // RIO: ORIGINAL: 0, 22, ..
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
+                             }
+    case ITEM_AMPLITUDE:     {
+      //#################################################
+      //# RIO: TOGGLE FADE OUT ABS or REL
+      //#################################################
+
+      if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 200) {
+          u8 mask = 1 << 7;
+          u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
+          if( incrementer == 0 ) SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
+      }
+      return SEQ_UI_CC_Inc(SEQ_CC_LFO_AMPLITUDE, 0, 255, incrementer);
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
+                             }
+    case ITEM_PHASE:         {
+      //#################################################
+      //# RIO: TOGGLE FADE UP/DOWN
+      //#################################################
+
+      if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 200) {
+          u8 mask = 1 << 6;
+          u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
+          if( incrementer == 0 ) SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
+      }
+      return SEQ_UI_CC_Inc(SEQ_CC_LFO_PHASE, 0, 250, incrementer);       // RIO: ORIGINAL: 0, 99, ..
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
+                             }
     case ITEM_STEPS:         return SEQ_UI_CC_Inc(SEQ_CC_LFO_STEPS, 0, 255, incrementer);
     case ITEM_STEPS_RST:     return SEQ_UI_CC_Inc(SEQ_CC_LFO_STEPS_RST, 0, 255, incrementer);
 
@@ -205,18 +264,6 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       if( incrementer == 0 ) // toggle
 	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
       else if( incrementer > 0 )
-	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, mask);
-      else
-	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, 0);
-    } break;
-
-    case ITEM_DISABLE_EXTRA_CC: {
-      u8 flag = 5;
-      u8 mask = 1 << flag;
-      u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
-      if( incrementer == 0 ) // toggle
-	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
-      else if( incrementer < 0 )
 	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, mask);
       else
 	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, 0);
@@ -296,15 +343,41 @@ static s32 Button_Handler(seq_ui_button_t button, s32 depressed)
 /////////////////////////////////////////////////////////////////////////////
 static s32 LCD_Handler(u8 high_prio)
 {
-  if( high_prio )
-    return 0; // there are no high-priority updates
+  //#################################################
+  //# RIO: Added new waveforms (LCD update)
+  //#################################################
+
+  if( high_prio ) {
+
+      if (SEQ_BPM_IsRunning()) {
+          u8 visible_track = SEQ_UI_VisibleTrackGet();
+          u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_WAVEFORM);
+
+          if ( value ) {
+
+              mios32_midi_package_t p;
+
+              if( SEQ_LFO_FastCC_Event(visible_track, 0, &p, 1) >= 1 ) {
+                char buffer[20];
+                sprintf(buffer, "V: %d", p.value);
+                SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 1000, buffer, 0);
+              }
+          }
+      }
+  }
+  // return 0; // there are no high-priority updates //RIO: changed
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
 
   // layout:
   // 00000000001111111111222222222233333333330000000000111111111122222222223333333333
   // 01234567890123456789012345678901234567890123456789012345678901234567890123456789
   // <--------------------------------------><-------------------------------------->
   // Trk. Wave Amp. Phs. Steps Rst OneShot   Note Vel. Len.  CC   ExtraCC# Offs. PPQN
-  // GxTy Sine   64   0%   16   16  on        off  off  off  off   001 on   64   384
+  // GxTy Sine   64   0%   16   16  on        off  off  off  off        001   64  384
 
   u8 visible_track = SEQ_UI_VisibleTrackGet();
 
@@ -337,10 +410,121 @@ static s32 LCD_Handler(u8 high_prio)
       };
 
       SEQ_LCD_PrintString((char *)waveform_str[value]);
-    } else {
-      SEQ_LCD_PrintFormattedString(" R%02d ", (value-4+1)*5);
-    }
+
+  //#################################################
+  //# RIO: Added new waveforms (LCD update)
+  //#################################################
+
+    // Original:
+    //} else {
+    //  SEQ_LCD_PrintFormattedString(" R%02d ", (value-4+1)*5);
+    //}
+
+    } else if (value <= 22) SEQ_LCD_PrintFormattedString(" R%02d ", (value-4+1)*5);
+      else if (value <= 41) SEQ_LCD_PrintFormattedString(" S%02d ",  value-21);
+
+      else if (value == SEQ_LFO_WAVEFORM___V2) SEQ_LCD_PrintString("--V2 ");
+      else if (value == SEQ_LFO_WAVEFORM___H2) SEQ_LCD_PrintString("--H2 ");
+      else if (value == SEQ_LFO_WAVEFORM___D2) SEQ_LCD_PrintString("--D2 ");
+      else if (value == SEQ_LFO_WAVEFORM___A2) SEQ_LCD_PrintString("--A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2__) SEQ_LCD_PrintString("V2-- ");
+      else if (value == SEQ_LFO_WAVEFORM_H2__) SEQ_LCD_PrintString("H2-- ");
+      else if (value == SEQ_LFO_WAVEFORM_D2__) SEQ_LCD_PrintString("D2-- ");
+      else if (value == SEQ_LFO_WAVEFORM_A2__) SEQ_LCD_PrintString("A2-- ");
+      else if (value == SEQ_LFO_WAVEFORM___V4) SEQ_LCD_PrintString("--V4 ");
+      else if (value == SEQ_LFO_WAVEFORM___H4) SEQ_LCD_PrintString("--H4 ");
+      else if (value == SEQ_LFO_WAVEFORM___D4) SEQ_LCD_PrintString("--D4 ");
+      else if (value == SEQ_LFO_WAVEFORM___A4) SEQ_LCD_PrintString("--A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4__) SEQ_LCD_PrintString("V4-- ");
+      else if (value == SEQ_LFO_WAVEFORM_H4__) SEQ_LCD_PrintString("H4-- ");
+      else if (value == SEQ_LFO_WAVEFORM_D4__) SEQ_LCD_PrintString("D4-- ");
+      else if (value == SEQ_LFO_WAVEFORM_A4__) SEQ_LCD_PrintString("A4-- ");
+
+      else if (value == SEQ_LFO_WAVEFORM_V2V2) SEQ_LCD_PrintString("V2V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2H2) SEQ_LCD_PrintString("V2H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2D2) SEQ_LCD_PrintString("V2D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2A2) SEQ_LCD_PrintString("V2A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2V2) SEQ_LCD_PrintString("H2V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2H2) SEQ_LCD_PrintString("H2H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2D2) SEQ_LCD_PrintString("H2D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2A2) SEQ_LCD_PrintString("H2A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2V2) SEQ_LCD_PrintString("D2V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2H2) SEQ_LCD_PrintString("D2H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2D2) SEQ_LCD_PrintString("D2D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2A2) SEQ_LCD_PrintString("D2A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2V2) SEQ_LCD_PrintString("A2V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2H2) SEQ_LCD_PrintString("A2H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2D2) SEQ_LCD_PrintString("A2D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2A2) SEQ_LCD_PrintString("A2A2 ");
+
+      else if (value == SEQ_LFO_WAVEFORM_V2V4) SEQ_LCD_PrintString("V2V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2H4) SEQ_LCD_PrintString("V2H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2D4) SEQ_LCD_PrintString("V2D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2A4) SEQ_LCD_PrintString("V2A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2V4) SEQ_LCD_PrintString("H2V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2H4) SEQ_LCD_PrintString("H2H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2D4) SEQ_LCD_PrintString("H2D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2A4) SEQ_LCD_PrintString("H2A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2V4) SEQ_LCD_PrintString("D2V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2H4) SEQ_LCD_PrintString("D2H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2D4) SEQ_LCD_PrintString("D2D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2A4) SEQ_LCD_PrintString("D2A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2V4) SEQ_LCD_PrintString("A2V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2H4) SEQ_LCD_PrintString("A2H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2D4) SEQ_LCD_PrintString("A2D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2A4) SEQ_LCD_PrintString("A2A4 ");
+
+      else if (value == SEQ_LFO_WAVEFORM_V4V2) SEQ_LCD_PrintString("V4V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4H2) SEQ_LCD_PrintString("V4H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4D2) SEQ_LCD_PrintString("V4D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4A2) SEQ_LCD_PrintString("V4A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4V2) SEQ_LCD_PrintString("H4V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4H2) SEQ_LCD_PrintString("H4H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4D2) SEQ_LCD_PrintString("H4D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4A2) SEQ_LCD_PrintString("H4A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4V2) SEQ_LCD_PrintString("D4V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4H2) SEQ_LCD_PrintString("D4H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4D2) SEQ_LCD_PrintString("D4D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4A2) SEQ_LCD_PrintString("D4A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4V2) SEQ_LCD_PrintString("A4V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4H2) SEQ_LCD_PrintString("A4H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4D2) SEQ_LCD_PrintString("A4D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4A2) SEQ_LCD_PrintString("A4A2 ");
+
+      else if (value == SEQ_LFO_WAVEFORM_V4V4) SEQ_LCD_PrintString("V4V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4H4) SEQ_LCD_PrintString("V4H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4D4) SEQ_LCD_PrintString("V4D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4A4) SEQ_LCD_PrintString("V4A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4V4) SEQ_LCD_PrintString("H4V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4H4) SEQ_LCD_PrintString("H4H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4D4) SEQ_LCD_PrintString("H4D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4A4) SEQ_LCD_PrintString("H4A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4V4) SEQ_LCD_PrintString("D4V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4H4) SEQ_LCD_PrintString("D4H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4D4) SEQ_LCD_PrintString("D4D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4A4) SEQ_LCD_PrintString("D4A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4V4) SEQ_LCD_PrintString("A4V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4H4) SEQ_LCD_PrintString("A4H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4D4) SEQ_LCD_PrintString("A4D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4A4) SEQ_LCD_PrintString("A4A4 ");
   }
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
+  //#################################################
+  //# RIO: Added REVERSE
+  //#################################################
+
+  if (value >= SEQ_LFO_WAVEFORM___V2 && value <= SEQ_LFO_WAVEFORM_A4A4) {
+       SEQ_LCD_CursorSet(9, 1);
+       SEQ_LCD_PrintChar((SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 5)) ? '>' : '<');
+  }
+  
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
 
   ///////////////////////////////////////////////////////////////////////////
   if( ui_selected_item == ITEM_AMPLITUDE && ui_cursor_flash ) {
@@ -409,32 +593,25 @@ static s32 LCD_Handler(u8 high_prio)
   }
 
   ///////////////////////////////////////////////////////////////////////////
-  SEQ_LCD_PrintSpaces(2);
+  SEQ_LCD_PrintSpaces(5);
   if( ui_selected_item == ITEM_CC && ui_cursor_flash ) {
-    SEQ_LCD_PrintSpaces(4);
+    SEQ_LCD_PrintSpaces(5);
   } else {
     u8 current_value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_CC);
     u8 edit_value = (ui_selected_item == ITEM_CC) ? edit_cc_number : current_value;
 
     if( edit_value )
-      SEQ_LCD_PrintFormattedString("%03d", edit_value);
+      SEQ_LCD_PrintFormattedString(" %03d", edit_value);
     else
-      SEQ_LCD_PrintString("---");
+      SEQ_LCD_PrintString(" ---");
     SEQ_LCD_PrintChar((current_value != edit_value) ? '!' : ' ');
   }
 
   ///////////////////////////////////////////////////////////////////////////
-  if( ui_selected_item == ITEM_DISABLE_EXTRA_CC && ui_cursor_flash ) {
-    SEQ_LCD_PrintSpaces(3);
-  } else {
-    SEQ_LCD_PrintString((SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 5)) ? "off" : " on");
-  }
-
-  ///////////////////////////////////////////////////////////////////////////
   if( ui_selected_item == ITEM_CC_OFFSET && ui_cursor_flash ) {
-    SEQ_LCD_PrintSpaces(6);
+    SEQ_LCD_PrintSpaces(5);
   } else {
-    SEQ_LCD_PrintFormattedString("  %3d ", SEQ_CC_Get(visible_track, SEQ_CC_LFO_CC_OFFSET));
+    SEQ_LCD_PrintFormattedString(" %3d ", SEQ_CC_Get(visible_track, SEQ_CC_LFO_CC_OFFSET));
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -468,3 +645,7 @@ s32 SEQ_UI_FX_LFO_Init(u32 mode)
 
   return 0; // no error
 }
+
+//########################################################################################################
+//# RIO: END MODIFICATION
+//########################################################################################################

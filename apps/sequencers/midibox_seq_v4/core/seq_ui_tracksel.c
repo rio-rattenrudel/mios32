@@ -72,7 +72,17 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       } else {
 	// first GP: radio-button function (1 of 16)
 	ui_selected_tracks = (1 << (u8)encoder);
-	multi_sel = 1; // start multi-selection
+
+	//###########################
+	//# RIO: SINGLE SELECTION
+	//###########################
+
+	//multi_sel = 1; // start multi-selection
+	multi_sel = 0;
+
+	//###########################
+	//# RIO: END MODIFICATION
+	//###########################
       }
 
       // if no track selected anymore, restore old selection

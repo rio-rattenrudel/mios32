@@ -285,7 +285,29 @@ typedef struct {
   s8 link_par_layer_nth2;        // parameter layer which stores nth2 value (-1 if not assigned)
   s8 link_par_layer_root;        // parameter layer which stores root value (-1 if not assigned)
   s8 link_par_layer_scale;       // parameter layer which stores scale value (-1 if not assigned)
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  s8 link_par_layer_mute1;       // parameter layer which stores mute1 value (-1 if not assigned)
+  s8 link_par_layer_mute2;       // parameter layer which stores mute2 value (-1 if not assigned)
+  s8 link_par_layer_mute3;       // parameter layer which stores mute3 value (-1 if not assigned)
+  s8 link_par_layer_mute4;       // parameter layer which stores mute4 value (-1 if not assigned)
+  s8 link_par_layer_mute5;       // parameter layer which stores mute5 value (-1 if not assigned)
+  s8 link_par_layer_mute6;       // parameter layer which stores mute6 value (-1 if not assigned)
+  s8 link_par_layer_mute7;       // parameter layer which stores mute7 value (-1 if not assigned)
+  s8 link_par_layer_mute8;       // parameter layer which stores mute8 value (-1 if not assigned)
+  s8 link_par_layer_mute9;       // parameter layer which stores mute9 value (-1 if not assigned)
+  s8 link_par_layer_mute10;       // parameter layer which stores mute10 value (-1 if not assigned)
+  s8 link_par_layer_mute11;       // parameter layer which stores mute11 value (-1 if not assigned)
+  s8 link_par_layer_mute12;       // parameter layer which stores mute12 value (-1 if not assigned)
+  s8 link_par_layer_mute13;       // parameter layer which stores mute13 value (-1 if not assigned)
+  s8 link_par_layer_mute14;       // parameter layer which stores mute14 value (-1 if not assigned)
+  s8 link_par_layer_mute15;       // parameter layer which stores mute15 value (-1 if not assigned)
+  s8 link_par_layer_mute16;       // parameter layer which stores mute16 value (-1 if not assigned)
 } seq_cc_trk_t;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 
 /////////////////////////////////////////////////////////////////////////////

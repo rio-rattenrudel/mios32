@@ -1106,6 +1106,21 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	    continue;
 	}
 
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  // get mute steps
+  u8 layer_type = 0;
+  for (layer_type = SEQ_PAR_Type_Mute1; layer_type <= SEQ_PAR_Type_Mute16; layer_type++) {
+    u8 mute_value = SEQ_PAR_MuteValueGet(track, t->step, 0, layer_muted, layer_type);
+    u8 mute_track = layer_type - SEQ_PAR_Type_Mute1;
+    if      (mute_value == 1)  seq_core_trk_muted &= ~(1 << mute_track);  // ON
+    else if (mute_value == 2)  seq_core_trk_muted |= (1 << mute_track);   // OFF
+  }
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
 	// store last glide notes before they will be cleared
 	//memcpy(last_glide_notes, t->glide_notes, 4*4);
 	// this will be a bit faster (memcpy copies bytes, by copying words we save some time)

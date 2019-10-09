@@ -464,6 +464,25 @@ s32 SEQ_CC_LinkUpdate(u8 track)
   tcc->link_par_layer_nth2 = -1;
   tcc->link_par_layer_root = -1;
   tcc->link_par_layer_scale = -1;
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  tcc->link_par_layer_mute1 = -1;
+  tcc->link_par_layer_mute2 = -1;
+  tcc->link_par_layer_mute3 = -1;
+  tcc->link_par_layer_mute4 = -1;
+  tcc->link_par_layer_mute5 = -1;
+  tcc->link_par_layer_mute6 = -1;
+  tcc->link_par_layer_mute7 = -1;
+  tcc->link_par_layer_mute8 = -1;
+  tcc->link_par_layer_mute9 = -1;
+  tcc->link_par_layer_mute10 = -1;
+  tcc->link_par_layer_mute11 = -1;
+  tcc->link_par_layer_mute12 = -1;
+  tcc->link_par_layer_mute13 = -1;
+  tcc->link_par_layer_mute14 = -1;
+  tcc->link_par_layer_mute15 = -1;
+  tcc->link_par_layer_mute16 = -1;
 
   u8 num_layers = SEQ_PAR_NumLayersGet(track);
   if( num_layers ) {
@@ -485,6 +504,25 @@ s32 SEQ_CC_LinkUpdate(u8 track)
         case SEQ_PAR_Type_Nth2: tcc->link_par_layer_nth2 = layer; break;
         case SEQ_PAR_Type_Root: tcc->link_par_layer_root = layer; break;
         case SEQ_PAR_Type_Scale: tcc->link_par_layer_scale = layer; break;
+        case SEQ_PAR_Type_Mute1: tcc->link_par_layer_mute1 = layer; break;
+        case SEQ_PAR_Type_Mute2: tcc->link_par_layer_mute2 = layer; break;
+        case SEQ_PAR_Type_Mute3: tcc->link_par_layer_mute3 = layer; break;
+        case SEQ_PAR_Type_Mute4: tcc->link_par_layer_mute4 = layer; break;
+        case SEQ_PAR_Type_Mute5: tcc->link_par_layer_mute5 = layer; break;
+        case SEQ_PAR_Type_Mute6: tcc->link_par_layer_mute6 = layer; break;
+        case SEQ_PAR_Type_Mute7: tcc->link_par_layer_mute7 = layer; break;
+        case SEQ_PAR_Type_Mute8: tcc->link_par_layer_mute8 = layer; break;
+        case SEQ_PAR_Type_Mute9: tcc->link_par_layer_mute9 = layer; break;
+        case SEQ_PAR_Type_Mute10: tcc->link_par_layer_mute10 = layer; break;
+        case SEQ_PAR_Type_Mute11: tcc->link_par_layer_mute11 = layer; break;
+        case SEQ_PAR_Type_Mute12: tcc->link_par_layer_mute12 = layer; break;
+        case SEQ_PAR_Type_Mute13: tcc->link_par_layer_mute13 = layer; break;
+        case SEQ_PAR_Type_Mute14: tcc->link_par_layer_mute14 = layer; break;
+        case SEQ_PAR_Type_Mute15: tcc->link_par_layer_mute15 = layer; break;
+        case SEQ_PAR_Type_Mute16: tcc->link_par_layer_mute16 = layer; break;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
       }
     }
   }

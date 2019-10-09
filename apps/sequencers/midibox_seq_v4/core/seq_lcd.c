@@ -692,6 +692,21 @@ s32 SEQ_LCD_PrintScaleValue(u8 scale_value)
   return SEQ_LCD_PrintFormattedString("%3d ", scale_value-1);
 }
 
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+/////////////////////////////////////////////////////////////////////////////
+// prints the Mute value
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_LCD_PrintMuteValue(u8 mute_value)
+{
+  if     ( mute_value == 1 )  return SEQ_LCD_PrintFormattedString("ON  ");
+  else if( mute_value == 2 )  return SEQ_LCD_PrintFormattedString("OFF ");
+  else                        return SEQ_LCD_PrintFormattedString("----");
+}
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 /////////////////////////////////////////////////////////////////////////////
 // prints event type of MIDI package with given number of chars
@@ -843,6 +858,31 @@ s32 SEQ_LCD_PrintLayerValue(u8 track, u8 par_layer, u8 par_value)
   case SEQ_PAR_Type_Scale:
     SEQ_LCD_PrintScaleValue(par_value);
     break;
+
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  case SEQ_PAR_Type_Mute1:
+  case SEQ_PAR_Type_Mute2:
+  case SEQ_PAR_Type_Mute3:
+  case SEQ_PAR_Type_Mute4:
+  case SEQ_PAR_Type_Mute5:
+  case SEQ_PAR_Type_Mute6:
+  case SEQ_PAR_Type_Mute7:
+  case SEQ_PAR_Type_Mute8:
+  case SEQ_PAR_Type_Mute9:
+  case SEQ_PAR_Type_Mute10:
+  case SEQ_PAR_Type_Mute11:
+  case SEQ_PAR_Type_Mute12:
+  case SEQ_PAR_Type_Mute13:
+  case SEQ_PAR_Type_Mute14:
+  case SEQ_PAR_Type_Mute15:
+  case SEQ_PAR_Type_Mute16:
+    SEQ_LCD_PrintMuteValue(par_value);
+    break;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
   default:
     SEQ_LCD_PrintString("????");
@@ -1016,6 +1056,31 @@ s32 SEQ_LCD_PrintLayerEvent(u8 track, u8 step, u8 par_layer, u8 instrument, u8 s
   case SEQ_PAR_Type_Scale:
     SEQ_LCD_PrintScaleValue(SEQ_PAR_ScaleValueGet(track, step, instrument, 0x0000));
     break;
+
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  case SEQ_PAR_Type_Mute1:
+  case SEQ_PAR_Type_Mute2:
+  case SEQ_PAR_Type_Mute3:
+  case SEQ_PAR_Type_Mute4:
+  case SEQ_PAR_Type_Mute5:
+  case SEQ_PAR_Type_Mute6:
+  case SEQ_PAR_Type_Mute7:
+  case SEQ_PAR_Type_Mute8:
+  case SEQ_PAR_Type_Mute9:
+  case SEQ_PAR_Type_Mute10:
+  case SEQ_PAR_Type_Mute11:
+  case SEQ_PAR_Type_Mute12:
+  case SEQ_PAR_Type_Mute13:
+  case SEQ_PAR_Type_Mute14:
+  case SEQ_PAR_Type_Mute15:
+  case SEQ_PAR_Type_Mute16:
+    SEQ_LCD_PrintMuteValue(SEQ_PAR_MuteValueGet(track, step, instrument, 0x0000, layer_type));
+    break;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
   default:
     SEQ_LCD_PrintString("????");

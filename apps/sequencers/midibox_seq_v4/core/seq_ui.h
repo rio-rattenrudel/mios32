@@ -395,6 +395,16 @@ extern s32 SEQ_UI_TRKREPEAT_Init(u32 mode);
 extern s32 SEQ_UI_PATTERN_RMX_Init(u32 mode);
 extern s32 SEQ_UI_TRKEUCLID_Init(u32 mode);
 
+//####################################
+//# RIO: PROTEUS added
+//####################################
+
+extern s32 SEQ_UI_PROTEUS_Init(u32 mode);   // RIO: added Proteus
+extern s32 SEQ_UI_XLTURBO_Init(u32 mode);   // RIO: added Proteus
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 extern s32 SEQ_UI_EDIT_LED_Handler(u16 *gp_leds);
 extern s32 SEQ_UI_EDIT_Button_Handler(seq_ui_button_t button, s32 depressed);

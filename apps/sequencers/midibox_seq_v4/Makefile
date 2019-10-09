@@ -14,6 +14,10 @@ LCD       =     $(MIOS32_LCD)
 # Source Files, include paths and libraries
 ################################################################################
 
+####################################
+# RIO: Added PROTEUS files
+####################################
+
 THUMB_SOURCE    = core/app.c \
 		mios32/tasks.c \
 		core/seq_hwcfg.c  \
@@ -51,6 +55,7 @@ THUMB_SOURCE    = core/app.c \
 		core/seq_ui_fx_scale.c \
 		core/seq_ui_manual.c \
 		core/seq_ui_util.c \
+		core/seq_ui_proteus.c \
 		core/seq_ui_bpm.c \
 		core/seq_ui_bpm_presets.c \
 		core/seq_ui_opt.c \
@@ -117,6 +122,10 @@ THUMB_SOURCE    = core/app.c \
 		core/seq_led.c \
 		core/seq_blm8x8.c \
 		core/seq_tpd.c
+
+####################################
+# RIO: END MODIFICATION
+####################################
 
 # (following source stubs not relevant for Cortex M3 derivatives)
 THUMB_AS_SOURCE =

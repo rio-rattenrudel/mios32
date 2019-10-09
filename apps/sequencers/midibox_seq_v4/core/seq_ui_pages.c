@@ -40,6 +40,10 @@ typedef struct {
   s32 (*init_callback)(u32 mode); // will be called to initialize the page
 } seq_ui_page_entry_t;
 
+//####################################
+//# RIO: PROTEUS added
+//####################################
+
 static const seq_ui_page_entry_t ui_menu_pages[SEQ_UI_PAGES] = {
   { "NONE",         "TODO ", "TODO page         ",  0, (void *)&SEQ_UI_TODO_Init },
   { "MENU",         "Menu ", "Page Menu         ",  1, (void *)&SEQ_UI_MENU_Init },
@@ -102,8 +106,13 @@ static const seq_ui_page_entry_t ui_menu_pages[SEQ_UI_PAGES] = {
   { "REMIX",        "Remix", "Pattern Remix     ", 54, (void *)&SEQ_UI_PATTERN_RMX_Init },
   { "BOOKMARKS",    "BookM", "Bookmarks         ", 51, (void *)&SEQ_UI_BOOKMARKS_Init },
   { "ABOUT",        "About", "About this MIDIbox", 52, (void *)&SEQ_UI_INFO_Init },
+  { "PROTEUS",      "P2K  ", "Proteus Ch Select ", 59, (void *)&SEQ_UI_PROTEUS_Init }, // RIO: added Proteus
+  { "XL-TURBO",     "XL-T ", "XLTurbo Ch Select ", 60, (void *)&SEQ_UI_XLTURBO_Init }, // RIO: added Proteus
 };
 
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Access functions to the table

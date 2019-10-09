@@ -766,4 +766,45 @@ s32 SEQ_MIDI_SYSEX_REMOTE_Server_SendLED(u8 first_sr, u8 *led_sr, u8 num_sr)
   return status;
 }
 
+//###########################################################################
+//# RIO: Proteus 2000 Parameter Value Edit -> Multimode Basic Channel Select
+//###########################################################################
 
+/////////////////////////////////////////////////////////////////////////////
+// RIO: This function is called to send a Proteus 2000 Parameter Value Edit
+// EXAMPLE:> {F0h, 18h, 0Fh, dd, 55h, 01h, 02h, <xx, xx, yy, yy>, F7h}
+//
+// MULTIMODE_BASIC_CHANNEL (Independent of MULTIMODE_CHANNEL_SELECT)
+// xx, xx = id = 139 (0Bh,01h) yy, yy = min = 0; max = 15
+//
+// Example for Channel 4: F0 18 0F 02 55 01 02 0B 01 03 00 F7
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_MIDI_SYSEX_PROTEUS_SendChannel(mios32_midi_port_t port, u8 sysex_device_id, u8 basic_channel)
+{
+  u8 sysex_buffer[12];
+  u8 *sysex_buffer_ptr = &sysex_buffer[0];
+
+  // send proteus 2000 sysex
+  *sysex_buffer_ptr++ = 0xf0;             // sysex message
+  *sysex_buffer_ptr++ = 0x18;             // EMU ID
+  *sysex_buffer_ptr++ = 0x0f;             // Proteus ID
+  *sysex_buffer_ptr++ = sysex_device_id;  // Device ID
+  *sysex_buffer_ptr++ = 0x55;             // Special Editor designator byte
+  *sysex_buffer_ptr++ = 0x01;             // Command::Parameter Value Edit
+  *sysex_buffer_ptr++ = 0x02;             // Byte count(number of Byte pairs)
+  *sysex_buffer_ptr++ = 0x0b;             // Parameter ID for MULTIMODE_BASIC_CHANNEL 139 LSB
+  *sysex_buffer_ptr++ = 0x01;             // Parameter ID for MULTIMODE_BASIC_CHANNEL 139 MSB
+  *sysex_buffer_ptr++ = basic_channel;    // Parameter Data for MULTIMODE_BASIC_CHANNEL LSB
+  *sysex_buffer_ptr++ = 0x00;             // Parameter Data for MULTIMODE_BASIC_CHANNEL MSB
+  *sysex_buffer_ptr++ = 0xf7;
+
+  // finally send SysEx stream
+  MUTEX_MIDIOUT_TAKE;
+  s32 status = MIOS32_MIDI_SendSysEx(port, (u8 *)sysex_buffer, (u32)sysex_buffer_ptr - ((u32)&sysex_buffer[0]));
+  MUTEX_MIDIOUT_GIVE;
+  return status;
+}
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################

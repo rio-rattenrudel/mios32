@@ -53,6 +53,15 @@ extern s32 SEQ_MIDI_SYSEX_REMOTE_Server_SendLCD(u8 x, u8 y, u8 *str, u8 len);
 extern s32 SEQ_MIDI_SYSEX_REMOTE_Server_SendCharset(u8 charset);
 extern s32 SEQ_MIDI_SYSEX_REMOTE_Server_SendLED(u8 first_sr, u8 *led_sr, u8 num_sr);
 
+//###########################################################################
+//# RIO: Proteus 2000 Parameter Value Edit -> Multimode Basic Channel Select
+//###########################################################################
+
+extern s32 SEQ_MIDI_SYSEX_PROTEUS_SendChannel(mios32_midi_port_t port, u8 proteus_id, u8 basic_channel);
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Export global variables

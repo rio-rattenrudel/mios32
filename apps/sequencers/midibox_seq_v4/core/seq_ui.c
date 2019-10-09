@@ -786,7 +786,11 @@ static s32 SEQ_UI_Button_Follow(s32 depressed)
   return 0; // no error
 }
 
-static s32 SEQ_UI_Button_Scrub(s32 depressed)
+//####################################
+//# RIO: Replace with PROTEUS Handler
+//####################################
+
+/*static s32 SEQ_UI_Button_Scrub(s32 depressed)
 {
   // double function: -> Loop if menu button pressed
   if( seq_ui_button_state.MENU_PRESSED )
@@ -804,7 +808,21 @@ static s32 SEQ_UI_Button_Scrub(s32 depressed)
   SEQ_UI_Msg(SEQ_UI_MSG_USER, 1000, "Scrub Mode", seq_ui_button_state.SCRUB ? "    on" : "   off");
 
   return 0; // no error
+}*/
+
+static s32 SEQ_UI_Button_Scrub(s32 depressed)
+{
+  if( depressed ) return -1; // ignore when button depressed
+
+  // change to utility page
+  SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
+
+  return 0; // no error
 }
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 static s32 SEQ_UI_Button_TempoPreset(s32 depressed)
 {
@@ -854,7 +872,11 @@ static s32 SEQ_UI_Button_ExtRestart(s32 depressed)
   return 0; // no error
 }
 
-static s32 SEQ_UI_Button_Metronome(s32 depressed)
+//####################################
+//# RIO: Replace with XLTURBO Handler
+//####################################
+
+/*static s32 SEQ_UI_Button_Metronome(s32 depressed)
 {
   // double function: -> ExtRestart if menu button pressed
   if( seq_ui_button_state.MENU_PRESSED )
@@ -883,7 +905,21 @@ static s32 SEQ_UI_Button_Metronome(s32 depressed)
 #endif
 
   return 0; // no error
+}*/
+
+static s32 SEQ_UI_Button_Metronome(s32 depressed)
+{
+  if( depressed ) return -1; // ignore when button depressed
+
+  // change to utility page
+  SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
+
+  return 0; // no error
 }
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 s32 SEQ_UI_Button_Record(s32 depressed)
 {

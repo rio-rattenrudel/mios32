@@ -23,6 +23,10 @@
 // Global Types
 /////////////////////////////////////////////////////////////////////////////
 
+//####################################
+//# RIO: PROTEUS added
+//####################################
+
 // must be kept in sync with ui_menu_pages table in seq_ui_pages.c
 typedef enum {
   SEQ_UI_PAGE_NONE = 0,
@@ -85,8 +89,14 @@ typedef enum {
   SEQ_UI_PAGE_PATTERN_RMX,
   SEQ_UI_PAGE_BOOKMARKS,
   SEQ_UI_PAGE_INFO,
+  SEQ_UI_PAGE_PROTEUS, // RIO: added Proteus
+  SEQ_UI_PAGE_XLTURBO, // RIO: added Proteus
   SEQ_UI_PAGE_LAST__UNIMPLEMENTED
 } seq_ui_page_t;
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 #define SEQ_UI_PAGES (SEQ_UI_PAGE_LAST__UNIMPLEMENTED)
 #define SEQ_UI_FIRST_MENU_SELECTION_PAGE SEQ_UI_PAGE_EDIT

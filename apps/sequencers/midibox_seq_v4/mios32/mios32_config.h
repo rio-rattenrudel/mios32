@@ -148,8 +148,18 @@ extern void APP_SendDebugMessage(char *format, ...);
 #endif
 
 
+//####################################
+//# RIO: IIC HACK max 8
+//####################################
+
 // configure IIC_MIDI
-#define MIOS32_IIC_MIDI_NUM 4
+#define MIOS32_IIC_MIDI_NUM 8
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
 // all interfaces are "OUT only"
 #define MIOS32_IIC_MIDI0_ENABLED    1
 #define MIOS32_IIC_MIDI1_ENABLED    1

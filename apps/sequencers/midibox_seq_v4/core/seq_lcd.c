@@ -521,6 +521,37 @@ s32 SEQ_LCD_PrintNote(u8 note)
 }
 
 
+//###########################
+//# RIO: CHORD 3 REPLACEMENT
+//###########################
+s32 SEQ_LCD_PrintChord3(u8 value)
+{
+  const char note_tab[12][3] = { "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" };
+
+  if( value == 0 ) SEQ_LCD_PrintString("---");
+  else {
+    u8 octave = (value + 24) / 36;
+    u8 area   = value / 12;
+    u8 note   = value % 12;
+
+    SEQ_LCD_PrintChar(note_tab[note][0]);
+
+    if (note_tab[note][1] == '-') {
+      if      (area == 0 || area == 3 || area == 6 || area == 9)  SEQ_LCD_PrintChar('\"');
+      else if (area == 2 || area == 5 || area == 8)               SEQ_LCD_PrintChar('\'');
+      else                                                        SEQ_LCD_PrintChar('=');
+    } else                                                        SEQ_LCD_PrintChar('#');
+    
+    SEQ_LCD_PrintChar('0' + octave);
+  }
+
+  return 0; // no error
+}
+//###########################
+//# RIO: END MODIFICATION
+//###########################
+
+
 /////////////////////////////////////////////////////////////////////////////
 // prints an arp event (3 characters)
 /////////////////////////////////////////////////////////////////////////////
@@ -753,11 +784,14 @@ s32 SEQ_LCD_PrintLayerValue(u8 track, u8 par_layer, u8 par_value)
 	  
   case SEQ_PAR_Type_Chord3: {
     if( par_value ) {
-      if( par_value < 100 ) {
-	SEQ_LCD_PrintFormattedString("Ch%2d", par_value);
-      } else {
-	SEQ_LCD_PrintFormattedString("C%3d", par_value);
-      }
+      //###########################
+      //# RIO: CHORD 3 REPLACEMENT
+      //###########################
+      SEQ_LCD_PrintChord3(par_value);
+      SEQ_LCD_PrintChar(' ');
+      //###########################
+      //# RIO: END MODIFICATION
+      //###########################
     } else {
       SEQ_LCD_PrintString("----");
     }
@@ -910,13 +944,13 @@ s32 SEQ_LCD_PrintLayerEvent(u8 track, u8 step, u8 par_layer, u8 instrument, u8 s
 
     if( par_value && (print_edit_value >= 0 || print_without_gate || SEQ_TRG_GateGet(track, step, instrument)) ) {
       if( layer_type == SEQ_PAR_Type_Chord3 ) {
-	if( par_value < 10 ) {
-	  SEQ_LCD_PrintFormattedString("Ch%d", par_value);
-	} else if( par_value < 100 ) {
-	  SEQ_LCD_PrintFormattedString("C%2d", par_value);
-	} else {
-	  SEQ_LCD_PrintFormattedString("%3d", par_value);
-	}
+        //###########################
+        //# RIO: CHORD 3 REPLACEMENT
+        //###########################
+        SEQ_LCD_PrintChord3(par_value);
+        //###########################
+        //# RIO: END MODIFICATION
+        //###########################
       } else {
 	u8 chord_ix = par_value & 0x1f;
 	u8 chord_char = ((chord_ix >= 0x10) ? 'a' : 'A') + (chord_ix & 0xf);

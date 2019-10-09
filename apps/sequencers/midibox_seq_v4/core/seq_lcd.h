@@ -60,6 +60,13 @@ extern s32 SEQ_LCD_PrintVBar(u8 value);
 extern s32 SEQ_LCD_PrintHBar(u8 value);
 extern s32 SEQ_LCD_PrintLongHBar(u8 value);
 extern s32 SEQ_LCD_PrintNote(u8 note);
+//###########################
+//# RIO: CHORD 3 REPLACEMENT
+//###########################
+extern s32 SEQ_LCD_PrintChord3(u8 value);
+//###########################
+//# RIO: END MODIFICATION
+//###########################
 extern s32 SEQ_LCD_PrintArp(u8 note);
 extern s32 SEQ_LCD_PrintGatelength(u8 len);
 extern s32 SEQ_LCD_PrintProbability(u8 probability);

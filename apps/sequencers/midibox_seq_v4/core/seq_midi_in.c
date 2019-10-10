@@ -998,6 +998,14 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
   static u8 nrpn_lsb = 0;
   static u8 nrpn_msb = 0;
 
+  //#################################################
+  //# RIO: BPM Assignments
+  //#################################################
+  static u16 bpm = 0;
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
   // NRPN handling
   switch( cc ) {
   case 0x62: // NRPN LSB (selects parameter)

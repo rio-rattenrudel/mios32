@@ -666,7 +666,15 @@ static s32 SEQ_UI_Button_Pause(s32 depressed)
 
 s32 SEQ_UI_Button_Play(s32 depressed)
 {
-  if( depressed ) return -1; // ignore when button depressed
+  //###################################################
+  //# RIO: START PLAYBACK ONCE - fixed bouncing button
+  //###################################################
+
+  if( depressed || SEQ_BPM_IsRunning() ) return -1; // ignore when button depressed
+
+  //###################################################
+  //# RIO: END MODIFICATION
+  //###################################################
 
   // if MENU button pressed -> tap tempo
   if( seq_ui_button_state.MENU_PRESSED )

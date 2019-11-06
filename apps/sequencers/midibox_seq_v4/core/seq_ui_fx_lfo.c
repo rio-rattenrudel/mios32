@@ -218,22 +218,7 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       //# RIO: END MODIFICATION
       //#################################################
                              }
-    case ITEM_AMPLITUDE:     {
-      //#################################################
-      //# RIO: TOGGLE FADE OUT ABS or REL
-      //#################################################
-
-      if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 200) {
-          u8 mask = 1 << 7;
-          u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
-          if( incrementer == 0 ) SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
-      }
-      return SEQ_UI_CC_Inc(SEQ_CC_LFO_AMPLITUDE, 0, 255, incrementer);
-
-      //#################################################
-      //# RIO: END MODIFICATION
-      //#################################################
-                             }
+    case ITEM_AMPLITUDE:     return SEQ_UI_CC_Inc(SEQ_CC_LFO_AMPLITUDE, 0, 255, incrementer);
     case ITEM_PHASE:         {
       //#################################################
       //# RIO: TOGGLE FADE UP/DOWN
@@ -400,13 +385,8 @@ static s32 LCD_Handler(u8 high_prio)
   else                                                                  sprintf(buffer1, "Wave");
 
   if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 200) {
-    if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 7)) {
-      if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 6)) sprintf(buffer2, "FupA");
-      else                                                               sprintf(buffer2, "FdnA");
-    } else {
-      if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 6)) sprintf(buffer2, "FupR");
-      else                                                               sprintf(buffer2, "FdnR");
-    }
+    if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 6))  sprintf(buffer2, "FdUp");
+    else                                                                sprintf(buffer2, "FdDn");
   }
   else if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 100)           sprintf(buffer2, "Dly.");
   else                                                                  sprintf(buffer2, "Phs.");

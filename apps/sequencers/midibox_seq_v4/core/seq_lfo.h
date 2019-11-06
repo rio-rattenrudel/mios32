@@ -179,7 +179,6 @@ typedef union {
     u8 CC:1;
     u8 REVERSE:1;   // RIO: added Reverse
     u8 FADEUP:1;    // RIO: added Fade OUT
-    u8 FADEABS:1;   // RIO: added Fade OUT
   };
 } seq_lfo_enable_flags_t;
 

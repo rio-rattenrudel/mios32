@@ -33,8 +33,9 @@
 typedef struct {
   u16 step_ctr;
   u16 pos;
-  u16 rstcount; // RIO: added rstcount
-  u8  delayed;  // RIO: added delayflag
+  u16 rstcount;   // RIO: added rstcount
+  u8  delayed;    // RIO: added delayflag
+  u8  fadeoffset; // RIO: added fadeoffset
 } seq_lfo_t;
 
 //###########################################################################
@@ -81,6 +82,7 @@ s32 SEQ_LFO_ResetTrk(u8 track)
   lfo->step_ctr = 0;
   lfo->pos = 0;
   lfo->rstcount = 0;                                                        // RIO: added rstcount
+  lfo->fadeoffset = 0;                                                      // RIO: added fadeoffset
 
   seq_cc_trk_t *tcc = &seq_cc_trk[track];
   if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200)    lfo->delayed = 1;   // RIO: added delayed
@@ -598,31 +600,32 @@ static s32 SEQ_LFO_ValueGet(seq_cc_trk_t *tcc, seq_lfo_t *lfo)
     } break;
   }
 
-  // FADE OUT
-
+  // FADE UP/DOWN
+  
   if (tcc->lfo_phase > 200) {
 
-    u8 lfo_fade_start;
-    if ((tcc->lfo_phase - 200) > tcc->lfo_steps_rst)    lfo_fade_start = 0;
-    else                                                lfo_fade_start = tcc->lfo_steps_rst - (tcc->lfo_phase - 200);
+    u8 fadestart  = 0;
+    u8 fadevalue  = tcc->lfo_phase - 200;
 
-    if( lfo->step_ctr > lfo_fade_start) {
+    if (fadevalue < tcc->lfo_steps_rst) 
+        fadestart = tcc->lfo_steps_rst-fadevalue+1;
 
-        if (!tcc->lfo_enable_flags.FADEABS) {
+    if( lfo->step_ctr > fadestart) {
 
-            float m = 1/(float)(tcc->lfo_steps_rst-lfo->step_ctr+1);
-            if (tcc->lfo_enable_flags.FADEUP)   lfo_value += (int)((127-lfo_value) * m);
-            else                                lfo_value -= (int)(lfo_value * m);
+        // store last lfo before fade out
+        if (!lfo->fadeoffset) lfo->fadeoffset = lfo_value;
 
-        } else {
+        float m = (lfo->step_ctr - fadestart) / (float)fadevalue;
+        if (tcc->lfo_enable_flags.FADEUP)   lfo_value = lfo->fadeoffset + (int)((127-tcc->lfo_cc_offset-lfo->fadeoffset) * m);
+        else                                lfo_value = lfo->fadeoffset - (int)(lfo->fadeoffset * m);
 
-            if (tcc->lfo_enable_flags.FADEUP)   lfo_value += (lfo->step_ctr - lfo_fade_start)<<1;
-            else                                lfo_value -= (lfo->step_ctr - lfo_fade_start)<<1;
-        }
-    }
+        if      (lfo_value < 0)     lfo_value = 0;
+        else if (lfo_value > 127)   lfo_value = 127;
 
-    if      (lfo_value < 0)     lfo_value = 0;
-    else if (lfo_value > 127)   lfo_value = 127;
+        //DEBUG_MSG("step: %d rst: %d off: %d start: %d value: %d lfo: %d stp-start+1: %d m: %d.%03d\n", lfo->step_ctr,tcc->lfo_steps_rst,lfo->fadeoffset,fadestart,fadevalue,lfo_value,lfo->step_ctr-fadestart+1,(int)m,(int)(m*1000.0)%1000);
+        return lfo_value;
+
+    } else lfo->fadeoffset = 0;
   }
 
 //#################################################

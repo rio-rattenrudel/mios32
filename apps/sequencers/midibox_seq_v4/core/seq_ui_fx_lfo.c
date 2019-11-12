@@ -45,7 +45,10 @@
 // Local definitions
 /////////////////////////////////////////////////////////////////////////////
 
-#define NUM_OF_ITEMS       14
+//####################################
+//# RIO: POLYPHONIC PRESSURE
+//####################################
+#define NUM_OF_ITEMS       15
 #define ITEM_GXTY          0
 #define ITEM_WAVEFORM      1
 #define ITEM_AMPLITUDE     2
@@ -59,8 +62,11 @@
 #define ITEM_ENABLE_CC     10
 #define ITEM_CC            11
 #define ITEM_CC_OFFSET     12
-#define ITEM_CC_PPQN       13
-
+#define ITEM_ENABLE_PP     13
+#define ITEM_CC_PPQN       14
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Local variables
@@ -89,8 +95,15 @@ static s32 LED_Handler(u16 *gp_leds)
     case ITEM_ENABLE_VELOCITY: *gp_leds = 0x0200; break;
     case ITEM_ENABLE_LENGTH: *gp_leds = 0x0400; break;
     case ITEM_ENABLE_CC: *gp_leds = 0x0800; break;
-    case ITEM_CC: *gp_leds = 0x1000; break;
-    case ITEM_CC_OFFSET: *gp_leds = 0x2000; break;
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
+    case ITEM_ENABLE_PP: *gp_leds = 0x1000; break;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+    case ITEM_CC: *gp_leds = 0x2000; break;
+    case ITEM_CC_OFFSET: *gp_leds = 0x4000; break;
     case ITEM_CC_PPQN: *gp_leds = 0x8000; break;
   }
 
@@ -164,8 +177,15 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       ui_selected_item = ITEM_ENABLE_CC;
       break;
 
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
     case SEQ_UI_ENCODER_GP13:
-      return -1; // not mapped
+      ui_selected_item = ITEM_ENABLE_PP;
+      break;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
 
     case SEQ_UI_ENCODER_GP14:
       // CC number selection now has to be confirmed with GP button
@@ -238,11 +258,15 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
     case ITEM_STEPS:         return SEQ_UI_CC_Inc(SEQ_CC_LFO_STEPS, 0, 255, incrementer);
     case ITEM_STEPS_RST:     return SEQ_UI_CC_Inc(SEQ_CC_LFO_STEPS_RST, 0, 255, incrementer);
 
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
     case ITEM_ENABLE_ONE_SHOT:
     case ITEM_ENABLE_NOTE:
     case ITEM_ENABLE_VELOCITY:
     case ITEM_ENABLE_LENGTH:
-    case ITEM_ENABLE_CC: {
+    case ITEM_ENABLE_CC:
+    case ITEM_ENABLE_PP: {
       u8 flag = ui_selected_item - ITEM_ENABLE_ONE_SHOT;
       u8 mask = 1 << flag;
       u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
@@ -253,6 +277,9 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       else
 	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, 0);
     } break;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
 
     case ITEM_CC: {
       // CC number selection now has to be confirmed with GP button
@@ -391,7 +418,7 @@ static s32 LCD_Handler(u8 high_prio)
   else if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 100)           sprintf(buffer2, "Dly.");
   else                                                                  sprintf(buffer2, "Phs.");
 
-  SEQ_LCD_PrintFormattedString("Trk. %s%cAmp. %s Steps Rst OneShot   Note Vel. Len.  CC   ExtraCC# Offs. PPQN",buffer1,ch,buffer2);
+  SEQ_LCD_PrintFormattedString("Trk. %s%cAmp. %s Steps Rst OneShot   Note Vel. Len.  CC   Extra%s# Offs. PPQN",buffer1,ch,buffer2, (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 7)) ? "PP" : "CC");
 
   //##############################
   //# RIO: END MODIFICATION

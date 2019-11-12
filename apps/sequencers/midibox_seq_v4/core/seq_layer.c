@@ -424,11 +424,35 @@ s32 SEQ_LAYER_GetEvents(u8 track, u16 step, seq_layer_evnt_t layer_events[16], u
       for(par_layer=0; par_layer<num_p_layers; ++par_layer, ++layer_type_ptr) {
 
 	switch( *layer_type_ptr ) {
+
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+
+	case SEQ_PAR_Type_PolyPressure:
 	case SEQ_PAR_Type_CC: {
 	  u8 cc_number = seq_layer_drum_cc[drum][par_layer];
 	  u8 value = SEQ_PAR_Get(track, step, par_layer, drum);
 
 	  if( !insert_empty_notes ) {
+
+      if (*layer_type_ptr == SEQ_PAR_Type_PolyPressure) {
+
+	    // new: don't send CC if assigned to invalid CC number
+	    // new: don't send if CC is assigned to LFO extra CC function in POLYPRESSURE mode
+	    if( cc_number >= 0x80 ||
+		(tcc->lfo_waveform && tcc->lfo_cc == cc_number && tcc->lfo_enable_flags.POLYPRESSURE) )
+	      break;
+
+	    // don't send CC if value hasn't changed (== invalid value)
+	    // but only if LFO not assigned to CC layer in POLYPRESSURE mode
+	    if( !tcc->lfo_enable_flags.CC  && !tcc->lfo_enable_flags.POLYPRESSURE &&
+		( value >= 0x80 || value == cc_last_value[track][drum][par_layer]) ) {
+	      break;
+	    }
+
+      } else {
+
 	    // new: don't send CC if assigned to invalid CC number
 	    // new: don't send if CC is assigned to LFO extra CC function
 	    if( cc_number >= 0x80 ||
@@ -441,6 +465,8 @@ s32 SEQ_LAYER_GetEvents(u8 track, u16 step, seq_layer_evnt_t layer_events[16], u
 		( value >= 0x80 || value == cc_last_value[track][drum][par_layer]) ) {
 	      break;
 	    }
+      }
+
 	    cc_last_value[track][drum][par_layer] = value;
 	  }
 
@@ -448,15 +474,19 @@ s32 SEQ_LAYER_GetEvents(u8 track, u16 step, seq_layer_evnt_t layer_events[16], u
 	    seq_layer_evnt_t *e = &layer_events[num_events];
 	    mios32_midi_package_t *p = &e->midi_package;
 
-	    p->type     = CC;
+	    p->type     = *layer_type_ptr == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
 	    p->cable    = track;
-	    p->event    = CC;
+	    p->event    = *layer_type_ptr == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
 	    p->chn      = tcc->midi_chn;
 	    p->cc_number = cc_number;
 	    p->value    = value;
 	    e->len      = -1;
 	    e->layer_tag = drum;
 	    ++num_events;
+
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
 
 	    // morph it
 	    if( !insert_empty_notes && tcc->morph_mode )
@@ -757,6 +787,11 @@ s32 SEQ_LAYER_GetEvents(u8 track, u16 step, seq_layer_evnt_t layer_events[16], u
 
 	} break;
 
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+
+        case SEQ_PAR_Type_PolyPressure:
         case SEQ_PAR_Type_CC: {
 	  seq_layer_evnt_t *e = &layer_events[num_events];
 	  mios32_midi_package_t *p = &e->midi_package;
@@ -764,6 +799,24 @@ s32 SEQ_LAYER_GetEvents(u8 track, u16 step, seq_layer_evnt_t layer_events[16], u
 	  u8 value = SEQ_PAR_Get(track, step, par_layer, instrument);
 
 	  if( !insert_empty_notes ) {
+
+      if (*layer_type_ptr == SEQ_PAR_Type_PolyPressure) {
+
+	    // new: don't send CC if assigned to invalid CC number
+	    // new: don't send if CC is assigned to LFO extra CC function in POLYPRESSURE mode
+	    if( cc_number >= 0x80 ||
+		(tcc->lfo_waveform && tcc->lfo_cc == cc_number && tcc->lfo_enable_flags.POLYPRESSURE) )
+	      break;
+
+	    // don't send CC if value hasn't changed (== invalid value)
+	    // but only if LFO not assigned to CC layer in POLYPRESSURE mode
+	    if( !tcc->lfo_enable_flags.CC && !tcc->lfo_enable_flags.POLYPRESSURE &&
+		( value >= 0x80 || value == cc_last_value[track][0][par_layer]) ) {
+	      break;
+	    }
+
+      } else {
+
 	    // new: don't send CC if assigned to invalid CC number
 	    // new: don't send if CC is assigned to LFO extra CC function
 	    if( cc_number >= 0x80 ||
@@ -776,7 +829,9 @@ s32 SEQ_LAYER_GetEvents(u8 track, u16 step, seq_layer_evnt_t layer_events[16], u
 		( value >= 0x80 || value == cc_last_value[track][0][par_layer]) ) {
 	      break;
 	    }
-	    cc_last_value[track][0][par_layer] = value;
+      }
+
+      cc_last_value[track][0][par_layer] = value;
 	  }
 
 	  if(
@@ -784,15 +839,19 @@ s32 SEQ_LAYER_GetEvents(u8 track, u16 step, seq_layer_evnt_t layer_events[16], u
 	     (tcc->event_mode != SEQ_EVENT_MODE_CC || gate) &&
 #endif
 	     (insert_empty_notes || !(layer_muted & (1 << par_layer))) ) {
-	    p->type     = CC;
+	    p->type     = *layer_type_ptr == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
 	    p->cable    = track;
-	    p->event    = CC;
+	    p->event    = *layer_type_ptr == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
 	    p->chn      = tcc->midi_chn;
 	    p->cc_number = cc_number;
 	    p->value    = value;
 	    e->len      = -1;
 	    e->layer_tag = par_layer;
 	    ++num_events;
+
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
 
 	    // morph it
 	    if( !insert_empty_notes && tcc->morph_mode )
@@ -1231,7 +1290,12 @@ s32 SEQ_LAYER_DirectSendEvent(u8 track, u8 par_layer)
   p.cable    = track;
   p.chn      = tcc->midi_chn;
 
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+
   switch( layer_type ) {
+  case SEQ_PAR_Type_PolyPressure:
   case SEQ_PAR_Type_CC: {
     u8 cc_number = tcc->lay_const[1*16 + par_layer];
     u8 value = (cc_last_value[track][0][par_layer] < 0x80) ? cc_last_value[track][0][par_layer] : 0x40;
@@ -1239,11 +1303,15 @@ s32 SEQ_LAYER_DirectSendEvent(u8 track, u8 par_layer)
     if( cc_number >= 0x80 )
       return -1; // CC disabled
 
-    p.type      = CC;
-    p.event     = CC;
+    p.type      = layer_type == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
+    p.event     = layer_type == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
     p.cc_number = tcc->lay_const[1*16 + par_layer];
     p.value     = value;
   } break;
+
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
 
   case SEQ_PAR_Type_PitchBend: {
     u8 value = (pb_last_value[track] < 0x80) ? pb_last_value[track] : 0x40;

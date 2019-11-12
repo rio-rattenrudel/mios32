@@ -262,12 +262,18 @@ s32 SEQ_LFO_FastCC_Event(u8 track, u32 bpm_tick, mios32_midi_package_t *p, u8 ig
   else if( lfo_value > 127 )
     lfo_value = 127;
 
-  p->type      = CC;
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+  p->type      = (tcc->lfo_enable_flags.POLYPRESSURE) ? PolyPressure : CC;
   p->cable     = track;
-  p->event     = CC;
+  p->event     = (tcc->lfo_enable_flags.POLYPRESSURE) ? PolyPressure : CC;
   p->chn       = tcc->midi_chn;
   p->cc_number = tcc->lfo_cc;
   p->value     = lfo_value;
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
 
   return 1; // returned 1 event
 }

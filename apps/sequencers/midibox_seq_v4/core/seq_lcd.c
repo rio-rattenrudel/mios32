@@ -816,6 +816,13 @@ s32 SEQ_LCD_PrintLayerValue(u8 track, u8 par_layer, u8 par_value)
     SEQ_LCD_PrintGatelength(par_value);
     break;
 
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+  case SEQ_PAR_Type_PolyPressure:
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
   case SEQ_PAR_Type_CC:
   case SEQ_PAR_Type_ProgramChange:
   case SEQ_PAR_Type_PitchBend:
@@ -1007,6 +1014,13 @@ s32 SEQ_LCD_PrintLayerEvent(u8 track, u8 step, u8 par_layer, u8 instrument, u8 s
     SEQ_LCD_PrintGatelength(layer_event.len);
     break;
 
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+  case SEQ_PAR_Type_PolyPressure:
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
   case SEQ_PAR_Type_CC:
   case SEQ_PAR_Type_ProgramChange:
   case SEQ_PAR_Type_PitchBend:

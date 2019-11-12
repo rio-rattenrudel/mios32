@@ -63,9 +63,9 @@ static const char seq_par_type_names[SEQ_PAR_NUM_TYPES][6] = {
   "Root ", // 16
   "Scale", // 17
   "Chrd3", // 18
-//####################################
-//# RIO: MUTES LAYER
-//####################################
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
   "Mute1", // 19
   "Mute2", // 20
   "Mute3", // 21
@@ -82,9 +82,10 @@ static const char seq_par_type_names[SEQ_PAR_NUM_TYPES][6] = {
   "Mut14", // 32
   "Mut15", // 33
   "Mut16", // 34
-//####################################
+  " PP  ", // 35
+//########################################
 //# RIO: END MODIFICATION
-//####################################
+//########################################
 };
 
 static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order for the UI selection
@@ -96,6 +97,13 @@ static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order
   SEQ_PAR_Type_Velocity,
   SEQ_PAR_Type_Length,
   SEQ_PAR_Type_CC,
+//####################################
+//# RIO: POLYPHONIC PRESSURE
+//####################################
+  SEQ_PAR_Type_PolyPressure,
+//####################################
+//# RIO: END MODIFICATION
+//####################################
   SEQ_PAR_Type_PitchBend,
   SEQ_PAR_Type_Aftertouch,
   SEQ_PAR_Type_ProgramChange,
@@ -151,9 +159,9 @@ static const u8 seq_par_default_value[SEQ_PAR_NUM_TYPES] = {
   0,    // Root: C
   0,    // Scale: 0
   0x01, // Chord3: 1
-//####################################
-//# RIO: MUTES LAYER
-//####################################
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
   0,    // Mute1: 0
   0,    // Mute2: 0
   0,    // Mute3: 0
@@ -170,9 +178,10 @@ static const u8 seq_par_default_value[SEQ_PAR_NUM_TYPES] = {
   0,    // Mute14: 0
   0,    // Mute15: 0
   0,    // Mute16: 0
-//####################################
+  0x80, // PolyPressure
+//########################################
 //# RIO: END MODIFICATION
-//####################################
+//########################################
 };
 
 static const u8 seq_par_max_value[SEQ_PAR_NUM_TYPES] = {
@@ -195,9 +204,9 @@ static const u8 seq_par_max_value[SEQ_PAR_NUM_TYPES] = {
   0x7f, // Root
   0x7f, // Scale
   0x7f, // Chord3
-//####################################
-//# RIO: MUTES LAYER
-//####################################
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
   2,    // Mute1
   2,    // Mute2
   2,    // Mute3
@@ -214,9 +223,10 @@ static const u8 seq_par_max_value[SEQ_PAR_NUM_TYPES] = {
   2,    // Mute14
   2,    // Mute15
   2,    // Mute16
-//####################################
+  0x80, // PolyPressure
+//########################################
 //# RIO: END MODIFICATION
-//####################################
+//########################################
 };
 
 

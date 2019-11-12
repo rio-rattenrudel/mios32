@@ -2318,7 +2318,11 @@ s32 SEQ_CORE_NotifyIncomingMIDIEvent(u8 track, mios32_midi_package_t p)
     }
   } break;
 
-  //case PolyPressure:
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+
+  case PolyPressure:
   case CC:
   case ProgramChange:
   //case Aftertouch:
@@ -2336,6 +2340,15 @@ s32 SEQ_CORE_NotifyIncomingMIDIEvent(u8 track, mios32_midi_package_t p)
 	  apply_mask = 1;
 	}
       } break;
+      case SEQ_PAR_Type_PolyPressure: {
+  if( p.event == PolyPressure && p.cc_number == tcc->lay_const[1*16 + par_layer] ) {
+    apply_mask = 1;
+  }
+      } break;
+
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
 
       case SEQ_PAR_Type_PitchBend: {
 	if( p.event == PitchBend ) {

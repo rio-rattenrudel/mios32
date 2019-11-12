@@ -53,9 +53,9 @@ typedef enum {
   SEQ_PAR_Type_Root=16,
   SEQ_PAR_Type_Scale=17,
   SEQ_PAR_Type_Chord3=18,
-//####################################
-//# RIO: MUTES LAYER
-//####################################
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
   SEQ_PAR_Type_Mute1=19,
   SEQ_PAR_Type_Mute2=20,
   SEQ_PAR_Type_Mute3=21,
@@ -72,12 +72,13 @@ typedef enum {
   SEQ_PAR_Type_Mute14=32,
   SEQ_PAR_Type_Mute15=33,
   SEQ_PAR_Type_Mute16=34,
+  SEQ_PAR_Type_PolyPressure=35,
 } seq_par_layer_type_t;
 
-#define SEQ_PAR_NUM_TYPES 35
-//####################################
+#define SEQ_PAR_NUM_TYPES 36
+//########################################
 //# RIO: END MODIFICATION
-//####################################
+//########################################
 
 // NOTE: numbers have to be aligned with the strings in SEQ_LCD_PrintNthMode!
 #define SEQ_PAR_TYPE_NTH_OFF    0

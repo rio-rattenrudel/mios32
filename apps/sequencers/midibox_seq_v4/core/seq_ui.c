@@ -268,6 +268,13 @@ s32 SEQ_UI_InitEncSpeed(u32 auto_config)
     switch( SEQ_PAR_AssignmentGet(SEQ_UI_VisibleTrackGet(), ui_selected_par_layer) ) {
       case SEQ_PAR_Type_Velocity:
       case SEQ_PAR_Type_Length:
+      //####################################
+      //# RIO: POLYPHONIC PRESSURE
+      //####################################
+      case SEQ_PAR_Type_PolyPressure:
+      //####################################
+      //# RIO: END MODIFICATION
+      //####################################
       case SEQ_PAR_Type_CC:
       case SEQ_PAR_Type_PitchBend:
       case SEQ_PAR_Type_Probability:
@@ -666,8 +673,9 @@ static s32 SEQ_UI_Button_Pause(s32 depressed)
 
 s32 SEQ_UI_Button_Play(s32 depressed)
 {
+
   //###################################################
-  //# RIO: START PLAYBACK ONCE - fixed bouncing button
+  //# RIO: Start playback once - fixed bouncing button
   //###################################################
 
   if( depressed || SEQ_BPM_IsRunning() ) return -1; // ignore when button depressed

@@ -15,7 +15,7 @@ LCD       =     $(MIOS32_LCD)
 ################################################################################
 
 ####################################
-# RIO: Added PROTEUS files
+# RIO: Added NEW files
 ####################################
 
 THUMB_SOURCE    = core/app.c \
@@ -85,6 +85,7 @@ THUMB_SOURCE    = core/app.c \
 		core/seq_blm.c \
 		core/seq_cc.c  \
 		core/seq_cc_labels.c  \
+		core/seq_pp_labels.c  \
 		core/seq_core.c \
 		core/seq_scale.c \
 		core/seq_groove.c \

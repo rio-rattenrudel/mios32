@@ -29,6 +29,7 @@
 #include "seq_midi_port.h"
 #include "seq_label.h"
 #include "seq_cc_labels.h"
+#include "seq_pp_labels.h"
 #include "seq_midi_in.h"
 
 #include "file.h"
@@ -553,18 +554,25 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
 	      if( ui_selected_item == ITEM_LAYER_CONTROL )
 		assignment = edit_layer_type;
 
-	      if( assignment == SEQ_PAR_Type_CC ) {
+        //####################################
+        //# RIO: POLYPHONIC PRESSURE
+        //####################################
+	      if( assignment == SEQ_PAR_Type_CC || assignment == SEQ_PAR_Type_PolyPressure ) {
 		// CC number selection now has to be confirmed with GP button
 		if( incrementer ) {
 		  if( ui_selected_item != ITEM_LAYER_PAR ) {
 		    edit_cc_number = SEQ_CC_Get(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer);
 		    ui_selected_item = ITEM_LAYER_PAR;
 		  }
-		  SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "Please confirm CC", "with GP button!");
+          if (assignment == SEQ_PAR_Type_PolyPressure) 
+            SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "Please confirm PP", "with GP button!");
+		  else SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "Please confirm CC", "with GP button!");
 		} else {
 		  if( edit_cc_number != SEQ_CC_Get(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer) ) {
 		    SEQ_CC_Set(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer, edit_cc_number);
-		    SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "CC number", "has been changed.");
+            if (assignment == SEQ_PAR_Type_PolyPressure) 
+    		    SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "PP number", "has been changed.");
+            else SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "CC number", "has been changed.");
 		  } else {
 		    // send MIDI event
 		    if( SEQ_LAYER_DirectSendEvent(visible_track, ui_selected_par_layer) >= 0 ) {
@@ -572,6 +580,9 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
 		    }
 		  }
 		}
+        //####################################
+        //# RIO: END MODIFICATION
+        //####################################
 	      } else {
 		return -1; // ignore
 	      }
@@ -1369,24 +1380,31 @@ static s32 LCD_Handler(u8 high_prio)
 	  if( ui_selected_item == ITEM_LAYER_CONTROL )
 	    assignment = edit_layer_type;
 
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
 	  switch( assignment ) {
+            case SEQ_PAR_Type_PolyPressure:
             case SEQ_PAR_Type_CC: {
 	      mios32_midi_port_t port = SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT);
 	      u8 current_value = SEQ_CC_Get(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer);
 	      u8 edit_value = ui_selected_item == ITEM_LAYER_PAR ? edit_cc_number : current_value;
 
 	      if( edit_value >= 0x80 ) {
-		SEQ_LCD_PrintFormattedString("off%c(no CC   ) ", (current_value != edit_value) ? '!' : ' ');
+        SEQ_LCD_PrintFormattedString("off%c(no %s   ) ", (current_value != edit_value) ? '!' : ' ', (assignment == SEQ_PAR_Type_PolyPressure) ? "PP" : "CC");
 	      } else {
 		SEQ_LCD_PrintFormattedString("%03d%c(%s) ", edit_value,
 					     (current_value != edit_value) ? '!' : ' ',
-					     SEQ_CC_LABELS_Get(port, edit_value));
+					     (assignment == SEQ_PAR_Type_PolyPressure) ? SEQ_PP_LABELS_Get(edit_value) : SEQ_CC_LABELS_Get(port, edit_value));
 	      }
 	    } break;
 
             default:
 	      SEQ_LCD_PrintSpaces(15);
 	  }
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
 	}
 
 	SEQ_LCD_PrintString("PRESETS  INIT");

@@ -177,8 +177,9 @@ typedef union {
     u8 VELOCITY:1;
     u8 LENGTH:1;
     u8 CC:1;
-    u8 REVERSE:1;   // RIO: added Reverse
-    u8 FADEUP:1;    // RIO: added Fade OUT
+    u8 REVERSE:1;       // RIO: added Reverse
+    u8 FADEUP:1;        // RIO: added Fade OUT
+    u8 POLYPRESSURE:1;  // RIO: added PolyPressure
   };
 } seq_lfo_enable_flags_t;
 

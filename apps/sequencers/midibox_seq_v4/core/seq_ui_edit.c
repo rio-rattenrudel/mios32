@@ -1073,8 +1073,10 @@ s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
   SEQ_LCD_CursorSet(40, 0);
 
   SEQ_LCD_PrintFormattedString("Step%3d ", ui_selected_step+1);
-
-  if( layer_event.midi_package.event == CC ) {
+//####################################
+//# RIO: POLYPHONIC PRESSURE
+//####################################
+  if( layer_event.midi_package.event == CC || layer_event.midi_package.event == PolyPressure) {
     mios32_midi_port_t port = SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT);
     u8 loopback = port == 0xf0;
 
@@ -1082,13 +1084,16 @@ s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
       SEQ_LCD_PrintString((char *)SEQ_CC_LABELS_Get(port, layer_event.midi_package.cc_number));
     else {
       if( layer_event.midi_package.cc_number >= 0x80 ) {
-	SEQ_LCD_PrintFormattedString("  CC#off");
+	SEQ_LCD_PrintFormattedString("  %s#off", (layer_event.midi_package.event == CC) ? "CC" : "PP");
       } else {
-	SEQ_LCD_PrintFormattedString("  CC#%3d", layer_event.midi_package.cc_number);
+	SEQ_LCD_PrintFormattedString("  %s#%3d", (layer_event.midi_package.event == CC) ? "CC" : "PP", layer_event.midi_package.cc_number);
       }
     }
     SEQ_LCD_PrintFormattedString(" %3d ", layer_event.midi_package.value);
     SEQ_LCD_PrintVBar(layer_event.midi_package.value >> 4);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
   } else {
     SEQ_LCD_PrintSpaces(2);
 
@@ -1481,14 +1486,20 @@ static s32 ChangeSingleEncValue(u8 track, u16 par_step, u16 trg_step, s32 increm
   if( !dont_change_gate ) {
     u8 event_mode = SEQ_CC_Get(track, SEQ_CC_MIDI_EVENT_MODE);
 
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
     // we do this always regardless if value has been changed or not (e.g. increment if value already 127)
-    if( event_mode == SEQ_EVENT_MODE_CC && layer_type == SEQ_PAR_Type_CC ) {
+    if( event_mode == SEQ_EVENT_MODE_CC && (layer_type == SEQ_PAR_Type_CC || layer_type == SEQ_PAR_Type_PolyPressure) ) {
       // in this mode gates are used to disable CC
       // if a CC value has been changed, set gate
       if( !seq_ui_options.PRINT_AND_MODIFY_WITHOUT_GATES ) {
 	SEQ_TRG_GateSet(track, trg_step, ui_selected_instrument, 1);
       }
     }
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
   }
 
   // take over if changed

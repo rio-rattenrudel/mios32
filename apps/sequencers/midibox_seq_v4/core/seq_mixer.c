@@ -176,6 +176,37 @@ static s32 SEQ_MIXER_SendCC(mios32_midi_port_t midi_port, mios32_midi_chn_t midi
   return MIOS32_MIDI_SendPackage(midi_port, midi_package);
 }
 
+
+//####################################
+//# RIO: POLYPHONIC PRESSURE MIXER
+//####################################
+
+/////////////////////////////////////////////////////////////////////////////
+// Sends a PP (PolyPressure) value, considers Bus target
+/////////////////////////////////////////////////////////////////////////////
+static s32 SEQ_MIXER_SendPP(mios32_midi_port_t midi_port, mios32_midi_chn_t midi_chn, u8 pp, u8 value)
+{
+  mios32_midi_package_t midi_package;
+
+  midi_package.type  = 0xa;
+  midi_package.evnt0 = 0xa0 | midi_chn;
+  midi_package.evnt1 = pp;
+  midi_package.evnt2 = value;
+
+  if( (midi_port & 0xf0) == 0xf0 ) { // send to bus?
+    // forward to router
+    SEQ_MIDI_ROUTER_Receive(midi_port, midi_package);
+
+    // forward to transposer/arpeggiator/CC parser/etc...
+    SEQ_MIDI_IN_Receive(midi_port, midi_package);
+
+    return 0; // no error
+  }
+
+  return MIOS32_MIDI_SendPackage(midi_port, midi_package);
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 // Sends a single mixer value
 /////////////////////////////////////////////////////////////////////////////
@@ -185,6 +216,7 @@ s32 SEQ_MIXER_Send(u8 chn, seq_mixer_par_t par)
   mios32_midi_chn_t  midi_chn = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CHANNEL);
 
   s32 value;
+  s32 value2;
   if( (value=SEQ_MIXER_Get(chn, par)) < 0 )
     return 0; // don't return error, as it could be misinterpreded as a MIDI interface issue
 
@@ -202,20 +234,27 @@ s32 SEQ_MIXER_Send(u8 chn, seq_mixer_par_t par)
     case SEQ_MIXER_PAR_MODWHEEL:
       return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 1, value-1);
 
-    case SEQ_MIXER_PAR_CC1:
-      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC1_NUM), value-1);
+    case SEQ_MIXER_PAR_CC1: 
     case SEQ_MIXER_PAR_CC2:
-      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC2_NUM), value-1);
     case SEQ_MIXER_PAR_CC3:
-      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC3_NUM), value-1);
     case SEQ_MIXER_PAR_CC4:
-      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC4_NUM), value-1);
+      if      (par == SEQ_MIXER_PAR_CC1)  value2 = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC1_NUM);
+      else if (par == SEQ_MIXER_PAR_CC2)  value2 = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC2_NUM);
+      else if (par == SEQ_MIXER_PAR_CC3)  value2 = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC3_NUM);
+      else                                value2 = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC4_NUM);
+      if (value2 > 127) return value == 0 ? 0 : SEQ_MIXER_SendPP(midi_port, midi_chn, value2-128, value-1);
+      else              return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, value2, value-1);
   }
 
   // not supported
   // don't return error, as this could be misinterpreted as a MIDI interface issue
   return 0;
 }
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
 
 /////////////////////////////////////////////////////////////////////////////
 // Sends all mixer values for a specified Channel

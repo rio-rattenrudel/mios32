@@ -320,7 +320,13 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       case SEQ_MIXER_PAR_CC2_NUM:
       case SEQ_MIXER_PAR_CC3_NUM:
       case SEQ_MIXER_PAR_CC4_NUM:
-	min=0x00; max=0x7f;
+//####################################
+//# RIO: POLYPHONIC PRESSURE MIXER
+//####################################
+	min=0x00; max=0xff;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 	break;
       default:
 	return -1; // unsupported parameter
@@ -511,6 +517,9 @@ static s32 LCD_Handler(u8 high_prio)
 
     if( mixer_par < SEQ_MIXER_PAR_CC1_NUM ) {
       if( mixer_par < SEQ_MIXER_PAR_CC1 ) {
+//####################################
+//# RIO: POLYPHONIC PRESSURE MIXER
+//####################################
 	const char page_name[8][13] = {
 	  "MIDI Port   ",
 	  "MIDI Channel",
@@ -523,14 +532,17 @@ static s32 LCD_Handler(u8 high_prio)
 	};
 	SEQ_LCD_PrintString((char *)page_name[mixer_par]);
       } else {
-	SEQ_LCD_PrintFormattedString("CC%d #%3d    ", 
-				     mixer_par-SEQ_MIXER_PAR_CC1+1, 
-				     SEQ_MIXER_Get(ui_selected_item, mixer_par-SEQ_MIXER_PAR_CC1+SEQ_MIXER_PAR_CC1_NUM));
+    s32 value = SEQ_MIXER_Get(ui_selected_item, mixer_par-SEQ_MIXER_PAR_CC1+SEQ_MIXER_PAR_CC1_NUM);
+    if (value > 127)	SEQ_LCD_PrintFormattedString("PP%d #%3d    ", mixer_par-SEQ_MIXER_PAR_CC1+1, value-128);
+    else							SEQ_LCD_PrintFormattedString("CC%d #%3d    ", mixer_par-SEQ_MIXER_PAR_CC1+1, value);
       }
       SEQ_LCD_PrintSpaces(7);
     } else {
-      SEQ_LCD_PrintFormattedString("Assignment for CC%d ", mixer_par-SEQ_MIXER_PAR_CC1_NUM+1);
+      SEQ_LCD_PrintFormattedString("Assignment CC/PP %d ", mixer_par-SEQ_MIXER_PAR_CC1_NUM+1);
     }
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
     SEQ_LCD_PrintSpaces(2);
     SEQ_LCD_PrintMIDIOutPort(SEQ_MIXER_Get(ui_selected_item, SEQ_MIXER_PAR_PORT));
@@ -554,7 +566,15 @@ static s32 LCD_Handler(u8 high_prio)
 	} else if( mixer_par >= SEQ_MIXER_PAR_PRG && mixer_par <= SEQ_MIXER_PAR_CC4 ) {
 	  SEQ_LCD_PrintFormattedString(value ? " %3d " : " --- ", value-1);
 	} else {
-	  SEQ_LCD_PrintFormattedString(" %3d ", value);
+		//####################################
+		//# RIO: POLYPHONIC PRESSURE MIXER
+		//####################################
+		if( mixer_par >= SEQ_MIXER_PAR_CC1_NUM && mixer_par <= SEQ_MIXER_PAR_CC4_NUM && value > 127)
+			SEQ_LCD_PrintFormattedString(" %3d+", value-128);
+		else SEQ_LCD_PrintFormattedString(" %3d ", value);
+		//####################################
+		//# RIO: END MODIFICATION
+		//####################################
 	}
       }
     }
@@ -575,7 +595,13 @@ static s32 LCD_Handler(u8 high_prio)
       SEQ_LCD_PrintSpaces(8);
     }
 
-    SEQ_LCD_PrintString("CC Assignments      LiveSend       Edit ");
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE MIXER
+    //####################################
+    SEQ_LCD_PrintString("CC/PP Assignments   LiveSend       Edit ");
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
 
     SEQ_LCD_CursorSet(0, 1);
     SEQ_LCD_PrintFormattedString("%3d  Copy Paste Clr      Load Save Dump ", SEQ_MIXER_NumGet()+1);

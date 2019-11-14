@@ -1,0 +1,4633 @@
+Recompiling 4.096:
+--------------------------------------------------------------------
+Application successfully built for:
+Processor: LPC1769
+Family:    LPC17xx
+Board:     MBHP_CORE_LPC17
+LCD:       universal
+--------------------------------------------------------------------
+
+original max size:
+------------------
+arm-none-eabi-size project_build/project.elf
+   text    data     bss     dec     hex filename
+ 406964     936   62536  470436   72da4 project_build/project.elf
+10000000 B __ram_start
+10007d48 B __ram_end
+2007c000 D __ram_start_ahb
+20083aa8 B __ram_end_ahb
+
+modified size (mit IIC Hack):
+-----------------------------
+arm-none-eabi-size project_build/project.elf
+   text    data     bss     dec     hex filename
+ 415828     936   62896  479660   751ac project_build/project.elf
+10000000 B __ram_start
+10007eb0 B __ram_end
+2007c000 D __ram_start_ahb
+20083aa8 B __ram_end_ahb
+
+-----------------------------------------------------------------
+Erklärung:
+----------
+Probleme treten auf wenn __ram_end sich stark vom original vergrößert. Also z.B. im oder nach Bereich 10007d00 oder 10007e00 !!! Wo genau die Grenze ist, kann man nicht sagen, aber der Arbeitspeicher liegt genau zwischen __ram_end und __ram_start_ahb. 
+
+Im Bereich 10007cxx (oder auch noch 10007dxx (MAX PASSED: 10007ebx)) sollte alles sauber funktionieren...., darum am besten in dem Bereich bleiben. Zum Beispiel, weist die damals Jahre stabil eingesetzte und recompilierte version 0.80 folgende Werte auf (__ram_end = 10007d20):
+
+arm-none-eabi-size project_build/project.elf
+   text    data     bss     dec     hex filename
+ 352692     496   63512  416700   65bbc project_build/project.elf
+10000000 B __ram_start
+10007d20 B __ram_end
+2007c000 D __ram_start_ahb
+20083ce8 B __ram_end_ahb
+-----------------------------------------------------------------
+
+
+
+Modifizierte Dateien:
+
+MBSEQ_HW.V4
+mios32_config.h
+seq_lfo.c
+seq_lfo.h
+seq_midi_in.c
+seq_midi_in.h
+seq_mixer.c
+seq_ui.c
+seq_ui.h
+seq_ui_mixer.c
+seq_ui_pattern.c
+seq_ui_util.c
+seq_ui_util.h  (neu erstellt!)
+seq_ui_fx_lfo.c
+seq_midi_sysex.h
+seq_midi_sysex.c
+seq_ui_pages.c
+seq_ui_pages.h
+seq_ui_proteus.c (neu erstellt!)
+seq_ui_tracksel.c
+seq_ui_trkevnt.c
+seq_ui_edit.c
+seq_chord.c
+seq_lcd.c
+seq_lcd.h
+seq_par.c
+seq_par.h
+seq_cc.c
+seq_cc.h
+seq_core.c
+seq_layer.c
+seq_pp_labels.c  (neu erstellt!)
+seq_pp_labels.h  (neu erstellt!)
+Makefile
+
+-----------------------------------------------------------------
+
+1. neustes gputils installieren
+
+-----------------------------------------------------------------
+
+2. msys 1.10 installieren
+
+-----------------------------------------------------------------
+
+3. entpacken von gcc-arm-none-eabi-4_7-2013q3-20130916-win32.zip aus dem Applications32\mios32_toolchain\2013 Ordner
+nach C:\Program Files (x86)\mios32_toolchain-Verzeichnes (aber nur die Unterverzeichnisse von gcc-arm-none-eabi-4_7-2013q3-20130916-win32)
+
+-----------------------------------------------------------------
+
+4. Umgebungsvariablen ergänzen oder übernehmen:
+
+USER
+----
+PATH
+C:\Program Files (x86)\gputils\bin;C:\Program Files (x86)\SDCC\bin;C:\Program Files (x86)\mios32_toolchain\bin
+
+MIOS32_PATH
+/D/MIDISYSTEM/MIDIBOX/Github/mios32
+
+MIOS32_BIN_PATH
+D:\MIDISYSTEM\MIDIBOX\Github\mios32\bin
+
+MIOS32_GCC_PREFIX
+arm-none-eabi
+
+MIOS32_FAMILY
+LPC17xx
+
+MIOS32_PROCESSOR
+LPC1769
+
+MIOS32_BOARD
+MBHP_CORE_LPC17
+
+MIOS32_LCD
+universal
+
+SYSTEM (PATH - nur gucken ob MSYS drin ist, und zwar an ersterer Stelle):
+C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\PROGRA~2\MSYS\1.0\bin;C:\PROGRA~2\Borland\Delphi5\Projects\Bpl;C:\PROGRA~2\Borland\Delphi5\Bin;C:\Perl\bin\;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\;C:\Program Files\TortoiseSVN\bin
+
+-----------------------------------------------------------------
+
+5. check auf make version:
+make –version
+
+sollte das kommen:
+GNU Make 3.81
+Copyright (C) 2006  Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+This program built for i686-pc-msys
+
+-----------------------------------------------------------------
+
+6. Hardware File MBSEQ_HW.V4 konfigurieren und adden (rio ordner):
+
+###########################
+# RIO: DEFINE MIDI IN LED
+###########################
+#                    SR  Pin
+LED_MIDI_IN_COMBINED  7   0
+LED_MIDI_OUT_COMBINED 0   0
+
+###########################
+# RIO: END MODIFICATION
+###########################
+
+-----------------------------------------------------------------
+
+7. Default Mixer Map CCs setzen (auch Bank #32 auf CC4):
+
+seq_mixer.c -->
+
+s32 SEQ_MIXER_Clear(void):
+
+    //###################################################
+    //# RIO: Set Default Mixer Map CCs (Bank #32 on CC4)
+    //###################################################
+
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CHANNEL] = chn & 0xf;
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CC1_NUM] = 21;   //RIO: Original: 16
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CC2_NUM] = 40;   //RIO: Original: 17
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CC3_NUM] = 41;   //RIO: Original: 18
+    seq_mixer_value[chn][SEQ_MIXER_PAR_CC4_NUM] = 32;   //RIO: Original: 19
+
+    //###################################################
+    //# RIO: END MODIFICATION
+    //###################################################
+
+-----------------------------------------------------------------
+
+8. Using the BPM DataWheel in MUTE and PATTERN SCREEN:
+
+seq_ui.c-->
+  s32 SEQ_UI_Encoder_Handler(u32 encoder, s32 incrementer):
+
+  //#########################################################
+  //# RIO: Using the BPM DataWheel in MUTE and PATTERN SCREEN
+  //#########################################################
+
+  // Original:
+  // encoder 17 increments BPM
+  // if( encoder == 17 ) {
+
+  if( (encoder == 17) || ((encoder == 0) && ((ui_page == SEQ_UI_PAGE_MUTE) || (ui_page == SEQ_UI_PAGE_PATTERN)) ) ) { //RIO: changed to BPM in MUTE and PATTERN PAGE
+    u16 value = (u16)(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num]*10);
+    if( SEQ_UI_Var16_Inc(&value, 25, 3000, incrementer) ) { // at 384ppqn, the minimum BPM rate is ca. 2.5
+      // set new BPM
+      seq_core_bpm_preset_tempo[seq_core_bpm_preset_num] = (float)value/10.0;
+      SEQ_CORE_BPM_Update(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num], seq_core_bpm_preset_ramp[seq_core_bpm_preset_num]);
+      //store_file_required = 1;
+
+      // RIO: print BPM on LCD
+      float bpm = seq_core_bpm_preset_tempo[seq_core_bpm_preset_num];
+      char str[6];
+      sprintf(str, "%3d.%d", (int)bpm, (int)(10*bpm)%10);
+      SEQ_UI_Msg(SEQ_UI_MSG_USER, 500, "BPM", str);
+
+      seq_ui_display_update_req = 1;    
+    }
+    return 0;
+  }
+
+  //#########################################################
+  //# RIO: END MODIFICATION
+  //#########################################################
+
+-----------------------------------------------------------------
+
+9. Board LEDs Anzeige ausschalten
+
+seq_ui.c -->
+
+s32 SEQ_UI_LED_Handler_Periodic():
+
+  //###################################################
+  //# RIO: Disable Board LEDs
+  //###################################################
+
+  // mirror to green status LED (inverted, so that LED is normaly on)
+  //MIOS32_BOARD_LED_Set(0x00000001, sequencer_running ? (beat_led_on ? 1 : 0) : 1);
+
+  // measure LED
+  u8 measure_led_on = sequencer_running && ((seq_core_state.ref_step % (seq_core_steps_per_measure+1)) == 0);
+  SEQ_LED_PinSet(seq_hwcfg_led.measure, measure_led_on);
+
+  // mirror to red status LED
+  //MIOS32_BOARD_LED_Set(0x00000002, measure_led_on ? 2 : 0);
+  // now used for SD Card indicator
+  //MIOS32_BOARD_LED_Set(0x00000002, FILE_SDCardAvailable() ? 2 : 0);
+
+
+  // MIDI IN/OUT LEDs
+  SEQ_LED_PinSet(seq_hwcfg_led.midi_in_combined, seq_midi_port_in_combined_ctr);
+  //MIOS32_BOARD_LED_Set(0x00000004, seq_midi_port_in_combined_ctr ? 4 : 0);
+  SEQ_LED_PinSet(seq_hwcfg_led.midi_out_combined, seq_midi_port_out_combined_ctr);  
+  //MIOS32_BOARD_LED_Set(0x00000008, seq_midi_port_out_combined_ctr ? 8 : 0);
+
+  //###################################################
+  //# RIO: END MODIFICATION
+  //###################################################
+
+-----------------------------------------------------------------
+
+10. BankChange CC soll nur setzen, nicht wechseln, folgend durch den PatternChange CC  / update display
+
+seq_midi_in.c-->
+  static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value):
+
+      //#################################################
+      //# RIO: Display update
+      //#################################################
+
+      case SEQ_MIDI_IN_EXT_CTRL_PATTERN_G1:
+      case SEQ_MIDI_IN_EXT_CTRL_PATTERN_G2:
+      case SEQ_MIDI_IN_EXT_CTRL_PATTERN_G3:
+      case SEQ_MIDI_IN_EXT_CTRL_PATTERN_G4: {
+	u8 group = i - SEQ_MIDI_IN_EXT_CTRL_PATTERN_G1;
+	portENTER_CRITICAL();
+	seq_pattern_t pattern = seq_pattern[group];
+	if( value < SEQ_FILE_B_NumPatterns(pattern.bank) ) {
+	  pattern.pattern = value;
+	  pattern.DISABLED = 0;
+	  pattern.SYNCHED = 0;
+	  SEQ_PATTERN_Change(group, pattern, 0);
+	}
+	portEXIT_CRITICAL();
+        seq_ui_display_update_req = 1;  // RIO: added for update
+      } break;
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
+      
+      ..
+
+      //#################################################
+      //# RIO: Display update & Separate Dump Call
+      //#################################################
+
+      case SEQ_MIDI_IN_EXT_CTRL_MIXER_MAP: {
+	SEQ_MIXER_NumSet(value);
+	SEQ_MIXER_Load(value);
+	seq_ui_display_update_req = 1;  // RIO: added for update
+      } break;
+
+      case SEQ_MIDI_IN_EXT_CTRL_MIXER_DUMP: {  // RIO: seperate dump
+	if (value) SEQ_MIXER_SendAll();
+      } break;
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
+
+      //#################################################
+      //# RIO: Bank Change should be set, but not change
+      //#################################################
+
+      case SEQ_MIDI_IN_EXT_CTRL_BANK_G1:
+      case SEQ_MIDI_IN_EXT_CTRL_BANK_G2:
+      case SEQ_MIDI_IN_EXT_CTRL_BANK_G3:
+      case SEQ_MIDI_IN_EXT_CTRL_BANK_G4: {
+	u8 group = i - SEQ_MIDI_IN_EXT_CTRL_BANK_G1;
+	portENTER_CRITICAL();
+	seq_pattern_t pattern = seq_pattern[group];
+	if( value < SEQ_FILE_B_NUM_BANKS ) {
+	  pattern.bank = value;
+	  pattern.DISABLED = 0;
+	  pattern.SYNCHED = 0;
+	  seq_pattern[group] = pattern;
+	}
+	portEXIT_CRITICAL();
+      } break;
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
+
+-----------------------------------------------------------------
+
+11. a) mixer map dump cc 111 und little remote functions hinzufügen (3x CC)
+    b) Remote Key auf 0x73 G-8 ändern (115 statt 96)
+
+ CC       | Val  | Function
+==========+======+==========================================================
+80 (0x50) | 0    | NONE
+80 (0x50) | 1    | Step Left  <
+80 (0x50) | 2    | Step Right >
+80 (0x50) | 3    | Toggle Step
+80 (0x50) | 4    | Stepview Left  <
+80 (0x50) | 5    | Stepview Right >
+80 (0x50) | 6    | Clear
+80 (0x50) | 7    | Copy4
+80 (0x50) | 8    | Copy8
+80 (0x50) | 9    | Copy16
+80 (0x50) | 10   | Paste
+80 (0x50) | 11   | Move Step Left  <
+80 (0x50) | 12   | Move Step Right >
+80 (0x50) | 13   | Insert
+80 (0x50) | 14   | Delete
+80 (0x50) | 15   | Next Track
+80 (0x50) | 16   | Prev Track
+80 (0x50) | 17   | Mute Track
+80 (0x50) | 18   | Unmute Track
+80 (0x50) | 19   | Next Layer
+80 (0x50) | 20   | Prev Layer
+80 (0x50) | 21   | Len Left  < (75%)
+80 (0x50) | 22   | Len Right > (GLD)
+81 (0x51) | Note | Set Note Step
+82 (0x52) | Note | Set Note Live
+83 (0x53) | Note | Set Note Test
+84 (0x54) | Note | Set Note Off
+85 (0x55) | 8bit | Pattern Mute
+86 (0x56) | Note | Seq Note Step Vel
+87 (0x57) | Note | Seq Note Step Len
+88 (0x58) | BPM  | Clock Tempo
+
+seq_midi_in.h -->
+
+//#################################################
+//# RIO: Little Remote Assignments
+//#################################################
+// External controller assignments
+// They have to be aligned with the strings returned by the SEQ_MIDI_IN_ExtCtrlStr() function!
+#define SEQ_MIDI_IN_EXT_CTRL_MORPH          0
+#define SEQ_MIDI_IN_EXT_CTRL_SCALE          1
+#define SEQ_MIDI_IN_EXT_CTRL_SONG           2
+#define SEQ_MIDI_IN_EXT_CTRL_PHRASE         3
+#define SEQ_MIDI_IN_EXT_CTRL_MIXER_MAP      4
+#define SEQ_MIDI_IN_EXT_CTRL_MIXER_DUMP     5
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G1     6
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G2     7
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G3     8
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_G4     9
+#define SEQ_MIDI_IN_EXT_CTRL_BANK_G1       10
+#define SEQ_MIDI_IN_EXT_CTRL_BANK_G2       11
+#define SEQ_MIDI_IN_EXT_CTRL_BANK_G3       12
+#define SEQ_MIDI_IN_EXT_CTRL_BANK_G4       13
+#define SEQ_MIDI_IN_EXT_CTRL_ALL_NOTES_OFF 14
+#define SEQ_MIDI_IN_EXT_CTRL_PLAY          15
+#define SEQ_MIDI_IN_EXT_CTRL_RECORD        16
+// RIO: Little Remote
+#define SEQ_MIDI_IN_EXT_CTRL_LITTLE_REMOTE 17
+#define SEQ_MIDI_IN_EXT_CTRL_LSTEP_REMOTE  18
+#define SEQ_MIDI_IN_EXT_CTRL_LLIVE_REMOTE  19
+#define SEQ_MIDI_IN_EXT_CTRL_LTEST_REMOTE  20
+#define SEQ_MIDI_IN_EXT_CTRL_LNOFF_REMOTE  21
+#define SEQ_MIDI_IN_EXT_CTRL_PATTERN_MUTE  22
+#define SEQ_MIDI_IN_EXT_CTRL_LSVEL_REMOTE  23
+#define SEQ_MIDI_IN_EXT_CTRL_LSLEN_REMOTE  24
+#define SEQ_MIDI_IN_EXT_CTRL_CLOCK_TEMPO   25
+
+// RIO: new numbers (original:16)
+// number of external controllers which listen to CC (at the beginning of the list)
+#define SEQ_MIDI_IN_EXT_CTRL_NUM_IX_CC     26
+
+// not listen to CC
+#define SEQ_MIDI_IN_EXT_CTRL_NRPN_ENABLED  26
+#define SEQ_MIDI_IN_EXT_CTRL_PC_MODE       27
+
+// extra CC handling (we listen to 16 CCs)
+#define SEQ_MIDI_IN_EXT_CTRL_MUTES         28
+
+// extra CC handling (we listen to 16 CCs)
+#define SEQ_MIDI_IN_EXT_CTRL_STEPS         29
+
+// total number of external controllers
+#define SEQ_MIDI_IN_EXT_CTRL_NUM           30
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+
+seq_midi_in.c -->
+
+//########################
+//# RIO: Little Remote
+//########################
+
+#include <string.h>
+
+//########################
+//# RIO: END MODIFICATION
+//########################
+
+..
+
+//########################
+//# RIO: Little Remote
+//########################
+
+#include "seq_ui_util.h"    // RIO: added utils
+#include "seq_par.h"        // RIO: added NOTEs / Parameter
+
+//########################
+//# RIO: END MODIFICATION
+//########################
+
+..
+
+//########################
+//# RIO: Little Remote
+//########################
+
+static u16 lastnew_step;
+static u8 lastplayednote;
+static u8 lastplayedtransposed;
+
+//########################
+//# RIO: END MODIFICATION
+//########################
+
+
+s32 SEQ_MIDI_IN_Init(u32 mode):
+ 
+  //#################################################
+  //# RIO: Little Remote Assignments
+  //#################################################
+
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_MORPH] = 1;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_SCALE] = 3;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_G1] = 112;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_G2] = 113;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_G3] = 114;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_G4] = 115;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_SONG] = 102;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PHRASE] = 103;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_MIXER_MAP] = 111;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_MIXER_DUMP] = 110;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_BANK_G1] = 116;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_BANK_G2] = 117;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_BANK_G3] = 118;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_BANK_G4] = 119;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_ALL_NOTES_OFF] = 123;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LITTLE_REMOTE] = 80;  //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSTEP_REMOTE] = 81;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LLIVE_REMOTE] = 82;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LTEST_REMOTE] = 83;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LNOFF_REMOTE] = 84;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_MUTE] = 85;   //RIO: added Pattern Mute
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSVEL_REMOTE] = 86;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSLEN_REMOTE] = 87;   //RIO: added Little Remote
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_CLOCK_TEMPO] = 88;    //RIO: added Clock Tempo
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_NRPN_ENABLED] = 1;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PC_MODE] = SEQ_MIDI_IN_EXT_CTRL_PC_MODE_OFF;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_MUTES] = 128;
+  seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_STEPS] = 128;
+
+  seq_midi_in_sect_channel = 0; // disabled by default
+  seq_midi_in_sect_port = DEFAULT; // All ports
+  seq_midi_in_sect_fwd_port = DEFAULT; // 0 = disable
+
+  int i;
+  for(i=0; i<4; ++i)
+    seq_midi_in_sect_note[i] = 0x30 + 12*i;
+
+  seq_midi_in_remote.ALL = 0;
+  seq_midi_in_remote.value = 115; // C-7 (some MIDI monitors display C-6)
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
+  ..
+
+  //########################
+  //# RIO: Little Remote
+  //########################
+  
+  lastnew_step = 0xFFFF;
+  lastplayednote = 0xFF;
+  lastplayedtransposed = 0xFF;
+
+  //########################
+  //# RIO: END MODIFICATION
+  //########################
+
+ 
+ const char *SEQ_MIDI_IN_ExtCtrlStr(u8 ext_ctrl):
+
+  //#################################################
+  //# RIO: Little Remote Assignments
+  //#################################################
+
+  const char* ext_ctrl_str[SEQ_MIDI_IN_EXT_CTRL_NUM] = {
+  //<--------------->
+    "Morph Value",
+    "Scale",
+    "Song Number",
+    "Song Phrase",
+    "Mixer Map",
+    "Mixer Map Dump",
+    "Pattern G1",
+    "Pattern G2",
+    "Pattern G3",
+    "Pattern G4",
+    "Bank G1",
+    "Bank G2",
+    "Bank G3",
+    "Bank G4",
+    "All Notes Off",
+    "Play/Stop",
+    "Record",
+    "Little Remote",    // RIO: little remote added
+    "Little Re. Step",  // RIO: little remote added
+    "Little Re. Live",  // RIO: little remote added
+    "Little Re. Test",  // RIO: little remote added
+    "Little Re. NOff",  // RIO: little remote added
+    "Pattern Mute",     // RIO: added Pattern Mute
+    "Little Re. SVel",  // RIO: little remote added
+    "Little Re. SLen",  // RIO: little remote added
+    "Clock Tempo",      // RIO: added Clock Tempo
+    "NRPNs",
+    "PrgChange Mode",
+    "Mutes(first CC)",  // RIO: values 1&2
+    "Steps(first CC)",
+  };
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+  
+
+static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value):
+
+  //#################################################
+  //# RIO: BPM Assignments
+  //#################################################
+  static u16 bpm = 0;
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
+  // NRPN handling
+  switch( cc ) {
+  case 0x62: // NRPN LSB (selects parameter)
+    nrpn_lsb = value;
+    break;
+
+  case 0x63: // NRPN MSB (selects track, if >= SEQ_CORE_NUM_TRACKS, take the currently visible track)
+    nrpn_msb = value;
+    break;
+
+  case 0x06: // NRPN Value MSB (sets parameter)
+    if( nrpn_msb < SEQ_CORE_NUM_TRACKS && seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_NRPN_ENABLED] ) {
+      u8 track = nrpn_msb;
+      if( track >= SEQ_CORE_NUM_TRACKS )
+  track = SEQ_UI_VisibleTrackGet();
+      SEQ_CC_MIDI_Set(track, nrpn_lsb, value);
+    }
+    break;
+
+    //#################################################
+    //# RIO: BPM Assignments
+    //#################################################
+
+    case 0x58: // CLOCK TEMPO - BPM (063..190)
+      bpm = value+63;
+
+      // set new BPM
+      seq_core_bpm_preset_tempo[seq_core_bpm_preset_num] = bpm;
+      SEQ_CORE_BPM_Update(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num], seq_core_bpm_preset_ramp[seq_core_bpm_preset_num]);
+
+      break;
+
+    //#################################################
+    //# RIO: END MODIFICATION
+    //#################################################
+  }
+
+  //#################################################
+  //# RIO: Little Remote Assignments
+  //#################################################
+
+  u8 little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LITTLE_REMOTE];
+
+  u16 new_step = ui_selected_step;
+  u8 visible_track = SEQ_UI_VisibleTrackGet();
+  int num_steps = SEQ_TRG_NumStepsGet(visible_track);
+  u8 num_p_layers = SEQ_PAR_NumLayersGet(visible_track);
+  u8 new_value = 0;
+  u8 track;
+  int x;
+
+  if (little_cc == cc) {
+
+      // Switch to Editview
+      if (ui_page != SEQ_UI_PAGE_EDIT) SEQ_UI_PageSet(SEQ_UI_PAGE_EDIT);
+
+      // set/clear encoder fast function if required
+      SEQ_UI_InitEncSpeed(1); // auto config
+
+
+      switch (value) {
+
+          case 1:     // STEP < >
+          case 2:
+          case 21:    // LEN <
+          case 22:    // LEN >
+                      if (value == 1 || value == 21) x = -1;
+                      if (value == 2 || value == 22) x = 1;
+
+                      if (value == 21) {
+                        SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, 71);    // LEN
+                        seq_ui_display_update_req = 1;
+                      }
+
+                      if (value == 22) {
+                        SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, 95);    // LEN
+                        seq_ui_display_update_req = 1;
+                      }
+
+                      if( SEQ_UI_Var16_Inc(&new_step, 0, num_steps-1, x) )
+                        SEQ_UI_SelectedStepSet(new_step);
+                      break;
+
+          case 3:     // TOGGLE NOTE
+                      new_value = SEQ_TRG_Get(visible_track, ui_selected_step, ui_selected_trg_layer, ui_selected_instrument) ? 0 : 1;
+                      for(track=0; track<SEQ_CORE_NUM_TRACKS; ++track) {
+                          if( SEQ_UI_IsSelectedTrack(track) )
+                              SEQ_TRG_Set(track, ui_selected_step, ui_selected_trg_layer, ui_selected_instrument, new_value);
+                      }
+                      break;
+
+          case 4:     // STEPVIEW < >
+          case 5:
+                      if (value == 4) {
+                          x = ui_selected_step_view - 1;
+                          if( x >= 0 ) {
+                              ui_selected_step_view = x;
+                              new_value = 1;
+                          }
+                      }
+
+                      if (value == 5) {
+                          x = ui_selected_step_view + 1;
+                          if( (16*x) < num_steps ) {
+                              ui_selected_step_view = x;
+                              new_value = 1;
+                          }
+                      }
+
+                      if (new_value) {
+                          // select step within view
+                          if( !seq_ui_button_state.CHANGE_ALL_STEPS ) // don't change the selected step if ALL function is active, otherwise the ramp can't be changed over multiple views
+                              ui_selected_step = (ui_selected_step_view << 4) | (ui_selected_step & 0xf);
+                      }
+                      break;
+
+
+          case 26:    seq_ui_button_state.SELECT_PRESSED = 1; // CLEAR SELECTED LAYER
+          case 6:                                             // CLEAR TRACK
+                      // update undo buffer
+                      SEQ_UI_UTIL_UndoUpdate(visible_track);
+
+                      // clear steps
+                      new_value = seq_core_options.PASTE_CLR_ALL ? 0 : 1;
+                      SEQ_LAYER_CopyPreset(visible_track, new_value, 0, 0);
+
+                      memset((u8 *)&seq_trg_layer_value[visible_track], 0, SEQ_TRG_MAX_BYTES);
+                      seq_ui_button_state.SELECT_PRESSED = 0;
+                      break;
+
+          case 27:    // COPY SELECTED LAYER 4
+          case 28:    // COPY SELECTED LAYER 8
+          case 29:    // COPY SELECTED LAYER 16
+                      seq_ui_button_state.SELECT_PRESSED = 1;
+
+          case 7:     // COPY4
+          case 8:     // COPY8
+          case 9:     // COPY16
+
+                      if (value > 20) value-=20;
+
+                      if (value == 7) new_step = ui_selected_step+3;
+                      if (value == 8) new_step = ui_selected_step+7;
+                      if (value == 9) new_step = ui_selected_step+15;
+                      if (new_step > num_steps) new_step = num_steps - ui_selected_step -1;
+                      COPY_Ext_Track(visible_track,ui_selected_step,new_step);
+                      seq_ui_button_state.SELECT_PRESSED = 0;
+                      break;
+
+
+          case 30:    seq_ui_button_state.SELECT_PRESSED = 1; // PASTE SELECTED LAYER
+          case 10:                                            // PASTE TRACK
+
+                      // update undo buffer
+                      SEQ_UI_UTIL_UndoUpdate(visible_track);
+                      PASTE_Ext_Track(visible_track);
+                      seq_ui_button_state.SELECT_PRESSED = 0;
+                      break;
+
+          case 11:    // MOVE
+          case 12:
+                      if (value == 11) x = -1;
+                      if (value == 12) x = 1;
+
+                      // update undo buffer
+                      SEQ_UI_UTIL_UndoUpdate(visible_track);
+
+                      if (lastnew_step != ui_selected_step) {
+
+                          // store current step value in buffer
+                          MOVE_Ext_StoreStep(visible_track, ui_selected_step, 0, 0);
+
+                          // store it also in "old" record and disable current value (clear all triggers)
+                          MOVE_Ext_StoreStep(visible_track, ui_selected_step, 1, 1);
+
+                      }
+
+                      if( SEQ_UI_Var16_Inc(&new_step, 0, num_steps-1, x) ) {
+
+                        // restore old value
+                        MOVE_Ext_RestoreStep(visible_track, ui_selected_step, 1);
+                        // set new visible step/view
+                        SEQ_UI_SelectedStepSet(new_step); // this will change ui_selected_step
+                        // store "new" old value w/o disabling triggers
+                        MOVE_Ext_StoreStep(visible_track, new_step, 1, 0);
+                        // restore moved value in new step step
+                        MOVE_Ext_RestoreStep(visible_track, new_step, 0);
+
+                      }
+                      lastnew_step = new_step;
+                      break;
+
+
+          case 13:    // SCROLL 1 and then TOGGLE 0 First : INSERT
+          case 14:    // TOGGLE 0 First and SCROLL -1     : DELETE
+
+                      if (value == 13) SCROLL_Ext_Track(visible_track, ui_selected_step, 1);
+
+                      for(track=0; track<SEQ_CORE_NUM_TRACKS; ++track) {
+                          if( SEQ_UI_IsSelectedTrack(track) )
+                              SEQ_TRG_Set(track, ui_selected_step, ui_selected_trg_layer, ui_selected_instrument, 0);
+                      }
+
+                      if (value == 14) SCROLL_Ext_Track(visible_track, ui_selected_step, -1);
+                      break;
+
+          case 15:    // NEXT TRACK
+          case 16:    // PREV TRACK
+
+                      // switch to next track
+                      if ((value == 15) && (visible_track < (SEQ_CORE_NUM_TRACKS - 1)) ) visible_track++;
+
+                      // switch to previous track
+                      if ((value == 16) && (visible_track >= 1 ) ) visible_track--;
+
+                      ui_selected_tracks = (1 << visible_track);
+                      ui_selected_group = visible_track / 4;
+                      break;
+
+          case 17:    // MUTE TRACK
+          case 18:    // UNMUTE TRACK
+
+                      portENTER_CRITICAL();
+
+                      u16 mask = 1 << visible_track;
+                      u16 *muted = (u16 *)&seq_core_trk_muted;
+
+                      if (value == 17)       *muted |= mask;
+                      if (value == 18)       *muted &= ~mask;
+
+                      portEXIT_CRITICAL();
+                      break;
+
+          case 19:    // NEXT LAYER
+
+                      if( ++ui_selected_par_layer >= num_p_layers )   ui_selected_par_layer = 0;
+
+                      // set/clear encoder fast function if required
+                      SEQ_UI_InitEncSpeed(1); // auto config
+                      break;
+
+          case 20:    // PREV LAYER
+
+                      if( ui_selected_par_layer == 0 )                ui_selected_par_layer = num_p_layers - 1;
+                      else                                            --ui_selected_par_layer;
+
+                      // set/clear encoder fast function if required
+                      SEQ_UI_InitEncSpeed(1); // auto config
+                      break;
+
+      }
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSTEP_REMOTE];
+  if (little_cc == cc) {
+      value &= 0x7f; // to avoid array overwrites
+      new_step = ui_selected_step;
+      SEQ_PAR_Set(visible_track, new_step, 0, ui_selected_instrument, value); // NOTE
+      if(!SEQ_TRG_GateGet(visible_track, new_step, 0) ) {
+        SEQ_PAR_Set(visible_track, new_step, 1, ui_selected_instrument, 100); // VEL      
+        SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, 71);  // LEN
+      }
+      SEQ_TRG_GateSet(visible_track, new_step, 0, 1);                         // ENABLE GATE
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSVEL_REMOTE];
+  if (little_cc == cc) {
+      value &= 0x7f; // to avoid array overwrites
+      new_step = ui_selected_step;
+      SEQ_PAR_Set(visible_track, new_step, 1, ui_selected_instrument, value); // VEL
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LSLEN_REMOTE];
+  if (little_cc == cc) {
+      value &= 0x7f; // to avoid array overwrites
+      new_step = ui_selected_step;
+      SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, value); // LEN
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LLIVE_REMOTE];
+  if (little_cc == cc ||
+      seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LTEST_REMOTE] == cc ||
+      seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LNOFF_REMOTE] == cc) {
+
+      value &= 0x7f; // to avoid array overwrites
+
+      // Pickup the node
+      mios32_midi_package_t p;
+      mios32_midi_package_t e;
+      seq_core_trk_t *t = &seq_core_trk[visible_track];
+      seq_cc_trk_t *tcc = &seq_cc_trk[visible_track];
+
+      p.note = value;
+      p.type = NoteOn;
+      p.event = NoteOn;
+      p.velocity = 100;
+
+      // transpose
+      SEQ_CORE_Transpose(visible_track, ui_selected_instrument, t, tcc, &p);
+
+      if (seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_LNOFF_REMOTE] == cc) {
+
+          // set note off
+          p.type = NoteOff;
+          p.event = NoteOff;
+
+          // pickup the stored transpose note
+          if (value == lastplayednote) {
+              if (lastplayedtransposed != 0xFF) {
+                  p.note = lastplayedtransposed;
+                  lastplayedtransposed = 0xFF;
+              }
+          }
+
+      } else {
+
+          // check the stored note
+          if (lastplayedtransposed != 0xFF) {
+              // set note off
+              e.note = lastplayedtransposed;
+              e.type = NoteOff;
+              e.event = NoteOff;
+              e.velocity = 100;
+
+              // send
+              SEQ_LIVE_PlayEvent(visible_track, e);
+          }
+
+          // set new note on
+          lastplayednote = value;
+          lastplayedtransposed = p.note;
+      }
+
+      // send
+      SEQ_LIVE_PlayEvent(visible_track, p);
+
+
+      // storage
+      if (little_cc == cc) {
+          new_step = ui_selected_step;
+          if (SEQ_BPM_IsRunning()) {
+              new_step = seq_core_trk[visible_track].step;
+              MIOS32_IRQ_Disable();
+          }
+          SEQ_PAR_Set(visible_track, new_step, 0, ui_selected_instrument, value); // NOTE
+          SEQ_PAR_Set(visible_track, new_step, 1, ui_selected_instrument, 100);   // VEL
+          SEQ_PAR_Set(visible_track, new_step, 2, ui_selected_instrument, 71);    // LEN
+          SEQ_TRG_GateSet(visible_track, new_step, 0, 1);                         // ENABLE GATE
+          if (SEQ_BPM_IsRunning()) MIOS32_IRQ_Enable();
+          seq_ui_display_update_req = 1;
+      }
+      return 0;
+  }
+
+  little_cc = seq_midi_in_ext_ctrl_asg[SEQ_MIDI_IN_EXT_CTRL_PATTERN_MUTE];
+  if (little_cc == cc) {
+      portENTER_CRITICAL();
+      if( value & 0x01 )  seq_core_trk_muted |= 0x000F;
+      else                seq_core_trk_muted &= ~0x000F;
+
+      if( value & 0x02 )  seq_core_trk_muted |= 0x00F0;
+      else                seq_core_trk_muted &= ~0x00F0;
+
+      if( value & 0x04 )  seq_core_trk_muted |= 0x0F00;
+      else                seq_core_trk_muted &= ~0x0F00;
+
+      if( value & 0x08 )  seq_core_trk_muted |= 0xF000;
+      else                seq_core_trk_muted &= ~0xF000;
+      portEXIT_CRITICAL();
+      seq_ui_display_update_req = 1;
+      return 0;
+  }
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
+
+seq_ui_util.h -->
+
+//#################################################
+//# RIO: Little Remote Functions
+//#################################################
+
+extern s32 COPY_Ext_Track(u8 track, u8 begin, u8 end);
+extern s32 PASTE_Ext_Track(u8 track);
+extern s32 MOVE_Ext_StoreStep(u8 track, u16 step, u8 buffer, u8 clr_triggers);
+extern s32 MOVE_Ext_RestoreStep(u8 track, u16 step, u8 buffer);
+extern s32 SCROLL_Ext_Track(u8 track, u16 first_step, s32 incrementer);
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+seq_ui_util.c -->
+
+..
+static s32 SEQ_UI_UTIL_MuteAllTracks(void);
+static s32 SEQ_UI_UTIL_UnMuteAllTracks(void);
+
+//#################################################
+//# RIO: Little Remote Functions
+//#################################################
+
+s32 COPY_Ext_Track(u8 track, u8 begin, u8 end) {
+    copypaste_begin = begin;
+    copypaste_end = end;
+    return COPY_Track(track);
+}
+
+s32 PASTE_Ext_Track(u8 track) {
+    return PASTE_Track(track, PASTE_CLEAR_MODE_TRACK);
+}
+
+s32 MOVE_Ext_StoreStep(u8 track, u16 step, u8 buffer, u8 clr_triggers) {
+    return MOVE_StoreStep(track, step, buffer, clr_triggers);
+}
+
+s32 MOVE_Ext_RestoreStep(u8 track, u16 step, u8 buffer) {
+    return MOVE_RestoreStep(track, step, buffer);
+}
+
+s32 SCROLL_Ext_Track(u8 track, u16 first_step, s32 incrementer) {
+    return SCROLL_Track(track, first_step, incrementer);
+}
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+-----------------------------------------------------------------
+
+12. Visuals Update in pattern screen so that always current playing patterns are displayed
+
+seq_ui_pattern.c-->
+
+  static s32 Button_Handler(seq_ui_button_t button, s32 depressed):
+  	..
+
+    if( seq_ui_button_state.CHANGE_ALL_STEPS ) {
+      int group;
+      for(group=0; group<SEQ_CORE_NUM_GROUPS; ++group)
+	selected_pattern[group].pattern = selected_pattern[ui_selected_group].pattern;
+    }
+
+    //#################################################
+    //# RIO: Visual Updates for playing pattern
+    //#################################################
+
+    seq_pattern[ui_selected_group] = selected_pattern[ui_selected_group];
+
+    //#################################################
+    //# RIO: END MODIFICATION
+    //#################################################
+
+
+  static s32 LCD_Handler(u8 high_prio):
+  	..
+
+      if( seq_core_trk_muted & (1 << track) )
+	SEQ_LCD_PrintVBar('M');
+      else
+	SEQ_LCD_PrintVBar(t->vu_meter >> 4);
+    }
+  } else {
+    ///////////////////////////////////////////////////////////////////////////
+    u8 group;
+
+    //#################################################
+    //# RIO: Visual Updates for playing pattern
+    //#################################################
+
+    for(group=0; group<SEQ_CORE_NUM_GROUPS; ++group)
+        selected_pattern[group] = seq_pattern[group];
+
+    //#################################################
+    //# RIO: END MODIFICATION
+    //#################################################
+
+
+  static s32 LCD_Handler(u8 high_prio):
+
+      //########################################################################################################
+      //# RIO: Added seq_pattern_req[group] compare, because of my additional code above in the button function
+      //########################################################################################################
+
+      if( selected_pattern[group].pattern != seq_pattern[group].pattern ||
+	  selected_pattern[group].bank != seq_pattern[group].bank ||
+	  seq_pattern_req[group].pattern != seq_pattern[group].pattern ||
+	  seq_pattern_req[group].bank != seq_pattern[group].bank)
+
+	SEQ_LCD_PrintChar('*');
+      else
+	SEQ_LCD_PrintChar(seq_ui_button_state.SELECT_PRESSED ? '<' : ' '); // to show that changes will be taken over immediately
+
+      //########################################################################################################
+      //# RIO: END MODIFICATION
+      //########################################################################################################
+
+-----------------------------------------------------------------
+
+13. LFO mit neuen speziellen Waveforms erweitern (Saw Quantized und Amp Multiplikator + Quantizer), Reverse, Phase auf 250 setzen (siehe 15. Reset und Dly) + Bugfix LED Offset
+
+//########################################################################################################
+//# RIO: LFO expanded with special waveforms (Saw Quantized and Amp Multiplikator + Quantizer), Reverse, 
+//       Phase set to 250 + Bugfix LED Offset
+//       adapted source from original version 4.080 (without ITEM_DISABLE_EXTRA_CC)
+//########################################################################################################
+
+seq_ui_fx_lfo.c --> (	Datei wurde komplett mit der modifizierten version 4.080 ersetzt, 
+			um ITEM_DISABLE_EXTRA_CC komplett aus der GUI zu nehmen, welches
+			in einer höheren Version vorhanden war aber nicht benötigt wird, 
+			bzw. den modifizierten Code blockiert. )
+
+//########################################################################################################
+//# RIO: END MODIFICATION
+//########################################################################################################
+
+ERKLÄRUNG:
+----------
+
+In den folgenden Abschnitten (A-E) sieht man wo ITEM_DISABLE_EXTRA_CC entfernt wurde, so wie in version 4.080 (seq_ui_fx_lfo.c Basis ist 4.080, so dass die Abschnitte wie folgt stehen):
+
+---------------------------------------------------------------------------------
+
+A)
+
+/////////////////////////////////////////////////////////////////////////////
+// Local definitions
+/////////////////////////////////////////////////////////////////////////////
+
+#define NUM_OF_ITEMS       14
+#define ITEM_GXTY          0
+#define ITEM_WAVEFORM      1
+#define ITEM_AMPLITUDE     2
+#define ITEM_PHASE         3
+#define ITEM_STEPS         4
+#define ITEM_STEPS_RST     5
+#define ITEM_ENABLE_ONE_SHOT  6
+#define ITEM_ENABLE_NOTE   7
+#define ITEM_ENABLE_VELOCITY 8
+#define ITEM_ENABLE_LENGTH 9
+#define ITEM_ENABLE_CC     10
+#define ITEM_CC            11
+#define ITEM_CC_OFFSET     12
+#define ITEM_CC_PPQN       13
+
+B)
+
+static s32 LED_Handler(u16 *gp_leds)
+{
+  if( ui_cursor_flash ) // if flashing flag active: no LED flag set
+    return 0;
+
+  switch( ui_selected_item ) {
+    case ITEM_GXTY: *gp_leds = 0x0001; break;
+    case ITEM_WAVEFORM: *gp_leds = 0x0002; break;
+    case ITEM_AMPLITUDE: *gp_leds = 0x0004; break;
+    case ITEM_PHASE: *gp_leds = 0x0008; break;
+    case ITEM_STEPS: *gp_leds = 0x0010; break;
+    case ITEM_STEPS_RST: *gp_leds = 0x0020; break;
+    case ITEM_ENABLE_ONE_SHOT: *gp_leds = 0x0040; break;
+    case ITEM_ENABLE_NOTE: *gp_leds = 0x0100; break;
+    case ITEM_ENABLE_VELOCITY: *gp_leds = 0x0200; break;
+    case ITEM_ENABLE_LENGTH: *gp_leds = 0x0400; break;
+    case ITEM_ENABLE_CC: *gp_leds = 0x0800; break;
+    case ITEM_CC: *gp_leds = 0x2000; break;
+    case ITEM_CC_OFFSET: *gp_leds = 0x4000; break;
+    case ITEM_CC_PPQN: *gp_leds = 0x8000; break;
+  }
+
+C)
+
+    case SEQ_UI_ENCODER_GP13:
+      return -1; // not mapped
+
+    case SEQ_UI_ENCODER_GP14:
+      // CC number selection now has to be confirmed with GP button
+      if( ui_selected_item != ITEM_CC ) {
+	edit_cc_number = SEQ_CC_Get(visible_track, SEQ_CC_LFO_CC);
+	ui_selected_item = ITEM_CC;
+	SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "Please confirm CC", "with GP button!");
+      } else if( incrementer == 0 ) {
+	if( edit_cc_number != SEQ_CC_Get(visible_track, SEQ_CC_LFO_CC) ) {
+	  SEQ_CC_Set(visible_track, SEQ_CC_LFO_CC, edit_cc_number);
+	  SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "CC number", "has been changed.");
+	}
+
+	// send event
+	mios32_midi_package_t p;
+	if( SEQ_LFO_FastCC_Event(visible_track, 0, &p, 1) >= 1 ) {
+	  MUTEX_MIDIOUT_TAKE;
+	  MIOS32_MIDI_SendPackage(SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT), p);
+	  MUTEX_MIDIOUT_GIVE;
+	}
+      }
+      break;
+
+    case SEQ_UI_ENCODER_GP15:
+      ui_selected_item = ITEM_CC_OFFSET;
+      break;
+
+D)
+
+    case ITEM_ENABLE_CC: {
+      u8 flag = ui_selected_item - ITEM_ENABLE_ONE_SHOT;
+      u8 mask = 1 << flag;
+      u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
+      if( incrementer == 0 ) // toggle
+	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
+      else if( incrementer > 0 )
+	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, mask);
+      else
+	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, 0);
+    } break;
+
+    case ITEM_CC: {
+      // CC number selection now has to be confirmed with GP button
+      s32 status = SEQ_UI_Var8_Inc(&edit_cc_number, 0, 127, incrementer);
+      mios32_midi_port_t port = SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT);
+      u8 loopback = port == 0xf0;
+      if( !edit_cc_number ) {
+	SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 1000, "LFO CC", "disabled");
+      } else {
+	SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 1000, loopback ? "Loopback CC" : "Controller:", (char *)SEQ_CC_LABELS_Get(port, edit_cc_number));
+      }
+      return status;
+    } break;
+
+
+E)
+
+  ///////////////////////////////////////////////////////////////////////////
+  SEQ_LCD_PrintSpaces(5);
+  if( ui_selected_item == ITEM_CC && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(5);
+  } else {
+    u8 current_value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_CC);
+    u8 edit_value = (ui_selected_item == ITEM_CC) ? edit_cc_number : current_value;
+
+    if( edit_value )
+      SEQ_LCD_PrintFormattedString(" %03d", edit_value);
+    else
+      SEQ_LCD_PrintString(" ---");
+    SEQ_LCD_PrintChar((current_value != edit_value) ? '!' : ' ');
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( ui_selected_item == ITEM_CC_OFFSET && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(5);
+  } else {
+    SEQ_LCD_PrintFormattedString(" %3d ", SEQ_CC_Get(visible_track, SEQ_CC_LFO_CC_OFFSET));
+  }
+
+---------------------------------------------------------------------------------
+
+//#################################################
+//# RIO: Added Running?
+//#################################################
+
+#include "seq_bpm.h"
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer):
+
+  // for GP encoders and Datawheel
+  switch( ui_selected_item ) {
+    case ITEM_GXTY:          return SEQ_UI_GxTyInc(incrementer);
+    case ITEM_WAVEFORM:      {
+      //#################################################
+      //# RIO: TOGGLE REVERSE
+      //#################################################
+
+      u8 wave = SEQ_CC_Get(visible_track, SEQ_CC_LFO_WAVEFORM);
+      if ( wave >= SEQ_LFO_WAVEFORM___V2 && wave <=SEQ_LFO_WAVEFORM_A4A4) {
+          u8 mask = 1 << 5;
+          u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
+          if( incrementer == 0 ) SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
+      }
+      return SEQ_UI_CC_Inc(SEQ_CC_LFO_WAVEFORM, 0, 121, incrementer);    // RIO: ORIGINAL: 0, 22, ..
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
+                             }
+    case ITEM_AMPLITUDE:     return SEQ_UI_CC_Inc(SEQ_CC_LFO_AMPLITUDE, 0, 255, incrementer);
+    case ITEM_PHASE:         {
+      //#################################################
+      //# RIO: TOGGLE FADE UP/DOWN
+      //#################################################
+
+      if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 200) {
+          u8 mask = 1 << 6;
+          u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
+          if( incrementer == 0 ) SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
+      }
+      return SEQ_UI_CC_Inc(SEQ_CC_LFO_PHASE, 0, 250, incrementer);       // RIO: ORIGINAL: 0, 99, ..
+
+      //#################################################
+      //# RIO: END MODIFICATION
+      //#################################################
+                             }
+    ..
+
+
+static s32 LCD_Handler(u8 high_prio):
+
+  //#################################################
+  //# RIO: Added new waveforms (LCD update)
+  //#################################################
+
+  if( high_prio ) {
+
+      if (SEQ_BPM_IsRunning()) {
+          u8 visible_track = SEQ_UI_VisibleTrackGet();
+          u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_WAVEFORM);
+
+          if ( value ) {
+
+              mios32_midi_package_t p;
+
+              if( SEQ_LFO_FastCC_Event(visible_track, 0, &p, 1) >= 1 ) {
+                char buffer[20];
+                sprintf(buffer, "V: %d", p.value);
+                SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 1000, buffer, 0);
+              }
+          }
+      }
+  }
+  // return 0; // there are no high-priority updates //RIO: changed
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
+  ..
+
+  //#################################################
+  //# RIO: Added new waveforms (LCD update)
+  //#################################################
+
+    // Original:
+    //} else {
+    //  SEQ_LCD_PrintFormattedString(" R%02d ", (value-4+1)*5);
+    //}
+
+    } else if (value <= 22) SEQ_LCD_PrintFormattedString(" R%02d ", (value-4+1)*5);
+      else if (value <= 41) SEQ_LCD_PrintFormattedString(" S%02d ",  value-21);
+
+      else if (value == SEQ_LFO_WAVEFORM___V2) SEQ_LCD_PrintString("--V2 ");
+      else if (value == SEQ_LFO_WAVEFORM___H2) SEQ_LCD_PrintString("--H2 ");
+      else if (value == SEQ_LFO_WAVEFORM___D2) SEQ_LCD_PrintString("--D2 ");
+      else if (value == SEQ_LFO_WAVEFORM___A2) SEQ_LCD_PrintString("--A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2__) SEQ_LCD_PrintString("V2-- ");
+      else if (value == SEQ_LFO_WAVEFORM_H2__) SEQ_LCD_PrintString("H2-- ");
+      else if (value == SEQ_LFO_WAVEFORM_D2__) SEQ_LCD_PrintString("D2-- ");
+      else if (value == SEQ_LFO_WAVEFORM_A2__) SEQ_LCD_PrintString("A2-- ");
+      else if (value == SEQ_LFO_WAVEFORM___V4) SEQ_LCD_PrintString("--V4 ");
+      else if (value == SEQ_LFO_WAVEFORM___H4) SEQ_LCD_PrintString("--H4 ");
+      else if (value == SEQ_LFO_WAVEFORM___D4) SEQ_LCD_PrintString("--D4 ");
+      else if (value == SEQ_LFO_WAVEFORM___A4) SEQ_LCD_PrintString("--A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4__) SEQ_LCD_PrintString("V4-- ");
+      else if (value == SEQ_LFO_WAVEFORM_H4__) SEQ_LCD_PrintString("H4-- ");
+      else if (value == SEQ_LFO_WAVEFORM_D4__) SEQ_LCD_PrintString("D4-- ");
+      else if (value == SEQ_LFO_WAVEFORM_A4__) SEQ_LCD_PrintString("A4-- ");
+
+      else if (value == SEQ_LFO_WAVEFORM_V2V2) SEQ_LCD_PrintString("V2V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2H2) SEQ_LCD_PrintString("V2H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2D2) SEQ_LCD_PrintString("V2D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2A2) SEQ_LCD_PrintString("V2A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2V2) SEQ_LCD_PrintString("H2V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2H2) SEQ_LCD_PrintString("H2H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2D2) SEQ_LCD_PrintString("H2D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2A2) SEQ_LCD_PrintString("H2A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2V2) SEQ_LCD_PrintString("D2V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2H2) SEQ_LCD_PrintString("D2H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2D2) SEQ_LCD_PrintString("D2D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2A2) SEQ_LCD_PrintString("D2A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2V2) SEQ_LCD_PrintString("A2V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2H2) SEQ_LCD_PrintString("A2H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2D2) SEQ_LCD_PrintString("A2D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2A2) SEQ_LCD_PrintString("A2A2 ");
+
+      else if (value == SEQ_LFO_WAVEFORM_V2V4) SEQ_LCD_PrintString("V2V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2H4) SEQ_LCD_PrintString("V2H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2D4) SEQ_LCD_PrintString("V2D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V2A4) SEQ_LCD_PrintString("V2A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2V4) SEQ_LCD_PrintString("H2V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2H4) SEQ_LCD_PrintString("H2H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2D4) SEQ_LCD_PrintString("H2D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H2A4) SEQ_LCD_PrintString("H2A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2V4) SEQ_LCD_PrintString("D2V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2H4) SEQ_LCD_PrintString("D2H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2D4) SEQ_LCD_PrintString("D2D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D2A4) SEQ_LCD_PrintString("D2A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2V4) SEQ_LCD_PrintString("A2V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2H4) SEQ_LCD_PrintString("A2H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2D4) SEQ_LCD_PrintString("A2D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A2A4) SEQ_LCD_PrintString("A2A4 ");
+
+      else if (value == SEQ_LFO_WAVEFORM_V4V2) SEQ_LCD_PrintString("V4V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4H2) SEQ_LCD_PrintString("V4H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4D2) SEQ_LCD_PrintString("V4D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4A2) SEQ_LCD_PrintString("V4A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4V2) SEQ_LCD_PrintString("H4V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4H2) SEQ_LCD_PrintString("H4H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4D2) SEQ_LCD_PrintString("H4D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4A2) SEQ_LCD_PrintString("H4A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4V2) SEQ_LCD_PrintString("D4V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4H2) SEQ_LCD_PrintString("D4H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4D2) SEQ_LCD_PrintString("D4D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4A2) SEQ_LCD_PrintString("D4A2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4V2) SEQ_LCD_PrintString("A4V2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4H2) SEQ_LCD_PrintString("A4H2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4D2) SEQ_LCD_PrintString("A4D2 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4A2) SEQ_LCD_PrintString("A4A2 ");
+
+      else if (value == SEQ_LFO_WAVEFORM_V4V4) SEQ_LCD_PrintString("V4V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4H4) SEQ_LCD_PrintString("V4H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4D4) SEQ_LCD_PrintString("V4D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_V4A4) SEQ_LCD_PrintString("V4A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4V4) SEQ_LCD_PrintString("H4V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4H4) SEQ_LCD_PrintString("H4H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4D4) SEQ_LCD_PrintString("H4D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_H4A4) SEQ_LCD_PrintString("H4A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4V4) SEQ_LCD_PrintString("D4V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4H4) SEQ_LCD_PrintString("D4H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4D4) SEQ_LCD_PrintString("D4D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_D4A4) SEQ_LCD_PrintString("D4A4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4V4) SEQ_LCD_PrintString("A4V4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4H4) SEQ_LCD_PrintString("A4H4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4D4) SEQ_LCD_PrintString("A4D4 ");
+      else if (value == SEQ_LFO_WAVEFORM_A4A4) SEQ_LCD_PrintString("A4A4 ");
+  }
+
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
+  //#################################################
+  //# RIO: Added REVERSE
+  //#################################################
+
+  if (value >= SEQ_LFO_WAVEFORM___V2 && value <= SEQ_LFO_WAVEFORM_A4A4) {
+       SEQ_LCD_CursorSet(9, 1);
+       SEQ_LCD_PrintChar((SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 5)) ? '>' : '<');
+  }
+  
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
+
+
+
+seq_lfo.h-->
+
+//#################################################
+//# RIO: Added new waveforms
+//#################################################
+
+typedef enum {
+  SEQ_LFO_WAVEFORM_Off,
+  SEQ_LFO_WAVEFORM_Sine,
+  SEQ_LFO_WAVEFORM_Triangle,
+  SEQ_LFO_WAVEFORM_Saw,
+  SEQ_LFO_WAVEFORM_Rec05,
+  SEQ_LFO_WAVEFORM_Rec10,
+  SEQ_LFO_WAVEFORM_Rec15,
+  SEQ_LFO_WAVEFORM_Rec20,
+  SEQ_LFO_WAVEFORM_Rec25,
+  SEQ_LFO_WAVEFORM_Rec30,
+  SEQ_LFO_WAVEFORM_Rec35,
+  SEQ_LFO_WAVEFORM_Rec40,
+  SEQ_LFO_WAVEFORM_Rec45,
+  SEQ_LFO_WAVEFORM_Rec50,
+  SEQ_LFO_WAVEFORM_Rec55,
+  SEQ_LFO_WAVEFORM_Rec60,
+  SEQ_LFO_WAVEFORM_Rec65,
+  SEQ_LFO_WAVEFORM_Rec70,
+  SEQ_LFO_WAVEFORM_Rec75,
+  SEQ_LFO_WAVEFORM_Rec80,
+  SEQ_LFO_WAVEFORM_Rec85,
+  SEQ_LFO_WAVEFORM_Rec90,
+  SEQ_LFO_WAVEFORM_Rec95,
+  // RIO: added new waveforms
+  SEQ_LFO_WAVEFORM_Saw2,
+  SEQ_LFO_WAVEFORM_Saw3,
+  SEQ_LFO_WAVEFORM_Saw4,
+  SEQ_LFO_WAVEFORM_Saw5,
+  SEQ_LFO_WAVEFORM_Saw6,
+  SEQ_LFO_WAVEFORM_Saw7,
+  SEQ_LFO_WAVEFORM_Saw8,
+  SEQ_LFO_WAVEFORM_Saw9,
+  SEQ_LFO_WAVEFORM_Saw10,
+  SEQ_LFO_WAVEFORM_Saw11,
+  SEQ_LFO_WAVEFORM_Saw12,
+  SEQ_LFO_WAVEFORM_Saw13,
+  SEQ_LFO_WAVEFORM_Saw14,
+  SEQ_LFO_WAVEFORM_Saw15,
+  SEQ_LFO_WAVEFORM_Saw16,
+  SEQ_LFO_WAVEFORM_Saw17,
+  SEQ_LFO_WAVEFORM_Saw18,
+  SEQ_LFO_WAVEFORM_Saw19,
+  SEQ_LFO_WAVEFORM_Saw20,
+
+  SEQ_LFO_WAVEFORM___V2,
+  SEQ_LFO_WAVEFORM___H2,
+  SEQ_LFO_WAVEFORM___D2,
+  SEQ_LFO_WAVEFORM___A2,
+  SEQ_LFO_WAVEFORM_V2__,
+  SEQ_LFO_WAVEFORM_H2__,
+  SEQ_LFO_WAVEFORM_D2__,
+  SEQ_LFO_WAVEFORM_A2__,
+  SEQ_LFO_WAVEFORM___V4,
+  SEQ_LFO_WAVEFORM___H4,
+  SEQ_LFO_WAVEFORM___D4,
+  SEQ_LFO_WAVEFORM___A4,
+  SEQ_LFO_WAVEFORM_V4__,
+  SEQ_LFO_WAVEFORM_H4__,
+  SEQ_LFO_WAVEFORM_D4__,
+  SEQ_LFO_WAVEFORM_A4__,
+
+  SEQ_LFO_WAVEFORM_V2V2,
+  SEQ_LFO_WAVEFORM_V2H2,
+  SEQ_LFO_WAVEFORM_V2D2,
+  SEQ_LFO_WAVEFORM_V2A2,
+  SEQ_LFO_WAVEFORM_H2V2,
+  SEQ_LFO_WAVEFORM_H2H2,
+  SEQ_LFO_WAVEFORM_H2D2,
+  SEQ_LFO_WAVEFORM_H2A2,
+  SEQ_LFO_WAVEFORM_D2V2,
+  SEQ_LFO_WAVEFORM_D2H2,
+  SEQ_LFO_WAVEFORM_D2D2,
+  SEQ_LFO_WAVEFORM_D2A2,
+  SEQ_LFO_WAVEFORM_A2V2,
+  SEQ_LFO_WAVEFORM_A2H2,
+  SEQ_LFO_WAVEFORM_A2D2,
+  SEQ_LFO_WAVEFORM_A2A2,
+
+  SEQ_LFO_WAVEFORM_V4V2,
+  SEQ_LFO_WAVEFORM_V4H2,
+  SEQ_LFO_WAVEFORM_V4D2,
+  SEQ_LFO_WAVEFORM_V4A2,
+  SEQ_LFO_WAVEFORM_H4V2,
+  SEQ_LFO_WAVEFORM_H4H2,
+  SEQ_LFO_WAVEFORM_H4D2,
+  SEQ_LFO_WAVEFORM_H4A2,
+  SEQ_LFO_WAVEFORM_D4V2,
+  SEQ_LFO_WAVEFORM_D4H2,
+  SEQ_LFO_WAVEFORM_D4D2,
+  SEQ_LFO_WAVEFORM_D4A2,
+  SEQ_LFO_WAVEFORM_A4V2,
+  SEQ_LFO_WAVEFORM_A4H2,
+  SEQ_LFO_WAVEFORM_A4D2,
+  SEQ_LFO_WAVEFORM_A4A2,
+
+  SEQ_LFO_WAVEFORM_V2V4,
+  SEQ_LFO_WAVEFORM_V2H4,
+  SEQ_LFO_WAVEFORM_V2D4,
+  SEQ_LFO_WAVEFORM_V2A4,
+  SEQ_LFO_WAVEFORM_H2V4,
+  SEQ_LFO_WAVEFORM_H2H4,
+  SEQ_LFO_WAVEFORM_H2D4,
+  SEQ_LFO_WAVEFORM_H2A4,
+  SEQ_LFO_WAVEFORM_D2V4,
+  SEQ_LFO_WAVEFORM_D2H4,
+  SEQ_LFO_WAVEFORM_D2D4,
+  SEQ_LFO_WAVEFORM_D2A4,
+  SEQ_LFO_WAVEFORM_A2V4,
+  SEQ_LFO_WAVEFORM_A2H4,
+  SEQ_LFO_WAVEFORM_A2D4,
+  SEQ_LFO_WAVEFORM_A2A4,
+
+  SEQ_LFO_WAVEFORM_V4V4,
+  SEQ_LFO_WAVEFORM_V4H4,
+  SEQ_LFO_WAVEFORM_V4D4,
+  SEQ_LFO_WAVEFORM_V4A4,
+  SEQ_LFO_WAVEFORM_H4V4,
+  SEQ_LFO_WAVEFORM_H4H4,
+  SEQ_LFO_WAVEFORM_H4D4,
+  SEQ_LFO_WAVEFORM_H4A4,
+  SEQ_LFO_WAVEFORM_D4V4,
+  SEQ_LFO_WAVEFORM_D4H4,
+  SEQ_LFO_WAVEFORM_D4D4,
+  SEQ_LFO_WAVEFORM_D4A4,
+  SEQ_LFO_WAVEFORM_A4V4,
+  SEQ_LFO_WAVEFORM_A4H4,
+  SEQ_LFO_WAVEFORM_A4D4,
+  SEQ_LFO_WAVEFORM_A4A4,
+
+} seq_lfo_waveform_t;
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+//#################################################
+//# RIO: Added new commands
+//#################################################
+
+typedef union {
+  u8 ALL;
+  struct {
+    u8 ONE_SHOT:1;
+    u8 NOTE:1;
+    u8 VELOCITY:1;
+    u8 LENGTH:1;
+    u8 CC:1;
+    u8 REVERSE:1;   // RIO: added Reverse
+    u8 FADEUP:1;    // RIO: added Fade OUT
+  };
+} seq_lfo_enable_flags_t;
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+
+seq_lfo.c -->
+
+auskommentieren:
+
+//#################################################
+//# RIO: Remove EXTRA CC
+//#################################################
+
+//  if( tcc->lfo_enable_flags.EXTRA_CC_OFF )
+//    return 0; // Extra CC disabled
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+
+static s32 SEQ_LFO_ValueGet(seq_cc_trk_t *tcc, seq_lfo_t *lfo):
+    
+    ..
+
+    //#################################################
+    //# RIO: Added new waveforms 
+    //#################################################
+
+    case SEQ_LFO_WAVEFORM_Rec05:
+    case SEQ_LFO_WAVEFORM_Rec10:
+    case SEQ_LFO_WAVEFORM_Rec15:
+    case SEQ_LFO_WAVEFORM_Rec20:
+    case SEQ_LFO_WAVEFORM_Rec25:
+    case SEQ_LFO_WAVEFORM_Rec30:
+    case SEQ_LFO_WAVEFORM_Rec35:
+    case SEQ_LFO_WAVEFORM_Rec40:
+    case SEQ_LFO_WAVEFORM_Rec45:
+    case SEQ_LFO_WAVEFORM_Rec50:
+    case SEQ_LFO_WAVEFORM_Rec55:
+    case SEQ_LFO_WAVEFORM_Rec60:
+    case SEQ_LFO_WAVEFORM_Rec65:
+    case SEQ_LFO_WAVEFORM_Rec70:
+    case SEQ_LFO_WAVEFORM_Rec75:
+    case SEQ_LFO_WAVEFORM_Rec80:
+    case SEQ_LFO_WAVEFORM_Rec85:
+    case SEQ_LFO_WAVEFORM_Rec90:
+    case SEQ_LFO_WAVEFORM_Rec95: {
+
+      // SEQ_LFO_WAVEFORM_Rec05..SEQ_LFO_WAVEFORM_Rec95
+      u16 trans = 5 * 655 * (tcc->lfo_waveform-SEQ_LFO_WAVEFORM_Rec05+1);
+      lfo_value = (lfo_value >= trans) ? 0 : 65535;
+    } break;
+
+    // RIO: default break for all other waveforms
+    default: break;
+
+    //#################################################
+    //# RIO: END MODIFICATION
+    //#################################################
+
+    ..
+
+  // scale down to +/- 7bit
+  lfo_value = (lfo_value * (tcc->lfo_amplitude-128)) / 65536;
+
+//#################################################
+//# RIO: Added new waveforms
+//#################################################
+
+  switch( tcc->lfo_waveform ) {
+    case SEQ_LFO_WAVEFORM_Saw2:
+    case SEQ_LFO_WAVEFORM_Saw3:
+    case SEQ_LFO_WAVEFORM_Saw4:
+    case SEQ_LFO_WAVEFORM_Saw5:
+    case SEQ_LFO_WAVEFORM_Saw6:
+    case SEQ_LFO_WAVEFORM_Saw7:
+    case SEQ_LFO_WAVEFORM_Saw8:
+    case SEQ_LFO_WAVEFORM_Saw9:
+    case SEQ_LFO_WAVEFORM_Saw10:
+    case SEQ_LFO_WAVEFORM_Saw11:
+    case SEQ_LFO_WAVEFORM_Saw12:
+    case SEQ_LFO_WAVEFORM_Saw13:
+    case SEQ_LFO_WAVEFORM_Saw14:
+    case SEQ_LFO_WAVEFORM_Saw15:
+    case SEQ_LFO_WAVEFORM_Saw16:
+    case SEQ_LFO_WAVEFORM_Saw17:
+    case SEQ_LFO_WAVEFORM_Saw18:
+    case SEQ_LFO_WAVEFORM_Saw19:
+    case SEQ_LFO_WAVEFORM_Saw20:
+
+            lfo_value -= (lfo_value % (tcc->lfo_waveform - 21)); break;
+
+    default: {
+
+        if ( tcc->lfo_waveform >= SEQ_LFO_WAVEFORM___V2 &&
+             tcc->lfo_waveform <= SEQ_LFO_WAVEFORM_A4A4) {
+
+            s32 tmp;
+
+            // Referenzpunkte: 1/4 scaled down
+
+            s32 lfoV = (16384 * (tcc->lfo_amplitude-128)) / 65536;
+            s32 lfoH = (32768 * (tcc->lfo_amplitude-128)) / 65536;
+            s32 lfoD = (49152 * (tcc->lfo_amplitude-128)) / 65536;
+            s32 lfoA =           tcc->lfo_amplitude-128;
+
+            s32 ref;
+            u8  amp;
+
+            u8 qV = 0; // 1viertel          quantize for this area
+            u8 qH = 0; // 2viertel (Half)   quantize for this area
+            u8 qD = 0; // 3viertel          quantize for this area
+            u8 qA = 0; // 4viertel (ALL)    quantize for this area
+
+            switch( tcc->lfo_waveform ) {
+
+                case SEQ_LFO_WAVEFORM___V2: ref=lfoA;amp=1; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM___H2: ref=lfoA;amp=1; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM___D2: ref=lfoA;amp=1; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM___A2: ref=lfoA;amp=1; qV=2;qH=2;qD=2;qA=2; break;
+                case SEQ_LFO_WAVEFORM_V2__: ref=lfoV;amp=2; qV=0;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H2__: ref=lfoH;amp=2; qV=0;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D2__: ref=lfoD;amp=2; qV=0;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A2__: ref=lfoA;amp=2; qV=0;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM___V4: ref=lfoA;amp=1; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM___H4: ref=lfoA;amp=1; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM___D4: ref=lfoA;amp=1; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM___A4: ref=lfoA;amp=1; qV=4;qH=4;qD=4;qA=4; break;
+                case SEQ_LFO_WAVEFORM_V4__: ref=lfoV;amp=4; qV=0;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H4__: ref=lfoH;amp=4; qV=0;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D4__: ref=lfoD;amp=4; qV=0;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A4__: ref=lfoA;amp=4; qV=0;qH=0;qD=0;qA=0; break;
+
+                case SEQ_LFO_WAVEFORM_V2V2: ref=lfoV;amp=2; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V2H2: ref=lfoV;amp=2; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V2D2: ref=lfoV;amp=2; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V2A2: ref=lfoV;amp=2; qV=2;qH=2;qD=2;qA=2; break;
+                case SEQ_LFO_WAVEFORM_H2V2: ref=lfoH;amp=2; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H2H2: ref=lfoH;amp=2; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H2D2: ref=lfoH;amp=2; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H2A2: ref=lfoH;amp=2; qV=2;qH=2;qD=2;qA=2; break;
+                case SEQ_LFO_WAVEFORM_D2V2: ref=lfoD;amp=2; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D2H2: ref=lfoD;amp=2; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D2D2: ref=lfoD;amp=2; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D2A2: ref=lfoD;amp=2; qV=2;qH=2;qD=2;qA=2; break;
+                case SEQ_LFO_WAVEFORM_A2V2: ref=lfoA;amp=2; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A2H2: ref=lfoA;amp=2; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A2D2: ref=lfoA;amp=2; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A2A2: ref=lfoA;amp=2; qV=2;qH=2;qD=2;qA=2; break;
+
+                case SEQ_LFO_WAVEFORM_V4V2: ref=lfoV;amp=4; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V4H2: ref=lfoV;amp=4; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V4D2: ref=lfoV;amp=4; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V4A2: ref=lfoV;amp=4; qV=2;qH=2;qD=2;qA=2; break;
+                case SEQ_LFO_WAVEFORM_H4V2: ref=lfoH;amp=4; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H4H2: ref=lfoH;amp=4; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H4D2: ref=lfoH;amp=4; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H4A2: ref=lfoH;amp=4; qV=2;qH=2;qD=2;qA=2; break;
+                case SEQ_LFO_WAVEFORM_D4V2: ref=lfoD;amp=4; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D4H2: ref=lfoD;amp=4; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D4D2: ref=lfoD;amp=4; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D4A2: ref=lfoD;amp=4; qV=2;qH=2;qD=2;qA=2; break;
+                case SEQ_LFO_WAVEFORM_A4V2: ref=lfoA;amp=4; qV=2;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A4H2: ref=lfoA;amp=4; qV=2;qH=2;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A4D2: ref=lfoA;amp=4; qV=2;qH=2;qD=2;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A4A2: ref=lfoA;amp=4; qV=2;qH=2;qD=2;qA=2; break;
+
+                case SEQ_LFO_WAVEFORM_V2V4: ref=lfoV;amp=2; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V2H4: ref=lfoV;amp=2; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V2D4: ref=lfoV;amp=2; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V2A4: ref=lfoV;amp=2; qV=4;qH=4;qD=4;qA=4; break;
+                case SEQ_LFO_WAVEFORM_H2V4: ref=lfoH;amp=2; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H2H4: ref=lfoH;amp=2; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H2D4: ref=lfoH;amp=2; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H2A4: ref=lfoH;amp=2; qV=4;qH=4;qD=4;qA=4; break;
+                case SEQ_LFO_WAVEFORM_D2V4: ref=lfoD;amp=2; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D2H4: ref=lfoD;amp=2; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D2D4: ref=lfoD;amp=2; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D2A4: ref=lfoD;amp=2; qV=4;qH=4;qD=4;qA=4; break;
+                case SEQ_LFO_WAVEFORM_A2V4: ref=lfoA;amp=2; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A2H4: ref=lfoA;amp=2; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A2D4: ref=lfoA;amp=2; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A2A4: ref=lfoA;amp=2; qV=4;qH=4;qD=4;qA=4; break;
+
+                case SEQ_LFO_WAVEFORM_V4V4: ref=lfoV;amp=4; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V4H4: ref=lfoV;amp=4; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V4D4: ref=lfoV;amp=4; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM_V4A4: ref=lfoV;amp=4; qV=4;qH=4;qD=4;qA=4; break;
+                case SEQ_LFO_WAVEFORM_H4V4: ref=lfoH;amp=4; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H4H4: ref=lfoH;amp=4; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H4D4: ref=lfoH;amp=4; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM_H4A4: ref=lfoH;amp=4; qV=4;qH=4;qD=4;qA=4; break;
+                case SEQ_LFO_WAVEFORM_D4V4: ref=lfoD;amp=4; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D4H4: ref=lfoD;amp=4; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D4D4: ref=lfoD;amp=4; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM_D4A4: ref=lfoD;amp=4; qV=4;qH=4;qD=4;qA=4; break;
+                case SEQ_LFO_WAVEFORM_A4V4: ref=lfoA;amp=4; qV=4;qH=0;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A4H4: ref=lfoA;amp=4; qV=4;qH=4;qD=0;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A4D4: ref=lfoA;amp=4; qV=4;qH=4;qD=4;qA=0; break;
+                case SEQ_LFO_WAVEFORM_A4A4: ref=lfoA;amp=4; qV=4;qH=4;qD=4;qA=4; break;
+
+            }
+
+            // -------------------------------------------------- Initialize
+
+            if (!amp) amp = 1;
+            tmp = lfo_value;
+
+            if (!tcc->lfo_enable_flags.REVERSE) {
+
+                // ---------------------------------------------- Start init
+
+                tmp *= amp;
+
+                // ---------------------------------------------- 1Viertel - V
+
+                if (lfo_value < lfoV) {
+
+                    // set quantize
+                    if (qV) {
+                        qV *= amp;
+                        tmp -= tmp % qV;
+                    }
+                }
+
+                // ---------------------------------------------- 2Viertel - H
+
+                else if (lfo_value < lfoH) {
+
+                    //Recalc amplitude
+                    if (ref < lfoH) tmp -= lfo_value*(amp-1) - ref*(amp-1); else qH *= amp;
+
+                    // set quantize
+                    if (qH) tmp -= tmp % qH;
+                }
+
+                // ---------------------------------------------- 3Viertel - D
+
+                else if (lfo_value < lfoD) {
+
+                    //Recalc amplitude
+                    if (ref < lfoD) tmp -= lfo_value*(amp-1) - ref*(amp-1); else qD *= amp;
+
+                    // set quantize
+                    if (qD) tmp -= tmp % qD;
+                }
+
+                // ---------------------------------------------- 3Viertel - A
+
+                else if (lfo_value) {
+
+                    //Recalc amplitude
+                    if (ref < lfoA) tmp -= lfo_value*(amp-1) - ref*(amp-1); else qA *= amp;
+
+                    // set quantize
+                    if (qA) tmp -= tmp % qA;
+                }
+
+            } else {
+
+                // - REVERSE ------------------------------------ Start init
+
+                if (qV) {
+                    u8 qR = qV;
+                    if (qA) qA = 0; else qA = qR;
+                    if (qD) qD = 0; else qD = qR;
+                    if (qH) qH = 0; else qH = qR;
+                    if (qV) qV = 0; else qV = qR;
+                }
+
+                // ---------------------------------------------- 1Viertel - V
+
+                if (lfo_value < lfoV) ;// nothing to do
+
+                // ---------------------------------------------- 2Viertel - H
+
+                else if (lfo_value < lfoH) {
+
+                    //Recalc amplitude
+                    if (ref < lfoH) {
+                        tmp *= amp;
+                        tmp -= ref*(amp-1);
+                        qH *= amp;
+                    }
+
+                    // set quantize
+                    if (qH) tmp -= tmp % qH;
+                }
+
+                // ---------------------------------------------- 3Viertel - D
+
+                else if (lfo_value < lfoD) {
+
+                    //Recalc amplitude
+                    if (ref < lfoD) {
+                        tmp *= amp;
+                        tmp -= ref*(amp-1);
+                        qD *= amp;
+                    }
+
+                    // set quantize
+                    if (qD) tmp -= tmp % qD;
+                }
+
+                // ---------------------------------------------- 3Viertel - A
+
+                else if (lfo_value) {
+
+                    //Recalc amplitude
+                    if (ref < lfoA) {
+                        tmp *= amp;
+                        tmp -= ref*(amp-1);
+                        qA *= amp;
+                    }
+
+                    // set quantize
+                    if (qA) tmp -= tmp % qA;
+                }
+            }
+
+            lfo_value = tmp;
+        }
+
+    } break;
+  }
+
+  // FADE UP/DOWN
+  
+  if (tcc->lfo_phase > 200) {
+
+    u8 fadestart  = 0;
+    u8 fadevalue  = tcc->lfo_phase - 200;
+
+    if (fadevalue < tcc->lfo_steps_rst) 
+        fadestart = tcc->lfo_steps_rst-fadevalue+1;
+
+    if( lfo->step_ctr > fadestart) {
+
+        // store last lfo before fade out
+        if (!lfo->fadeoffset) lfo->fadeoffset = lfo_value;
+
+        float m = (lfo->step_ctr - fadestart) / (float)fadevalue;
+        if (tcc->lfo_enable_flags.FADEUP)   lfo_value = lfo->fadeoffset + (int)((127-tcc->lfo_cc_offset-lfo->fadeoffset) * m);
+        else                                lfo_value = lfo->fadeoffset - (int)(lfo->fadeoffset * m);
+
+        if      (lfo_value < 0)     lfo_value = 0;
+        else if (lfo_value > 127)   lfo_value = 127;
+
+        //DEBUG_MSG("step: %d rst: %d off: %d start: %d value: %d lfo: %d stp-start+1: %d m: %d.%03d\n", lfo->step_ctr,tcc->lfo_steps_rst,lfo->fadeoffset,fadestart,fadevalue,lfo_value,lfo->step_ctr-fadestart+1,(int)m,(int)(m*1000.0)%1000);
+        return lfo_value;
+
+    } else lfo->fadeoffset = 0;
+  }
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+  return lfo_value;
+}
+
+..
+
+//####################################
+//# RIO: Added Spezial Behaviour LFO
+//####################################
+
+typedef struct {
+  u16 step_ctr;
+  u16 pos;
+  u8  fadeoffset; // RIO: added fadeoffset
+} seq_lfo_t;
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+
+//####################################
+//# RIO: Added Spezial Behaviour LFO
+//####################################
+
+s32 SEQ_LFO_ResetTrk(u8 track)
+{
+  seq_lfo_t *lfo = &seq_lfo[track];
+
+  lfo->step_ctr = 0;
+  lfo->pos = 0;
+  lfo->fadeoffset = 0;                                                      // RIO: added fadeoffset
+
+  return 0; // no error
+}
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+-----------------------------------------------------------------
+
+14. Spezial Behaviour LFO (rstcount for increment spirals, delay)
+
+seq_lfo.c -->
+
+//###########################################################################
+//# RIO: Added Spezial Behaviour LFO (rstcount for increment spirals, delay)
+//###########################################################################
+
+typedef struct {
+  u16 step_ctr;
+  u16 pos;
+  u16 rstcount;   // RIO: added rstcount
+  u8  delayed;    // RIO: added delayflag
+  u8  fadeoffset; // RIO: added fadeoffset
+} seq_lfo_t;
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
+
+..
+
+//###########################################################################
+//# RIO: Added Spezial Behaviour LFO (rstcount for increment spirals, delay)
+//###########################################################################
+
+/////////////////////////////////////////////////////////////////////////////
+// Initializes the LFO of a given track
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_LFO_ResetTrk(u8 track)
+{
+  seq_lfo_t *lfo = &seq_lfo[track];
+
+  lfo->step_ctr = 0;
+  lfo->pos = 0;
+  lfo->rstcount = 0;                                                        // RIO: added rstcount
+  lfo->fadeoffset = 0;                                                      // RIO: added fadeoffset
+
+  seq_cc_trk_t *tcc = &seq_cc_trk[track];
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200)    lfo->delayed = 1;   // RIO: added delayed
+  else                                                  lfo->delayed = 0;
+
+  return 0; // no error
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Handles the LFO of a given track
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
+{
+  seq_cc_trk_t *tcc = &seq_cc_trk[track];
+  seq_lfo_t *lfo = &seq_lfo[track];
+
+  // Note: we always have to process this part for each track, otherwise the LFO
+  // could get out-of-sync if temporary disabled/enabled
+
+  // increment step counter on each step
+  if( (bpm_tick % 96) == 0 && lfo->step_ctr != 65535) // @384 ppqn (reference bpm_tick resolution)
+    ++lfo->step_ctr;
+
+  // RIO: delay
+  u8 delvalue = 0;
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) {
+    delvalue = tcc->lfo_phase-100;
+    if (lfo->delayed) {
+      if( lfo->step_ctr >= delvalue ) {
+          lfo->delayed = 0;
+          lfo->step_ctr = 0;
+      }
+    }
+  }
+
+  // increment waveform position
+  if( lfo->step_ctr > tcc->lfo_steps_rst - delvalue) {                              // RIO: added delvalue to reset
+    if( tcc->lfo_enable_flags.ONE_SHOT ) {
+      // oneshot mode: halt LFO counter
+      lfo->step_ctr = 65535;
+
+      //lfo->pos = 65535;                                                           // ORIGINAL
+      if (tcc->lfo_phase <= 100) lfo->pos = tcc->lfo_phase * 655;                   // RIO: setup phase in oneshot
+      else                       lfo->pos = 65535;
+
+    } else {
+
+      // reset step counter and LFO position
+      lfo->step_ctr = 0;
+
+      lfo->rstcount++;                                                              // RIO: increment rstcount
+      //lfo->pos = tcc->lfo_phase * 655; // possible phase offset: 0%..99%          // ORIGINAL
+      if (tcc->lfo_phase <= 100) lfo->pos = tcc->lfo_phase * 655 * lfo->rstcount;   // RIO: added rstcount
+      else                       lfo->pos = 0;
+
+    }
+    if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) lfo->delayed = 1;            // RIO: set again delay
+
+  } else {
+
+    if (lfo->delayed) return 0;                                                     // RIO: no LFO increment
+
+    // increment waveform pointer
+    u32 lfo_ticks = (u32)(tcc->lfo_steps+1) * 96; // @384 ppqn (reference bpm_tick resolution)
+    u32 inc = 65536 / lfo_ticks;
+    lfo->pos += inc;
+
+  }
+
+  return 0; // no error
+}
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
+
+
+seq_ui_fx_lfo.c -->
+
+static s32 LCD_Handler(u8 high_prio):
+
+  //##############################
+  //# RIO: Display Header adapted
+  //##############################
+
+  // Original:
+  //SEQ_LCD_PrintString("Trk. Wave Amp. Phs. Steps Rst OneShot   Note Vel. Len.  CC   ExtraCC# Offs. PPQN");
+
+  char buffer1[5];
+  char buffer2[5];
+  char ch = ' ';
+
+  u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_WAVEFORM);
+  if ( value >= SEQ_LFO_WAVEFORM___V2 && value <=SEQ_LFO_WAVEFORM_A4A4) sprintf(buffer1, "R+Q+");
+  else                                                                  sprintf(buffer1, "Wave");
+
+  if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 200) {
+    if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 6))  sprintf(buffer2, "FdUp");
+    else                                                                sprintf(buffer2, "FdDn");
+  }
+  else if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 100)           sprintf(buffer2, "Dly.");
+  else                                                                  sprintf(buffer2, "Phs.");
+
+  SEQ_LCD_PrintFormattedString("Trk. %s%cAmp. %s Steps Rst OneShot   Note Vel. Len.  CC   ExtraCC# Offs. PPQN",buffer1,ch,buffer2);
+
+  //##############################
+  //# RIO: END MODIFICATION
+  //##############################
+  
+  ..
+
+  //###########################
+  //# RIO: Delay and FadeOut
+  //###########################
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( ui_selected_item == ITEM_PHASE && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(6);
+  } else {
+  	// Original:
+    // SEQ_LCD_PrintFormattedString("%3d%%  ", SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE));
+
+    u8 tmp = SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE);   // RIO: added Delay and FadeOut
+    if      (tmp > 200) SEQ_LCD_PrintFormattedString("%3d   ", tmp-200);
+    else if (tmp > 100) SEQ_LCD_PrintFormattedString("%3d   ", tmp-100);
+    else                SEQ_LCD_PrintFormattedString("%3d%%  ", tmp);
+  }
+
+  //###########################
+  //# RIO: END MODIFICATION
+  //###########################
+
+-----------------------------------------------------------------
+
+15. Proteus 2000 Parameter Value Edit -> Multimode Basic Channel Select
+
+seq_midi_sysex.h -->
+
+//###########################################################################
+//# RIO: Proteus 2000 Parameter Value Edit -> Multimode Basic Channel Select
+//###########################################################################
+
+extern s32 SEQ_MIDI_SYSEX_PROTEUS_SendChannel(mios32_midi_port_t port, u8 proteus_id, u8 basic_channel);
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
+
+
+seq_midi_sysex.c -->
+
+..
+
+//###########################################################################
+//# RIO: Proteus 2000 Parameter Value Edit -> Multimode Basic Channel Select
+//###########################################################################
+
+/////////////////////////////////////////////////////////////////////////////
+// RIO: This function is called to send a Proteus 2000 Parameter Value Edit
+// EXAMPLE:> {F0h, 18h, 0Fh, dd, 55h, 01h, 02h, <xx, xx, yy, yy>, F7h}
+//
+// MULTIMODE_BASIC_CHANNEL (Independent of MULTIMODE_CHANNEL_SELECT)
+// xx, xx = id = 139 (0Bh,01h) yy, yy = min = 0; max = 15
+//
+// Example for Channel 4: F0 18 0F 02 55 01 02 0B 01 03 00 F7
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_MIDI_SYSEX_PROTEUS_SendChannel(mios32_midi_port_t port, u8 sysex_device_id, u8 basic_channel)
+{
+  u8 sysex_buffer[12];
+  u8 *sysex_buffer_ptr = &sysex_buffer[0];
+
+  // send proteus 2000 sysex
+  *sysex_buffer_ptr++ = 0xf0;             // sysex message
+  *sysex_buffer_ptr++ = 0x18;             // EMU ID
+  *sysex_buffer_ptr++ = 0x0f;             // Proteus ID
+  *sysex_buffer_ptr++ = sysex_device_id;  // Device ID
+  *sysex_buffer_ptr++ = 0x55;             // Special Editor designator byte
+  *sysex_buffer_ptr++ = 0x01;             // Command::Parameter Value Edit
+  *sysex_buffer_ptr++ = 0x02;             // Byte count(number of Byte pairs)
+  *sysex_buffer_ptr++ = 0x0b;             // Parameter ID for MULTIMODE_BASIC_CHANNEL 139 LSB
+  *sysex_buffer_ptr++ = 0x01;             // Parameter ID for MULTIMODE_BASIC_CHANNEL 139 MSB
+  *sysex_buffer_ptr++ = basic_channel;    // Parameter Data for MULTIMODE_BASIC_CHANNEL LSB
+  *sysex_buffer_ptr++ = 0x00;             // Parameter Data for MULTIMODE_BASIC_CHANNEL MSB
+  *sysex_buffer_ptr++ = 0xf7;
+
+  // finally send SysEx stream
+  MUTEX_MIDIOUT_TAKE;
+  s32 status = MIOS32_MIDI_SendSysEx(port, (u8 *)sysex_buffer, (u32)sysex_buffer_ptr - ((u32)&sysex_buffer[0]));
+  MUTEX_MIDIOUT_GIVE;
+  return status;
+}
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
+
+Makefile -->
+
+
+####################################
+# RIO: Added PROTEUS files
+####################################
+                ..
+		core/seq_ui_util.c \
+		core/seq_ui_proteus.c \
+		core/seq_ui_bpm.c \
+                ..
+
+####################################
+# RIO: END MODIFICATION
+####################################
+
+
+seq_ui.c -->
+
+//####################################
+//# RIO: Replace with PROTEUS Handler
+//####################################
+
+/*static s32 SEQ_UI_Button_Scrub(s32 depressed)
+{
+  // double function: -> Loop if menu button pressed
+  if( seq_ui_button_state.MENU_PRESSED )
+    return SEQ_UI_Button_Loop(depressed);
+
+  if( seq_hwcfg_button_beh.scrub ) {
+    // toggle mode
+    if( depressed ) return -1; // ignore when button depressed
+    seq_ui_button_state.SCRUB ^= 1;
+  } else {
+    // set mode
+    seq_ui_button_state.SCRUB = depressed ? 0 : 1;
+  }
+
+  SEQ_UI_Msg(SEQ_UI_MSG_USER, 1000, "Scrub Mode", seq_ui_button_state.SCRUB ? "    on" : "   off");
+
+  return 0; // no error
+}*/
+
+static s32 SEQ_UI_Button_Scrub(s32 depressed)
+{
+  if( depressed ) return -1; // ignore when button depressed
+
+  // change to utility page
+  SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
+
+  return 0; // no error
+}
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+
+//####################################
+//# RIO: Replace with XLTURBO Handler
+//####################################
+
+/*static s32 SEQ_UI_Button_Metronome(s32 depressed)
+{
+  // double function: -> ExtRestart if menu button pressed
+  if( seq_ui_button_state.MENU_PRESSED )
+    return SEQ_UI_Button_ExtRestart(depressed);
+
+  if( seq_hwcfg_button_beh.metronome ) {
+    // toggle mode
+    if( depressed ) return -1; // ignore when button depressed
+    // should be atomic
+    portENTER_CRITICAL();
+    seq_core_state.METRONOME ^= 1;
+  } else {
+    // should be atomic
+    portENTER_CRITICAL();
+    // set mode
+    seq_core_state.METRONOME = depressed ? 0 : 1;
+  }
+  portEXIT_CRITICAL();
+
+  SEQ_UI_Msg(SEQ_UI_MSG_USER, 1000, "Metronome", seq_core_state.METRONOME ? "    on" : "   off");
+
+#if 0
+  // metronome button can be used to trigger pattern file fixes
+  if( !depressed )
+    SEQ_PATTERN_FixAll();
+#endif
+
+  return 0; // no error
+}*/
+
+static s32 SEQ_UI_Button_Metronome(s32 depressed)
+{
+  if( depressed ) return -1; // ignore when button depressed
+
+  // change to utility page
+  SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
+
+  return 0; // no error
+}
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+  
+seq_ui_pages.c -->
+
+//####################################
+//# RIO: PROTEUS added
+//####################################
+
+static const seq_ui_page_entry_t ui_menu_pages[SEQ_UI_PAGES] = {
+  { "NONE",         "TODO ", "TODO page         ",  0, (void *)&SEQ_UI_TODO_Init },
+  { "MENU",         "Menu ", "Page Menu         ",  1, (void *)&SEQ_UI_MENU_Init },
+  { "FXSEL",        " Fx  ", "Fx Selection      ",  2, (void *)&SEQ_UI_FX_Init },
+  { "STEPSEL",      "StpS.", "Step Selection    ",  3, (void *)&SEQ_UI_STEPSEL_Init },
+  { "TRGSEL",       "TrgS.", "Trigger Selection ",  4, (void *)&SEQ_UI_TRGSEL_Init },
+  { "PARSEL",       "ParS.", "Param. Selection  ",  5, (void *)&SEQ_UI_PARSEL_Init },
+  { "INSEL",        "InsS.", "Inst. Selection   ",  6, (void *)&SEQ_UI_INSSEL_Init },
+  { "TRACKSEL",     "TrkS.", "Track Selection   ",  7, (void *)&SEQ_UI_TRACKSEL_Init },
+  { "BPM_PRESETS",  "BpmP.", "BPM Presets       ",  8, (void *)&SEQ_UI_BPM_PRESETS_Init },
+
+  { "RES2",         "Res2 ", "Reserved page #2  ",  9, (void *)&SEQ_UI_TODO_Init },
+  { "RES3",         "Res3 ", "Reserved page #3  ", 10, (void *)&SEQ_UI_TODO_Init },
+  { "RES4",         "Res4 ", "Reserved page #4  ", 11, (void *)&SEQ_UI_TODO_Init },
+  { "RES5",         "Res5 ", "Reserved page #5  ", 12, (void *)&SEQ_UI_TODO_Init },
+  { "RES6",         "Res6 ", "Reserved page #6  ", 13, (void *)&SEQ_UI_TODO_Init },
+  { "RES7",         "Res7 ", "Reserved page #7  ", 14, (void *)&SEQ_UI_TODO_Init },
+  { "RES8",         "Res8 ", "Reserved page #8  ", 15, (void *)&SEQ_UI_TODO_Init },
+
+  // menu selection  starts here
+  { "EDIT",         "Edit ", "Edit              ", 16, (void *)&SEQ_UI_EDIT_Init },
+  { "MUTE",         "Mute ", "Mute Tracks       ", 17, (void *)&SEQ_UI_MUTE_Init },
+  { "MUTE_PORTS",   "PMute", "Mute Ports        ", 18, (void *)&SEQ_UI_PMUTE_Init },
+  { "PATTERNS",     "Pat. ", "Patterns          ", 19, (void *)&SEQ_UI_PATTERN_Init },
+  { "SONG",         "Song ", "Song              ", 20, (void *)&SEQ_UI_SONG_Init },
+  { "MIXER",        "Mix  ", "Mixer             ", 21, (void *)&SEQ_UI_MIXER_Init },
+  { "EVENTS",       "Evnt ", "Track Events      ", 22, (void *)&SEQ_UI_TRKEVNT_Init },
+  { "INSTRUMENT",   "Inst ", "Track Instrument  ",  0, (void *)&SEQ_UI_TRKINST_Init },
+  { "MODE",         "Mode ", "Track Mode        ", 23, (void *)&SEQ_UI_TRKMODE_Init },
+  { "DIRECTION",    "Dir. ", "Track Direction   ", 24, (void *)&SEQ_UI_TRKDIR_Init },
+  { "DIVIDER",      "Div. ", "Track ClockDivider", 25, (void *)&SEQ_UI_TRKDIV_Init },
+  { "LENGTH",       "Len. ", "Track Length      ", 26, (void *)&SEQ_UI_TRKLEN_Init },
+  { "TRANSPOSE",    "Trn. ", "Track Transpose   ", 27, (void *)&SEQ_UI_TRKTRAN_Init },
+  { "GROOVE",       "Grv. ", "Track Groove      ", 28, (void *)&SEQ_UI_TRKGRV_Init },
+  { "TRG_ASSIGN",   "Trg. ", "Track Triggers    ", 29, (void *)&SEQ_UI_TRGASG_Init },
+  { "MORPH",        "Mrp. ", "Track Morphing    ", 30, (void *)&SEQ_UI_TRKMORPH_Init },
+  { "RANDOM",       "Rnd. ", "Random Generator  ", 31, (void *)&SEQ_UI_TRKRND_Init },
+  { "EUCLID",       "Eucl.", "Track Euclid Gen. ", 55, (void *)&SEQ_UI_TRKEUCLID_Init },
+  { "JAM",          "Jam  ", "Jam (Recording)   ", 32, (void *)&SEQ_UI_TRKJAM_Init },
+  { "MANUAL",       "Man. ", "Manual Trigger    ", 33, (void *)&SEQ_UI_MANUAL_Init },
+  { "FX_ECHO",      "Echo ", "Track Fx: Echo    ", 34, (void *)&SEQ_UI_FX_ECHO_Init },
+  { "FX_HUMANIZER", "Hum. ", "Track Fx: Humanize", 35, (void *)&SEQ_UI_FX_HUMANIZE_Init },
+  { "FX_ROBOTIZER", "Rob. ", "Track Fx: Robotize", 57, (void *)&SEQ_UI_FX_ROBOTIZE_Init },
+  { "FX_LIMIT",     "Limit", "Track Fx: Limit   ", 36, (void *)&SEQ_UI_FX_LIMIT_Init },
+  { "FX_LFO",       "LFO  ", "Track Fx: LFO     ", 37, (void *)&SEQ_UI_FX_LFO_Init },
+  { "FX_DUPLICATE", "Dupl.", "Track Fx: Duplict.", 56, (void *)&SEQ_UI_FX_DUPL_Init },
+  { "FX_LOOP",      "Loop ", "Global Fx: Loop   ", 38, (void *)&SEQ_UI_FX_LOOP_Init },
+  { "FX_SCALE",     "Scale", "Global Fx: Scale  ", 39, (void *)&SEQ_UI_FX_SCALE_Init },
+  { "UTIL",         "Util ", "Utilities         ", 40, (void *)&SEQ_UI_UTIL_Init },
+  { "BPM",          "BPM  ", "BPM Selection     ", 41, (void *)&SEQ_UI_BPM_Init },
+  { "OPTIONS",      "Opt. ", "Options           ", 42, (void *)&SEQ_UI_OPT_Init },
+  { "SAVE",         "Save ", "Save Pattern      ", 43, (void *)&SEQ_UI_SAVE_Init },
+  { "MIDI",         "MIDI ", "MIDI Configuration", 45, (void *)&SEQ_UI_MIDI_Init },
+  { "MIDIMON",      "MMon ", "MIDI Monitor      ", 46, (void *)&SEQ_UI_MIDIMON_Init },
+  { "SYSEX",        "SysEx", "SysEx             ", 47, (void *)&SEQ_UI_SYSEX_Init },
+  { "CVCFG",        "CVCfg", "CV Configuration  ", 48, (void *)&SEQ_UI_CV_Init },
+  { "DISK",         "Disk ", "Disk (SD Card)    ", 49, (void *)&SEQ_UI_DISK_Init },
+  { "ETH_OSC",      "Eth. ", "Ethernet (OSC)    ", 50, (void *)&SEQ_UI_ETH_Init },
+  { "LIVE",         "Live ", "Live Play         ", 53, (void *)&SEQ_UI_TRKLIVE_Init },
+  { "REMIX",        "Remix", "Pattern Remix     ", 54, (void *)&SEQ_UI_PATTERN_RMX_Init },
+  { "BOOKMARKS",    "BookM", "Bookmarks         ", 51, (void *)&SEQ_UI_BOOKMARKS_Init },
+  { "ABOUT",        "About", "About this MIDIbox", 52, (void *)&SEQ_UI_INFO_Init },
+  { "PROTEUS",      "P2K  ", "Proteus Ch Select ", 59, (void *)&SEQ_UI_PROTEUS_Init }, // RIO: added Proteus
+  { "XL-TURBO",     "XL-T ", "XLTurbo Ch Select ", 60, (void *)&SEQ_UI_XLTURBO_Init }, // RIO: added Proteus
+};
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_ui_pages.h -->
+
+//####################################
+//# RIO: PROTEUS added
+//####################################
+
+// must be kept in sync with ui_menu_pages table in seq_ui_pages.c
+typedef enum {
+  SEQ_UI_PAGE_NONE = 0,
+  SEQ_UI_PAGE_MENU = 1,
+  SEQ_UI_PAGE_FX = 2,
+  SEQ_UI_PAGE_STEPSEL = 3,
+  SEQ_UI_PAGE_TRGSEL = 4,
+  SEQ_UI_PAGE_PARSEL = 5,
+  SEQ_UI_PAGE_INSSEL = 6,
+  SEQ_UI_PAGE_TRACKSEL = 7,
+  SEQ_UI_PAGE_BPM_PRESETS = 8,
+
+  SEQ_UI_PAGE_DIRECT_RESERVED2 = 9,
+  SEQ_UI_PAGE_DIRECT_RESERVED3 = 10,
+  SEQ_UI_PAGE_DIRECT_RESERVED4 = 11,
+  SEQ_UI_PAGE_DIRECT_RESERVED5 = 12,
+  SEQ_UI_PAGE_DIRECT_RESERVED6 = 13,
+  SEQ_UI_PAGE_DIRECT_RESERVED7 = 14,
+  SEQ_UI_PAGE_DIRECT_RESERVED8 = 15,
+
+  SEQ_UI_PAGE_EDIT = 16,
+  SEQ_UI_PAGE_MUTE,
+  SEQ_UI_PAGE_PMUTE,
+  SEQ_UI_PAGE_PATTERN,
+  SEQ_UI_PAGE_SONG,
+  SEQ_UI_PAGE_MIXER,
+  SEQ_UI_PAGE_TRKEVNT,
+  SEQ_UI_PAGE_TRKINST,
+  SEQ_UI_PAGE_TRKMODE,
+  SEQ_UI_PAGE_TRKDIR,
+  SEQ_UI_PAGE_TRKDIV,
+  SEQ_UI_PAGE_TRKLEN,
+  SEQ_UI_PAGE_TRKTRAN,
+  SEQ_UI_PAGE_TRKGRV,
+  SEQ_UI_PAGE_TRGASG,
+  SEQ_UI_PAGE_TRKMORPH,
+  SEQ_UI_PAGE_TRKRND,
+  SEQ_UI_PAGE_TRKEUCLID,
+  SEQ_UI_PAGE_TRKJAM,
+  SEQ_UI_PAGE_MANUAL,
+  SEQ_UI_PAGE_FX_ECHO,
+  SEQ_UI_PAGE_FX_HUMANIZE,
+  SEQ_UI_PAGE_FX_ROBOTIZE,
+  SEQ_UI_PAGE_FX_LIMIT,
+  SEQ_UI_PAGE_FX_LFO,
+  SEQ_UI_PAGE_FX_DUPL,
+  SEQ_UI_PAGE_FX_LOOP,
+  SEQ_UI_PAGE_FX_SCALE,
+  SEQ_UI_PAGE_UTIL,
+  SEQ_UI_PAGE_BPM,
+  SEQ_UI_PAGE_OPT,
+  SEQ_UI_PAGE_SAVE,
+  SEQ_UI_PAGE_MIDI,
+  SEQ_UI_PAGE_MIDIMON,
+  SEQ_UI_PAGE_SYSEX,
+  SEQ_UI_PAGE_CV,
+  SEQ_UI_PAGE_DISK,
+  SEQ_UI_PAGE_ETH,
+  SEQ_UI_PAGE_TRKLIVE,
+  SEQ_UI_PAGE_PATTERN_RMX,
+  SEQ_UI_PAGE_BOOKMARKS,
+  SEQ_UI_PAGE_INFO,
+  SEQ_UI_PAGE_PROTEUS, // RIO: added Proteus
+  SEQ_UI_PAGE_XLTURBO, // RIO: added Proteus
+  SEQ_UI_PAGE_LAST__UNIMPLEMENTED
+} seq_ui_page_t;
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+seq_ui.h -->
+
+extern s32 SEQ_UI_TRKEUCLID_Init(u32 mode);
+
+//####################################
+//# RIO: PROTEUS added
+//####################################
+
+extern s32 SEQ_UI_PROTEUS_Init(u32 mode);   // RIO: added Proteus
+extern s32 SEQ_UI_XLTURBO_Init(u32 mode);   // RIO: added Proteus
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_ui_proteus.c -->
+
+//####################################
+//# RIO: PROTEUS added
+//####################################
+
+/*
+ * Proteus page
+ *
+ * ==========================================================================
+ *
+ *  Rio
+ *
+ * ==========================================================================
+ */
+
+/////////////////////////////////////////////////////////////////////////////
+// Include files
+/////////////////////////////////////////////////////////////////////////////
+
+#include <mios32.h>
+#include <string.h>
+#include "seq_lcd.h"
+#include "seq_ui.h"
+#include "seq_midi_port.h"
+#include "seq_midi_sysex.h"
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Global variables
+/////////////////////////////////////////////////////////////////////////////
+
+u8 proteus_typ;
+u8 proteus_id1 = 1;
+u8 proteus_id2 = 2;
+u8 proteus_out_port1 = 50;
+u8 proteus_out_port2 = 51;
+u8 proteus_sel_ch1 = 0;
+u8 proteus_sel_ch2 = 0;
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Local encoder callback function
+// Should return:
+//   1 if value has been changed
+//   0 if value hasn't been changed
+//  -1 if invalid or unsupported encoder
+/////////////////////////////////////////////////////////////////////////////
+static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
+{
+  if( (encoder >= SEQ_UI_ENCODER_GP9) && (encoder <= SEQ_UI_ENCODER_GP11) ) {
+
+    u8 port_ix;
+
+    if (proteus_typ == 1) {
+      port_ix = SEQ_MIDI_PORT_OutIxGet(proteus_out_port1);
+      if( SEQ_UI_Var8_Inc(&port_ix, 0, SEQ_MIDI_PORT_OutNumGet()-1, incrementer) >= 0 ) {
+      	proteus_out_port1 = SEQ_MIDI_PORT_OutPortGet(port_ix);
+        return 1; // value changed
+      }
+    } else {
+      port_ix = SEQ_MIDI_PORT_OutIxGet(proteus_out_port2);
+      if( SEQ_UI_Var8_Inc(&port_ix, 0, SEQ_MIDI_PORT_OutNumGet()-1, incrementer) >= 0 ) {
+      	proteus_out_port2 = SEQ_MIDI_PORT_OutPortGet(port_ix);
+        return 1; // value changed
+      }
+    }
+  }
+
+  if( encoder >= SEQ_UI_ENCODER_GP12 ) {
+
+    if (proteus_typ == 1) {
+      if( SEQ_UI_Var8_Inc(&proteus_id1, 0, 126, incrementer) >= 0 ) return 1; // value changed
+    } else {
+      if( SEQ_UI_Var8_Inc(&proteus_id2, 0, 126, incrementer) >= 0 ) return 1; // value changed
+    }
+  }
+
+  return 0; // no change
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Local button callback function
+// Should return:
+//   1 if value has been changed
+//   0 if value hasn't been changed
+//  -1 if invalid or unsupported button
+/////////////////////////////////////////////////////////////////////////////
+static s32 Button_Handler(seq_ui_button_t button, s32 depressed)
+{
+  switch( button ) {
+    case SEQ_UI_BUTTON_GP1:
+    case SEQ_UI_BUTTON_GP2:
+    case SEQ_UI_BUTTON_GP3:
+    case SEQ_UI_BUTTON_GP4:
+    case SEQ_UI_BUTTON_GP5:
+    case SEQ_UI_BUTTON_GP6:
+    case SEQ_UI_BUTTON_GP7:
+    case SEQ_UI_BUTTON_GP8:
+    case SEQ_UI_BUTTON_GP9:
+    case SEQ_UI_BUTTON_GP10:
+    case SEQ_UI_BUTTON_GP11:
+    case SEQ_UI_BUTTON_GP12:
+    case SEQ_UI_BUTTON_GP13:
+    case SEQ_UI_BUTTON_GP14:
+    case SEQ_UI_BUTTON_GP15:
+    case SEQ_UI_BUTTON_GP16:
+        if( depressed ) return 0; // ignore when button depressed
+
+        if (proteus_typ == 1) {
+          proteus_sel_ch1 = button+1;
+          SEQ_MIDI_SYSEX_PROTEUS_SendChannel(proteus_out_port1,proteus_id1,proteus_sel_ch1-1);
+        } else {
+          proteus_sel_ch2 = button+1;
+          SEQ_MIDI_SYSEX_PROTEUS_SendChannel(proteus_out_port2,proteus_id2,proteus_sel_ch2-1);
+        }
+
+      return 1; // nothing to do for button
+  }
+
+  return -1; // invalid or unsupported button
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Local LED handler function
+/////////////////////////////////////////////////////////////////////////////
+static s32 LED_Handler(u16 *gp_leds)
+{
+  if (proteus_typ == 1) {
+
+      if (proteus_sel_ch1)  *gp_leds = 1 << (proteus_sel_ch1-1);
+      else                  *gp_leds = 0x0000;
+
+  } else {
+
+      if (proteus_sel_ch2)  *gp_leds = 1 << (proteus_sel_ch2-1);
+      else                  *gp_leds = 0x0000;
+
+  }
+
+  return 0; // no error
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Local Display Handler function
+// IN: <high_prio>: if set, a high-priority LCD update is requested
+/////////////////////////////////////////////////////////////////////////////
+static s32 LCD_Handler(u8 high_prio)
+{
+  if( high_prio )
+    return 0; // there are no high-priority update
+
+  // layout:
+  // 00000000001111111111222222222233333333330000000000111111111122222222223333333333
+  // 01234567890123456789012345678901234567890123456789012345678901234567890123456789
+  // <--------------------------------------><-------------------------------------->
+  // Trk.        Utility Functions                       Quick Menu Change
+  // G1T1 Copy Paste Clr Move Scrl Rand Undo Save Rec. Live Opt. PMte Disk Mute UnMte
+
+  ///////////////////////////////////////////////////////////////////////////
+  SEQ_LCD_CursorSet(0, 0);
+
+  if (proteus_typ == 1) {
+
+      SEQ_LCD_PrintString("Proteus 2000                            ");
+
+      SEQ_LCD_PrintString("Port: ");
+      SEQ_LCD_PrintMIDIOutPort(proteus_out_port1);
+      SEQ_LCD_PrintString("      ID:");
+
+      SEQ_LCD_PrintFormattedString("%3d", proteus_id1);
+      SEQ_LCD_PrintSpaces(18);
+
+  } else {
+
+      SEQ_LCD_PrintString("Proteus XL-Turbo                        ");
+
+      SEQ_LCD_PrintString("Port: ");
+      SEQ_LCD_PrintMIDIOutPort(proteus_out_port2);
+      SEQ_LCD_PrintString("      ID:");
+
+      SEQ_LCD_PrintFormattedString("%3d", proteus_id2);
+      SEQ_LCD_PrintSpaces(18);
+
+  }
+
+
+  ///////////////////////////////////////////////////////////////////////////
+  SEQ_LCD_CursorSet(0, 1);
+
+  unsigned char i;
+  for (i = 1; i < 17; i++) {
+
+
+    if (proteus_typ == 1) {
+
+      if ( i == proteus_sel_ch1) {
+
+        if( ui_cursor_flash ) SEQ_LCD_PrintSpaces(5);
+        else                  SEQ_LCD_PrintFormattedString(" #%2d ", proteus_sel_ch1);
+
+      } else SEQ_LCD_PrintFormattedString(" #%2d ", i);
+
+    } else {
+
+      if ( i == proteus_sel_ch2) {
+
+        if( ui_cursor_flash ) SEQ_LCD_PrintSpaces(5);
+        else                  SEQ_LCD_PrintFormattedString(" #%2d ", proteus_sel_ch2);
+
+      } else SEQ_LCD_PrintFormattedString(" #%2d ", i);
+
+    }
+  }
+
+  return 0; // no error
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Initialisation
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_UI_PROTEUS_Init(u32 mode)
+{
+  proteus_typ       = 1;
+
+  // install callback routines
+  SEQ_UI_InstallButtonCallback(Button_Handler);
+  SEQ_UI_InstallEncoderCallback(Encoder_Handler);
+  SEQ_UI_InstallLEDCallback(LED_Handler);
+  SEQ_UI_InstallLCDCallback(LCD_Handler);
+
+  ui_hold_msg_ctr = 0;
+
+  return 0; // no error
+}
+
+s32 SEQ_UI_XLTURBO_Init(u32 mode)
+{
+  proteus_typ       = 2;
+
+  // install callback routines
+  SEQ_UI_InstallButtonCallback(Button_Handler);
+  SEQ_UI_InstallEncoderCallback(Encoder_Handler);
+  SEQ_UI_InstallLEDCallback(LED_Handler);
+  SEQ_UI_InstallLCDCallback(LCD_Handler);
+
+  ui_hold_msg_ctr = 0;
+
+  return 0; // no error
+}
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+-----------------------------------------------------------------
+
+16. SINGLE SELECTION
+
+seq_ui_tracksel.c -->
+
+  static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
+      ..
+
+	//###########################
+	//# RIO: SINGLE SELECTION
+	//###########################
+
+	//multi_sel = 1; // start multi-selection
+	multi_sel = 0;
+
+	//###########################
+	//# RIO: END MODIFICATION
+	//###########################
+
+-----------------------------------------------------------------
+
+17. CHORD 3 - Replacement
+
+seq_chord.c -->
+
+//###########################
+//# RIO: CHORD 3 REPLACEMENT
+//###########################
+
+static const seq_chord_entry_t seq_chord3_table[] = {
+  // 1   2   3   4   5   6     <----> (6 chars!)
+  {{-17, -12,  -8,  99,  99,  99 }, "inv II" },
+  {{-16, -11,  -7,  99,  99,  99 }, "inv II" },
+  {{-15, -10,  -6,  99,  99,  99 }, "inv II" },
+  {{-14,  -9,  -5,  99,  99,  99 }, "inv II" },
+  {{-13,  -8,  -4,  99,  99,  99 }, "inv II" },
+  {{-12,  -7,  -3,  99,  99,  99 }, "inv II" },
+  {{-11,  -6,  -2,  99,  99,  99 }, "inv II" },
+  {{-10,  -5,  -1,  99,  99,  99 }, "inv II" },
+  {{ -9,  -4,   0,  99,  99,  99 }, "inv II" },
+  {{ -8,  -3,   1,  99,  99,  99 }, "inv II" },
+  {{ -7,  -2,   2,  99,  99,  99 }, "inv II" },
+  {{ -6,  -1,   3,  99,  99,  99 }, "inv II" },
+  {{-12,  -8,  -5,  99,  99,  99 }, "root  " },
+  {{-11,  -7,  -4,  99,  99,  99 }, "root  " },
+  {{-10,  -6,  -3,  99,  99,  99 }, "root  " },
+  {{ -9,  -5,  -2,  99,  99,  99 }, "root  " },
+  {{ -8,  -4,  -1,  99,  99,  99 }, "root  " },
+  {{ -7,  -3,   0,  99,  99,  99 }, "root  " },
+  {{ -6,  -2,   1,  99,  99,  99 }, "root  " },
+  {{ -5,  -1,   2,  99,  99,  99 }, "root  " },
+  {{ -4,   0,   3,  99,  99,  99 }, "root  " },
+  {{ -3,   1,   4,  99,  99,  99 }, "root  " },
+  {{ -2,   2,   5,  99,  99,  99 }, "root  " },
+  {{ -1,   3,   6,  99,  99,  99 }, "root  " },
+  {{ -8,  -5,   0,  99,  99,  99 }, "inv I " },
+  {{ -7,  -4,   1,  99,  99,  99 }, "inv I " },
+  {{ -6,  -3,   2,  99,  99,  99 }, "inv I " },
+  {{ -5,  -2,   3,  99,  99,  99 }, "inv I " },
+  {{ -4,  -1,   4,  99,  99,  99 }, "inv I " },
+  {{ -3,   0,   5,  99,  99,  99 }, "inv I " },
+  {{ -2,   1,   6,  99,  99,  99 }, "inv I " },
+  {{ -1,   2,   7,  99,  99,  99 }, "inv I " },
+  {{  0,   3,   8,  99,  99,  99 }, "inv I " },
+  {{  1,   4,   9,  99,  99,  99 }, "inv I " },
+  {{  2,   5,  10,  99,  99,  99 }, "inv I " },
+  {{  3,   6,  11,  99,  99,  99 }, "inv I " },
+  {{ -5,   0,   4,  99,  99,  99 }, "inv II" },
+  {{ -4,   1,   5,  99,  99,  99 }, "inv II" },
+  {{ -3,   2,   6,  99,  99,  99 }, "inv II" },
+  {{ -2,   3,   7,  99,  99,  99 }, "inv II" },
+  {{ -1,   4,   8,  99,  99,  99 }, "inv II" },
+  {{  0,   5,   9,  99,  99,  99 }, "inv II" },
+  {{  1,   6,  10,  99,  99,  99 }, "inv II" },
+  {{  2,   7,  11,  99,  99,  99 }, "inv II" },
+  {{  3,   8,  12,  99,  99,  99 }, "inv II" },
+  {{  4,   9,  13,  99,  99,  99 }, "inv II" },
+  {{  5,  10,  14,  99,  99,  99 }, "inv II" },
+  {{  6,  11,  15,  99,  99,  99 }, "inv II" },
+  {{  0,   4,   7,  99,  99,  99 }, "root  " }, // C  E  G   root C
+  {{  1,   5,   8,  99,  99,  99 }, "root  " }, // C# F  G#  root C#
+  {{  2,   6,   9,  99,  99,  99 }, "root  " }, // D  F# A   root D
+  {{  3,   7,  10,  99,  99,  99 }, "root  " }, // D# G  A#  root D#
+  {{  4,   8,  11,  99,  99,  99 }, "root  " }, // E  G# B   root E
+  {{  5,   9,  12,  99,  99,  99 }, "root  " }, // F  A  C   root F
+  {{  6,  10,  13,  99,  99,  99 }, "root  " }, // F# A# C#  root F#
+  {{  7,  11,  14,  99,  99,  99 }, "root  " }, // G  B  D   root G
+  {{  8,  12,  15,  99,  99,  99 }, "root  " }, // G# C  D#  root G#
+  {{  9,  13,  16,  99,  99,  99 }, "root  " }, // A  C# E   root A
+  {{ 10,  14,  17,  99,  99,  99 }, "root  " }, // A# D  F   root A#
+  {{ 11,  15,  18,  99,  99,  99 }, "root  " }, // B  D# F#  root B
+  {{  4,   7,  12,  99,  99,  99 }, "inv I " },
+  {{  5,   8,  13,  99,  99,  99 }, "inv I " },
+  {{  6,   9,  14,  99,  99,  99 }, "inv I " },
+  {{  7,  10,  15,  99,  99,  99 }, "inv I " },
+  {{  8,  11,  16,  99,  99,  99 }, "inv I " },
+  {{  9,  12,  17,  99,  99,  99 }, "inv I " },
+  {{ 10,  13,  18,  99,  99,  99 }, "inv I " },
+  {{ 11,  14,  19,  99,  99,  99 }, "inv I " },
+  {{ 12,  15,  20,  99,  99,  99 }, "inv I " },
+  {{ 13,  16,  21,  99,  99,  99 }, "inv I " },
+  {{ 14,  17,  22,  99,  99,  99 }, "inv I " },
+  {{ 15,  18,  23,  99,  99,  99 }, "inv I " },
+  {{  7,  12,  16,  99,  99,  99 }, "inv II" },
+  {{  8,  13,  17,  99,  99,  99 }, "inv II" },
+  {{  9,  14,  18,  99,  99,  99 }, "inv II" },
+  {{ 10,  15,  19,  99,  99,  99 }, "inv II" },
+  {{ 11,  16,  20,  99,  99,  99 }, "inv II" },
+  {{ 12,  17,  21,  99,  99,  99 }, "inv II" },
+  {{ 13,  18,  22,  99,  99,  99 }, "inv II" },
+  {{ 14,  19,  23,  99,  99,  99 }, "inv II" },
+  {{ 15,  20,  24,  99,  99,  99 }, "inv II" },
+  {{ 16,  21,  25,  99,  99,  99 }, "inv II" },
+  {{ 17,  22,  26,  99,  99,  99 }, "inv II" },
+  {{ 18,  23,  27,  99,  99,  99 }, "inv II" },
+  {{ 12,  16,  19,  99,  99,  99 }, "root  " },
+  {{ 13,  17,  20,  99,  99,  99 }, "root  " },
+  {{ 14,  18,  21,  99,  99,  99 }, "root  " },
+  {{ 15,  19,  22,  99,  99,  99 }, "root  " },
+  {{ 16,  20,  23,  99,  99,  99 }, "root  " },
+  {{ 17,  21,  24,  99,  99,  99 }, "root  " },
+  {{ 18,  22,  25,  99,  99,  99 }, "root  " },
+  {{ 19,  23,  26,  99,  99,  99 }, "root  " },
+  {{ 20,  24,  27,  99,  99,  99 }, "root  " },
+  {{ 21,  25,  28,  99,  99,  99 }, "root  " },
+  {{ 22,  26,  29,  99,  99,  99 }, "root  " },
+  {{ 23,  27,  30,  99,  99,  99 }, "root  " },
+  {{ 16,  19,  24,  99,  99,  99 }, "inv I " },
+  {{ 17,  20,  25,  99,  99,  99 }, "inv I " },
+  {{ 18,  21,  26,  99,  99,  99 }, "inv I " },
+  {{ 19,  22,  27,  99,  99,  99 }, "inv I " },
+  {{ 20,  23,  28,  99,  99,  99 }, "inv I " },
+  {{ 21,  24,  29,  99,  99,  99 }, "inv I " },
+  {{ 22,  25,  30,  99,  99,  99 }, "inv I " },
+  {{ 23,  26,  31,  99,  99,  99 }, "inv I " },
+  {{ 24,  27,  32,  99,  99,  99 }, "inv I " },
+  {{ 25,  28,  33,  99,  99,  99 }, "inv I " },
+  {{ 26,  29,  34,  99,  99,  99 }, "inv I " },
+  {{ 27,  30,  35,  99,  99,  99 }, "inv I " },
+  {{ 19,  24,  28,  99,  99,  99 }, "inv II" },
+  {{ 20,  25,  29,  99,  99,  99 }, "inv II" },
+  {{ 21,  26,  30,  99,  99,  99 }, "inv II" },
+  {{ 22,  27,  31,  99,  99,  99 }, "inv II" },
+  {{ 23,  28,  32,  99,  99,  99 }, "inv II" },
+  {{ 24,  29,  33,  99,  99,  99 }, "inv II" },
+  {{ 25,  30,  34,  99,  99,  99 }, "inv II" },
+  {{ 26,  31,  35,  99,  99,  99 }, "inv II" },
+  {{ 27,  32,  36,  99,  99,  99 }, "inv II" },
+  {{ 28,  33,  37,  99,  99,  99 }, "inv II" },
+  {{ 29,  34,  38,  99,  99,  99 }, "inv II" },
+  {{ 30,  35,  39,  99,  99,  99 }, "inv II" },
+  {{ 24,  28,  31,  99,  99,  99 }, "root  " },
+  {{ 25,  29,  32,  99,  99,  99 }, "root  " },
+  {{ 26,  30,  33,  99,  99,  99 }, "root  " },
+  {{ 27,  31,  34,  99,  99,  99 }, "root  " },
+  {{ 28,  32,  35,  99,  99,  99 }, "root  " },
+  {{ 29,  33,  36,  99,  99,  99 }, "root  " },
+  {{ 30,  34,  37,  99,  99,  99 }, "root  " },
+  {{ 31,  35,  38,  99,  99,  99 }, "root  " }, // C127
+};
+
+//###########################
+//# RIO: END MODIFICATION
+//###########################
+
+..
+s32 SEQ_CHORD_NoteGet(u8 key_num, u8 chord_set, u8 chord)
+..
+  s32 note = 0;
+  s32 oct_transpose = 0;
+
+  //###########################
+  //# RIO: CHORD 3 REPLACEMENT
+  //###########################
+  if( chord_set == 2 ) {
+    note = (s32)seq_chord3_table[chord].keys[key_num];    
+
+    if( note == 99 ) return -1;
+
+  } else {
+    u8 chord_ix = chord & 0x1f;
+    oct_transpose = (chord >> 5) - 2;
+
+    note = (s32)seq_chord_table[chord_set][chord_ix].keys[key_num];
+
+    if( note < 0 ) return -1;
+  }
+  //###########################
+  //# RIO: END MODIFICATION
+  //###########################
+
+  // add C-2
+  note += 0x30;
+
+
+seq_lcd.h -->
+
+extern s32 SEQ_LCD_PrintNote(u8 note);
+//###########################
+//# RIO: CHORD 3 REPLACEMENT
+//###########################
+extern s32 SEQ_LCD_PrintChord3(u8 value);
+//###########################
+//# RIO: END MODIFICATION
+//###########################
+
+seq_lcd.c -->
+
+  nach s32 SEQ_LCD_PrintNote(u8 note) functions definition:
+
+
+//###########################
+//# RIO: CHORD 3 REPLACEMENT
+//###########################
+s32 SEQ_LCD_PrintChord3(u8 value)
+{
+  const char note_tab[12][3] = { "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" };
+
+  if( value == 0 ) SEQ_LCD_PrintString("---");
+  else {
+    u8 octave = (value + 24) / 36;
+    u8 area   = value / 12;
+    u8 note   = value % 12;
+
+    SEQ_LCD_PrintChar(note_tab[note][0]);
+
+    if (note_tab[note][1] == '-') {
+      if      (area == 0 || area == 3 || area == 6 || area == 9)  SEQ_LCD_PrintChar('\"');
+      else if (area == 2 || area == 5 || area == 8)               SEQ_LCD_PrintChar('\'');
+      else                                                        SEQ_LCD_PrintChar('=');
+    } else                                                        SEQ_LCD_PrintChar('#');
+    
+    SEQ_LCD_PrintChar('0' + octave);
+  }
+
+  return 0; // no error
+}
+//###########################
+//# RIO: END MODIFICATION
+//###########################
+
+
+..
+..
+
+  case SEQ_PAR_Type_Chord3: {
+    if( par_value ) {
+      //###########################
+      //# RIO: CHORD 3 REPLACEMENT
+      //###########################
+      SEQ_LCD_PrintChord3(par_value);
+      SEQ_LCD_PrintChar(' ');
+      //###########################
+      //# RIO: END MODIFICATION
+      //###########################
+    } else {
+      SEQ_LCD_PrintString("----");
+    }
+  } break;
+
+..
+..
+
+    if( par_value && (print_edit_value >= 0 || print_without_gate || SEQ_TRG_GateGet(track, step, instrument)) ) {
+      if( layer_type == SEQ_PAR_Type_Chord3 ) {
+        //###########################
+        //# RIO: CHORD 3 REPLACEMENT
+        //###########################
+        SEQ_LCD_PrintChord3(par_value);
+        //###########################
+        //# RIO: END MODIFICATION
+        //###########################
+      } else {
+  u8 chord_ix = par_value & 0x1f;
+
+
+-----------------------------------------------------------------
+
+18. Additional Track Par-Layer Mute1...Mut16
+
+seq_par.h -->
+
+  ..
+  SEQ_PAR_Type_Chord3=18,
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  SEQ_PAR_Type_Mute1=19,
+  SEQ_PAR_Type_Mute2=20,
+  SEQ_PAR_Type_Mute3=21,
+  SEQ_PAR_Type_Mute4=22,
+  SEQ_PAR_Type_Mute5=23,
+  SEQ_PAR_Type_Mute6=24,
+  SEQ_PAR_Type_Mute7=25,
+  SEQ_PAR_Type_Mute8=26,
+  SEQ_PAR_Type_Mute9=27,
+  SEQ_PAR_Type_Mute10=28,
+  SEQ_PAR_Type_Mute11=29, 
+  SEQ_PAR_Type_Mute12=30,
+  SEQ_PAR_Type_Mute13=31,
+  SEQ_PAR_Type_Mute14=32,
+  SEQ_PAR_Type_Mute15=33,
+  SEQ_PAR_Type_Mute16=34,
+} seq_par_layer_type_t;
+
+#define SEQ_PAR_NUM_TYPES 35
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+..
+
+extern s32 SEQ_PAR_ScaleValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted);
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+extern s32 SEQ_PAR_MuteValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted, u8 layer_type);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_par.c -->
+
+static const char seq_par_type_names[SEQ_PAR_NUM_TYPES][6] = {
+  ..
+  ..
+  "Chrd3", // 18
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  "Mute1", // 19
+  "Mute2", // 20
+  "Mute3", // 21
+  "Mute4", // 22
+  "Mute5", // 23
+  "Mute6", // 24
+  "Mute7", // 25
+  "Mute8", // 26
+  "Mute9", // 27
+  "Mut10", // 28
+  "Mut11", // 29
+  "Mut12", // 30
+  "Mut13", // 31
+  "Mut14", // 32
+  "Mut15", // 33
+  "Mut16", // 34
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+};
+
+static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order for the UI selection
+  ..
+  ..
+  SEQ_PAR_Type_Scale,
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  SEQ_PAR_Type_Mute1,
+  SEQ_PAR_Type_Mute2,
+  SEQ_PAR_Type_Mute3,
+  SEQ_PAR_Type_Mute4,
+  SEQ_PAR_Type_Mute5,
+  SEQ_PAR_Type_Mute6,
+  SEQ_PAR_Type_Mute7,
+  SEQ_PAR_Type_Mute8,
+  SEQ_PAR_Type_Mute9,
+  SEQ_PAR_Type_Mute10,
+  SEQ_PAR_Type_Mute11,
+  SEQ_PAR_Type_Mute12,
+  SEQ_PAR_Type_Mute13,
+  SEQ_PAR_Type_Mute14,
+  SEQ_PAR_Type_Mute15,
+  SEQ_PAR_Type_Mute16,
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+};
+
+static const u8 seq_par_default_value[SEQ_PAR_NUM_TYPES] = {
+  ..
+  ..
+  0x01, // Chord3: 1
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  0,    // Mute1: 0
+  0,    // Mute2: 0
+  0,    // Mute3: 0
+  0,    // Mute4: 0
+  0,    // Mute5: 0
+  0,    // Mute6: 0
+  0,    // Mute7: 0
+  0,    // Mute8: 0
+  0,    // Mute9: 0
+  0,    // Mute10: 0
+  0,    // Mute11: 0
+  0,    // Mute12: 0
+  0,    // Mute13: 0
+  0,    // Mute14: 0
+  0,    // Mute15: 0
+  0,    // Mute16: 0
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+};
+
+static const u8 seq_par_max_value[SEQ_PAR_NUM_TYPES] = {
+  ..
+  ..
+  0x7f, // Chord3
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  2,    // Mute1
+  2,    // Mute2
+  2,    // Mute3
+  2,    // Mute4
+  2,    // Mute5
+  2,    // Mute6
+  2,    // Mute7
+  2,    // Mute8
+  2,    // Mute9
+  2,    // Mute10
+  2,    // Mute11
+  2,    // Mute12
+  2,    // Mute13
+  2,    // Mute14
+  2,    // Mute15
+  2,    // Mute16
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+};
+
+..
+..
+
+  return 0; // no scale
+}
+
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+/////////////////////////////////////////////////////////////////////////////
+// returns the Mute value of layer type if assigned to any parameter layer
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_PAR_MuteValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted, u8 layer_type)
+{
+  seq_cc_trk_t *tcc = &seq_cc_trk[track];
+  s8 par_layer;
+
+  switch (layer_type) {
+
+    case SEQ_PAR_Type_Mute1:  if( (par_layer=tcc->link_par_layer_mute1) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute2:  if( (par_layer=tcc->link_par_layer_mute2) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute3:  if( (par_layer=tcc->link_par_layer_mute3) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute4:  if( (par_layer=tcc->link_par_layer_mute4) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute5:  if( (par_layer=tcc->link_par_layer_mute5) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute6:  if( (par_layer=tcc->link_par_layer_mute6) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute7:  if( (par_layer=tcc->link_par_layer_mute7) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute8:  if( (par_layer=tcc->link_par_layer_mute8) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute9:  if( (par_layer=tcc->link_par_layer_mute9) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute10: if( (par_layer=tcc->link_par_layer_mute10) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute11: if( (par_layer=tcc->link_par_layer_mute11) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute12: if( (par_layer=tcc->link_par_layer_mute12) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute13: if( (par_layer=tcc->link_par_layer_mute13) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute14: if( (par_layer=tcc->link_par_layer_mute14) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute15: if( (par_layer=tcc->link_par_layer_mute15) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+
+    case SEQ_PAR_Type_Mute16: if( (par_layer=tcc->link_par_layer_mute16) >= 0 && !(layer_muted & (1 << par_layer)) )
+                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
+                              break;
+  }
+
+  return 0; // no mute value
+}
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_lcd.h -->
+
+..
+extern s32 SEQ_LCD_PrintScaleValue(u8 scale_value);
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+extern s32 SEQ_LCD_PrintMuteValue(u8 mute_value);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_lcd.c -->
+
+..
+  return SEQ_LCD_PrintFormattedString("%3d ", scale_value-1);
+}
+
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+/////////////////////////////////////////////////////////////////////////////
+// prints the Mute value
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_LCD_PrintMuteValue(u8 mute_value)
+{
+  if     ( mute_value == 1 )  return SEQ_LCD_PrintFormattedString("ON  ");
+  else if( mute_value == 2 )  return SEQ_LCD_PrintFormattedString("OFF ");
+  else                        return SEQ_LCD_PrintFormattedString("----");
+}
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+s32 SEQ_LCD_PrintLayerValue(u8 track, u8 par_layer, u8 par_value)
+..
+
+  case SEQ_PAR_Type_Scale:
+    SEQ_LCD_PrintScaleValue(par_value);
+    break;
+
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  case SEQ_PAR_Type_Mute1:
+  case SEQ_PAR_Type_Mute2:
+  case SEQ_PAR_Type_Mute3:
+  case SEQ_PAR_Type_Mute4:
+  case SEQ_PAR_Type_Mute5:
+  case SEQ_PAR_Type_Mute6:
+  case SEQ_PAR_Type_Mute7:
+  case SEQ_PAR_Type_Mute8:
+  case SEQ_PAR_Type_Mute9:
+  case SEQ_PAR_Type_Mute10:
+  case SEQ_PAR_Type_Mute11:
+  case SEQ_PAR_Type_Mute12:
+  case SEQ_PAR_Type_Mute13:
+  case SEQ_PAR_Type_Mute14:
+  case SEQ_PAR_Type_Mute15:
+  case SEQ_PAR_Type_Mute16:
+    SEQ_LCD_PrintMuteValue(par_value);
+    break;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+
+s32 SEQ_LCD_PrintLayerEvent(u8 track, u8 step, u8 par_layer, u8 instrument, u8 step_view, int print_edit_value)
+..
+
+  case SEQ_PAR_Type_Scale:
+    SEQ_LCD_PrintScaleValue(SEQ_PAR_ScaleValueGet(track, step, instrument, 0x0000));
+    break;
+
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  case SEQ_PAR_Type_Mute1:
+  case SEQ_PAR_Type_Mute2:
+  case SEQ_PAR_Type_Mute3:
+  case SEQ_PAR_Type_Mute4:
+  case SEQ_PAR_Type_Mute5:
+  case SEQ_PAR_Type_Mute6:
+  case SEQ_PAR_Type_Mute7:
+  case SEQ_PAR_Type_Mute8:
+  case SEQ_PAR_Type_Mute9:
+  case SEQ_PAR_Type_Mute10:
+  case SEQ_PAR_Type_Mute11:
+  case SEQ_PAR_Type_Mute12:
+  case SEQ_PAR_Type_Mute13:
+  case SEQ_PAR_Type_Mute14:
+  case SEQ_PAR_Type_Mute15:
+  case SEQ_PAR_Type_Mute16:
+    SEQ_LCD_PrintMuteValue(SEQ_PAR_MuteValueGet(track, step, instrument, 0x0000, layer_type));
+    break;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_cc.h -->
+
+..
+  s8 link_par_layer_scale;       // parameter layer which stores scale value (-1 if not assigned)
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  s8 link_par_layer_mute1;       // parameter layer which stores mute1 value (-1 if not assigned)
+  s8 link_par_layer_mute2;       // parameter layer which stores mute2 value (-1 if not assigned)
+  s8 link_par_layer_mute3;       // parameter layer which stores mute3 value (-1 if not assigned)
+  s8 link_par_layer_mute4;       // parameter layer which stores mute4 value (-1 if not assigned)
+  s8 link_par_layer_mute5;       // parameter layer which stores mute5 value (-1 if not assigned)
+  s8 link_par_layer_mute6;       // parameter layer which stores mute6 value (-1 if not assigned)
+  s8 link_par_layer_mute7;       // parameter layer which stores mute7 value (-1 if not assigned)
+  s8 link_par_layer_mute8;       // parameter layer which stores mute8 value (-1 if not assigned)
+  s8 link_par_layer_mute9;       // parameter layer which stores mute9 value (-1 if not assigned)
+  s8 link_par_layer_mute10;       // parameter layer which stores mute10 value (-1 if not assigned)
+  s8 link_par_layer_mute11;       // parameter layer which stores mute11 value (-1 if not assigned)
+  s8 link_par_layer_mute12;       // parameter layer which stores mute12 value (-1 if not assigned)
+  s8 link_par_layer_mute13;       // parameter layer which stores mute13 value (-1 if not assigned)
+  s8 link_par_layer_mute14;       // parameter layer which stores mute14 value (-1 if not assigned)
+  s8 link_par_layer_mute15;       // parameter layer which stores mute15 value (-1 if not assigned)
+  s8 link_par_layer_mute16;       // parameter layer which stores mute16 value (-1 if not assigned)
+} seq_cc_trk_t;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_cc.c -->
+
+s32 SEQ_CC_LinkUpdate(u8 track)
+..
+  tcc->link_par_layer_scale = -1;
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  tcc->link_par_layer_mute1 = -1;
+  tcc->link_par_layer_mute2 = -1;
+  tcc->link_par_layer_mute3 = -1;
+  tcc->link_par_layer_mute4 = -1;
+  tcc->link_par_layer_mute5 = -1;
+  tcc->link_par_layer_mute6 = -1;
+  tcc->link_par_layer_mute7 = -1;
+  tcc->link_par_layer_mute8 = -1;
+  tcc->link_par_layer_mute9 = -1;
+  tcc->link_par_layer_mute10 = -1;
+  tcc->link_par_layer_mute11 = -1;
+  tcc->link_par_layer_mute12 = -1;
+  tcc->link_par_layer_mute13 = -1;
+  tcc->link_par_layer_mute14 = -1;
+  tcc->link_par_layer_mute15 = -1;
+  tcc->link_par_layer_mute16 = -1;
+
+  u8 num_layers = SEQ_PAR_NumLayersGet(track);
+  if( num_layers ) {
+    // search backwards to ensure that first assignments will be taken
+    int layer;
+    for(layer=num_layers-1; layer>=0; --layer) {
+      switch( (seq_par_layer_type_t)par_asg[layer] ) {
+        case SEQ_PAR_Type_Note: tcc->link_par_layer_note = layer; break;
+        case SEQ_PAR_Type_Chord1: tcc->link_par_layer_chord = layer; break;
+        case SEQ_PAR_Type_Chord2: tcc->link_par_layer_chord = layer; break;
+        case SEQ_PAR_Type_Chord3: tcc->link_par_layer_chord = layer; break;
+        case SEQ_PAR_Type_Velocity: tcc->link_par_layer_velocity = layer; break;
+        case SEQ_PAR_Type_Length: tcc->link_par_layer_length = layer; break;
+        case SEQ_PAR_Type_Probability: tcc->link_par_layer_probability = layer; break;
+        case SEQ_PAR_Type_Delay: tcc->link_par_layer_delay = layer; break;
+        case SEQ_PAR_Type_Roll: tcc->link_par_layer_roll = layer; break;
+        case SEQ_PAR_Type_Roll2: tcc->link_par_layer_roll2 = layer; break;
+        case SEQ_PAR_Type_Nth1: tcc->link_par_layer_nth1 = layer; break;
+        case SEQ_PAR_Type_Nth2: tcc->link_par_layer_nth2 = layer; break;
+        case SEQ_PAR_Type_Root: tcc->link_par_layer_root = layer; break;
+        case SEQ_PAR_Type_Scale: tcc->link_par_layer_scale = layer; break;
+        case SEQ_PAR_Type_Mute1: tcc->link_par_layer_mute1 = layer; break;
+        case SEQ_PAR_Type_Mute2: tcc->link_par_layer_mute2 = layer; break;
+        case SEQ_PAR_Type_Mute3: tcc->link_par_layer_mute3 = layer; break;
+        case SEQ_PAR_Type_Mute4: tcc->link_par_layer_mute4 = layer; break;
+        case SEQ_PAR_Type_Mute5: tcc->link_par_layer_mute5 = layer; break;
+        case SEQ_PAR_Type_Mute6: tcc->link_par_layer_mute6 = layer; break;
+        case SEQ_PAR_Type_Mute7: tcc->link_par_layer_mute7 = layer; break;
+        case SEQ_PAR_Type_Mute8: tcc->link_par_layer_mute8 = layer; break;
+        case SEQ_PAR_Type_Mute9: tcc->link_par_layer_mute9 = layer; break;
+        case SEQ_PAR_Type_Mute10: tcc->link_par_layer_mute10 = layer; break;
+        case SEQ_PAR_Type_Mute11: tcc->link_par_layer_mute11 = layer; break;
+        case SEQ_PAR_Type_Mute12: tcc->link_par_layer_mute12 = layer; break;
+        case SEQ_PAR_Type_Mute13: tcc->link_par_layer_mute13 = layer; break;
+        case SEQ_PAR_Type_Mute14: tcc->link_par_layer_mute14 = layer; break;
+        case SEQ_PAR_Type_Mute15: tcc->link_par_layer_mute15 = layer; break;
+        case SEQ_PAR_Type_Mute16: tcc->link_par_layer_mute16 = layer; break;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_core.c -->
+
+s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
+
+..
+  // check probability if not in drum mode
+  // if probability < 100: play step with given probability
+  // in drum mode, the probability is checked for each individual instrument inside the layer event loop
+  if( tcc->event_mode != SEQ_EVENT_MODE_Drum ) {
+    u8 rnd_probability;
+    if( (rnd_probability=SEQ_PAR_ProbabilityGet(track, t->step, 0, layer_muted)) < 100 &&
+        SEQ_RANDOM_Gen_Range(0, 99) >= rnd_probability )
+      continue;
+  }
+
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  // get mute steps
+  u8 layer_type = 0;
+  for (layer_type = SEQ_PAR_Type_Mute1; layer_type <= SEQ_PAR_Type_Mute16; layer_type++) {
+    u8 mute_value = SEQ_PAR_MuteValueGet(track, t->step, 0, layer_muted, layer_type);
+    u8 mute_track = layer_type - SEQ_PAR_Type_Mute1;
+    if      (mute_value == 1)  seq_core_trk_muted &= ~(1 << mute_track);  // ON
+    else if (mute_value == 2)  seq_core_trk_muted |= (1 << mute_track);   // OFF
+  }
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+-----------------------------------------------------------------
+
+19. MIOS32_IIC_MIDI_NUM has to be changed from 4 to 8 in mios32/mios32_config.h
+
+//####################################
+//# RIO: IIC HACK max 8
+//####################################
+
+// configure IIC_MIDI
+#define MIOS32_IIC_MIDI_NUM 8
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+-----------------------------------------------------------------
+
+20. Start playback once - fixed bouncing button
+
+seq_ui.c -->
+
+s32 SEQ_UI_Button_Play(s32 depressed)
+{
+
+  //###################################################
+  //# RIO: START PLAYBACK ONCE - fixed bouncing button
+  //###################################################
+
+  if( depressed || SEQ_BPM_IsRunning() ) return -1; // ignore when button depressed
+
+  //###################################################
+  //# RIO: END MODIFICATION
+  //###################################################
+
+-----------------------------------------------------------------
+
+21. Polyphonic Pressure (Poly Aftertouch) Support
+
+seq_core.c -->
+
+s32 SEQ_CORE_NotifyIncomingMIDIEvent(u8 track, mios32_midi_package_t p)
+  ..
+
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+
+  case PolyPressure:
+  case CC:
+  case ProgramChange:
+  //case Aftertouch:
+  case PitchBend: {
+    // temporary mute layers which are assigned to the corresponding event
+    u8 *layer_type_ptr = (u8 *)&tcc->lay_const[0*16];
+    int par_layer;
+    int num_p_layers = SEQ_PAR_NumLayersGet(track);
+    u16 mask = 1;
+    for(par_layer=0; par_layer<num_p_layers; ++par_layer, ++layer_type_ptr, mask <<= 1) {
+      u8 apply_mask = 0;
+      switch( *layer_type_ptr ) {
+      case SEQ_PAR_Type_CC: {
+	if( p.event == CC && p.cc_number == tcc->lay_const[1*16 + par_layer] ) {
+	  apply_mask = 1;
+	}
+      } break;
+      case SEQ_PAR_Type_PolyPressure: {
+  if( p.event == PolyPressure && p.cc_number == tcc->lay_const[1*16 + par_layer] ) {
+    apply_mask = 1;
+  }
+      } break;
+
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+
+
+seq_layer.c -->
+
+s32 SEQ_LAYER_GetEvents(u8 track, u16 step, seq_layer_evnt_t layer_events[16], u8 insert_empty_notes)
+  ..
+
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+
+	case SEQ_PAR_Type_PolyPressure:
+	case SEQ_PAR_Type_CC: {
+	  u8 cc_number = seq_layer_drum_cc[drum][par_layer];
+	  u8 value = SEQ_PAR_Get(track, step, par_layer, drum);
+
+	  if( !insert_empty_notes ) {
+
+      if (*layer_type_ptr == SEQ_PAR_Type_PolyPressure) {
+
+	    // new: don't send CC if assigned to invalid CC number
+	    // new: don't send if CC is assigned to LFO extra CC function in POLYPRESSURE mode
+	    if( cc_number >= 0x80 ||
+		(tcc->lfo_waveform && tcc->lfo_cc == cc_number && tcc->lfo_enable_flags.POLYPRESSURE) )
+	      break;
+
+	    // don't send CC if value hasn't changed (== invalid value)
+	    // but only if LFO not assigned to CC layer in POLYPRESSURE mode
+	    if( !tcc->lfo_enable_flags.CC  && !tcc->lfo_enable_flags.POLYPRESSURE &&
+		( value >= 0x80 || value == cc_last_value[track][drum][par_layer]) ) {
+	      break;
+	    }
+
+      } else {
+
+	    // new: don't send CC if assigned to invalid CC number
+	    // new: don't send if CC is assigned to LFO extra CC function
+	    if( cc_number >= 0x80 ||
+		(tcc->lfo_waveform && tcc->lfo_cc == cc_number) )
+	      break;
+
+	    // don't send CC if value hasn't changed (== invalid value)
+	    // but only if LFO not assigned to CC layer
+	    if( !tcc->lfo_enable_flags.CC &&
+		( value >= 0x80 || value == cc_last_value[track][drum][par_layer]) ) {
+	      break;
+	    }
+      }
+
+	    cc_last_value[track][drum][par_layer] = value;
+	  }
+
+	  if( insert_empty_notes || !(layer_muted & (1 << drum)) ) {
+	    seq_layer_evnt_t *e = &layer_events[num_events];
+	    mios32_midi_package_t *p = &e->midi_package;
+
+	    p->type     = *layer_type_ptr == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
+	    p->cable    = track;
+	    p->event    = *layer_type_ptr == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
+	    p->chn      = tcc->midi_chn;
+	    p->cc_number = cc_number;
+	    p->value    = value;
+	    e->len      = -1;
+	    e->layer_tag = drum;
+	    ++num_events;
+
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+
+  ..
+
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+
+        case SEQ_PAR_Type_PolyPressure:
+        case SEQ_PAR_Type_CC: {
+	  seq_layer_evnt_t *e = &layer_events[num_events];
+	  mios32_midi_package_t *p = &e->midi_package;
+	  u8 cc_number = tcc->lay_const[1*16 + par_layer];
+	  u8 value = SEQ_PAR_Get(track, step, par_layer, instrument);
+
+	  if( !insert_empty_notes ) {
+
+      if (*layer_type_ptr == SEQ_PAR_Type_PolyPressure) {
+
+	    // new: don't send CC if assigned to invalid CC number
+	    // new: don't send if CC is assigned to LFO extra CC function in POLYPRESSURE mode
+	    if( cc_number >= 0x80 ||
+		(tcc->lfo_waveform && tcc->lfo_cc == cc_number && tcc->lfo_enable_flags.POLYPRESSURE) )
+	      break;
+
+	    // don't send CC if value hasn't changed (== invalid value)
+	    // but only if LFO not assigned to CC layer in POLYPRESSURE mode
+	    if( !tcc->lfo_enable_flags.CC && !tcc->lfo_enable_flags.POLYPRESSURE &&
+		( value >= 0x80 || value == cc_last_value[track][0][par_layer]) ) {
+	      break;
+	    }
+
+      } else {
+
+	    // new: don't send CC if assigned to invalid CC number
+	    // new: don't send if CC is assigned to LFO extra CC function
+	    if( cc_number >= 0x80 ||
+		(tcc->lfo_waveform && tcc->lfo_cc == cc_number) )
+	      break;
+
+	    // don't send CC if value hasn't changed (== invalid value)
+	    // but only if LFO not assigned to CC layer
+	    if( !tcc->lfo_enable_flags.CC &&
+		( value >= 0x80 || value == cc_last_value[track][0][par_layer]) ) {
+	      break;
+	    }
+      }
+
+      cc_last_value[track][0][par_layer] = value;
+	  }
+
+	  if(
+#ifndef MBSEQV4L
+	     (tcc->event_mode != SEQ_EVENT_MODE_CC || gate) &&
+#endif
+	     (insert_empty_notes || !(layer_muted & (1 << par_layer))) ) {
+	    p->type     = *layer_type_ptr == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
+	    p->cable    = track;
+	    p->event    = *layer_type_ptr == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
+	    p->chn      = tcc->midi_chn;
+	    p->cc_number = cc_number;
+	    p->value    = value;
+	    e->len      = -1;
+	    e->layer_tag = par_layer;
+	    ++num_events;
+
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+
+
+s32 SEQ_LAYER_DirectSendEvent(u8 track, u8 par_layer)
+  ..
+
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+
+  switch( layer_type ) {
+  case SEQ_PAR_Type_PolyPressure:
+  case SEQ_PAR_Type_CC: {
+    u8 cc_number = tcc->lay_const[1*16 + par_layer];
+    u8 value = (cc_last_value[track][0][par_layer] < 0x80) ? cc_last_value[track][0][par_layer] : 0x40;
+
+    if( cc_number >= 0x80 )
+      return -1; // CC disabled
+
+    p.type      = layer_type == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
+    p.event     = layer_type == SEQ_PAR_Type_PolyPressure ? PolyPressure : CC;
+    p.cc_number = tcc->lay_const[1*16 + par_layer];
+    p.value     = value;
+  } break;
+
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+
+
+seq_lcd.c -->
+
+s32 SEQ_LCD_PrintLayerValue(u8 track, u8 par_layer, u8 par_value)
+  ..  
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+  case SEQ_PAR_Type_PolyPressure:
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+  case SEQ_PAR_Type_CC:
+
+  s32 SEQ_LCD_PrintLayerEvent(u8 track, u8 step, u8 par_layer, u8 instrument, u8 step_view, int print_edit_value)
+  ..  
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+  case SEQ_PAR_Type_PolyPressure:
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+  case SEQ_PAR_Type_CC:
+
+
+seq_par.h -->
+
+/////////////////////////////////////////////////////////////////////////////
+// Global Types
+/////////////////////////////////////////////////////////////////////////////
+
+typedef enum {
+  ..
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
+  SEQ_PAR_Type_Mute1=19,
+  SEQ_PAR_Type_Mute2=20,
+  SEQ_PAR_Type_Mute3=21,
+  SEQ_PAR_Type_Mute4=22,
+  SEQ_PAR_Type_Mute5=23,
+  SEQ_PAR_Type_Mute6=24,
+  SEQ_PAR_Type_Mute7=25,
+  SEQ_PAR_Type_Mute8=26,
+  SEQ_PAR_Type_Mute9=27,
+  SEQ_PAR_Type_Mute10=28,
+  SEQ_PAR_Type_Mute11=29, 
+  SEQ_PAR_Type_Mute12=30,
+  SEQ_PAR_Type_Mute13=31,
+  SEQ_PAR_Type_Mute14=32,
+  SEQ_PAR_Type_Mute15=33,
+  SEQ_PAR_Type_Mute16=34,
+  SEQ_PAR_Type_PolyPressure=35,
+} seq_par_layer_type_t;
+
+#define SEQ_PAR_NUM_TYPES 36
+//########################################
+//# RIO: END MODIFICATION
+//########################################
+
+
+seq_par.c -->
+
+static const char seq_par_type_names[SEQ_PAR_NUM_TYPES][6] = {
+  ..
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
+  "Mute1", // 19
+  "Mute2", // 20
+  "Mute3", // 21
+  "Mute4", // 22
+  "Mute5", // 23
+  "Mute6", // 24
+  "Mute7", // 25
+  "Mute8", // 26
+  "Mute9", // 27
+  "Mut10", // 28
+  "Mut11", // 29
+  "Mut12", // 30
+  "Mut13", // 31
+  "Mut14", // 32
+  "Mut15", // 33
+  "Mut16", // 34
+  " PP  ", // 35
+//########################################
+//# RIO: END MODIFICATION
+//########################################
+};
+
+static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order for the UI selection
+  ..
+//####################################
+//# RIO: POLYPHONIC PRESSURE
+//####################################
+  SEQ_PAR_Type_PolyPressure,
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+  ..
+
+static const u8 seq_par_default_value[SEQ_PAR_NUM_TYPES] = {
+  ..
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
+  0,    // Mute1: 0
+  0,    // Mute2: 0
+  0,    // Mute3: 0
+  0,    // Mute4: 0
+  0,    // Mute5: 0
+  0,    // Mute6: 0
+  0,    // Mute7: 0
+  0,    // Mute8: 0
+  0,    // Mute9: 0
+  0,    // Mute10: 0
+  0,    // Mute11: 0
+  0,    // Mute12: 0
+  0,    // Mute13: 0
+  0,    // Mute14: 0
+  0,    // Mute15: 0
+  0,    // Mute16: 0
+  0x80, // PolyPressure
+//########################################
+//# RIO: END MODIFICATION
+//########################################
+};
+
+static const u8 seq_par_max_value[SEQ_PAR_NUM_TYPES] = {
+  ..
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
+  2,    // Mute1
+  2,    // Mute2
+  2,    // Mute3
+  2,    // Mute4
+  2,    // Mute5
+  2,    // Mute6
+  2,    // Mute7
+  2,    // Mute8
+  2,    // Mute9
+  2,    // Mute10
+  2,    // Mute11
+  2,    // Mute12
+  2,    // Mute13
+  2,    // Mute14
+  2,    // Mute15
+  2,    // Mute16
+  0x80, // PolyPressure
+//########################################
+//# RIO: END MODIFICATION
+//########################################
+};
+
+
+seq_ui.c -->
+
+s32 SEQ_UI_InitEncSpeed(u32 auto_config)
+  ..
+      //####################################
+      //# RIO: POLYPHONIC PRESSURE
+      //####################################
+      case SEQ_PAR_Type_PolyPressure:
+      //####################################
+      //# RIO: END MODIFICATION
+      //####################################
+
+
+seq_ui_edit.c -->
+
+s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
+  ..
+//####################################
+//# RIO: POLYPHONIC PRESSURE
+//####################################
+  if( layer_event.midi_package.event == CC || layer_event.midi_package.event == PolyPressure) {
+    mios32_midi_port_t port = SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT);
+    u8 loopback = port == 0xf0;
+
+    if( loopback )
+      SEQ_LCD_PrintString((char *)SEQ_CC_LABELS_Get(port, layer_event.midi_package.cc_number));
+    else {
+      if( layer_event.midi_package.cc_number >= 0x80 ) {
+	SEQ_LCD_PrintFormattedString("  %s#off", (layer_event.midi_package.event == CC) ? "CC" : "PP");
+      } else {
+	SEQ_LCD_PrintFormattedString("  %s#%3d", (layer_event.midi_package.event == CC) ? "CC" : "PP", layer_event.midi_package.cc_number);
+      }
+    }
+    SEQ_LCD_PrintFormattedString(" %3d ", layer_event.midi_package.value);
+    SEQ_LCD_PrintVBar(layer_event.midi_package.value >> 4);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+static s32 ChangeSingleEncValue(u8 track, u16 par_step, u16 trg_step, s32 incrementer, s32 forced_value, u8 change_gate, u8 dont_change_gate)
+  ..
+
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
+    // we do this always regardless if value has been changed or not (e.g. increment if value already 127)
+    if( event_mode == SEQ_EVENT_MODE_CC && (layer_type == SEQ_PAR_Type_CC || layer_type == SEQ_PAR_Type_PolyPressure) ) {
+      // in this mode gates are used to disable CC
+      // if a CC value has been changed, set gate
+      if( !seq_ui_options.PRINT_AND_MODIFY_WITHOUT_GATES ) {
+	SEQ_TRG_GateSet(track, trg_step, ui_selected_instrument, 1);
+      }
+    }
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+
+
+seq_ui_trkevnt.c -->
+
+static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
+  ..
+
+        //####################################
+        //# RIO: POLYPHONIC PRESSURE
+        //####################################
+	      if( assignment == SEQ_PAR_Type_CC || assignment == SEQ_PAR_Type_PolyPressure ) {
+		// CC number selection now has to be confirmed with GP button
+		if( incrementer ) {
+		  if( ui_selected_item != ITEM_LAYER_PAR ) {
+		    edit_cc_number = SEQ_CC_Get(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer);
+		    ui_selected_item = ITEM_LAYER_PAR;
+		  }
+          if (assignment == SEQ_PAR_Type_PolyPressure) 
+            SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "Please confirm PP", "with GP button!");
+		  else SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "Please confirm CC", "with GP button!");
+		} else {
+		  if( edit_cc_number != SEQ_CC_Get(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer) ) {
+		    SEQ_CC_Set(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer, edit_cc_number);
+            if (assignment == SEQ_PAR_Type_PolyPressure) 
+    		    SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "PP number", "has been changed.");
+            else SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "CC number", "has been changed.");
+		  } else {
+		    // send MIDI event
+		    if( SEQ_LAYER_DirectSendEvent(visible_track, ui_selected_par_layer) >= 0 ) {
+		      SEQ_UI_Msg(SEQ_UI_MSG_USER, 2000, "MIDI event", "has been sent.");
+		    }
+		  }
+		}
+        //####################################
+        //# RIO: END MODIFICATION
+        //####################################
+
+
+static s32 LCD_Handler(u8 high_prio)
+  ..
+
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
+	  switch( assignment ) {
+            case SEQ_PAR_Type_PolyPressure:
+            case SEQ_PAR_Type_CC: {
+	      mios32_midi_port_t port = SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT);
+	      u8 current_value = SEQ_CC_Get(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer);
+	      u8 edit_value = ui_selected_item == ITEM_LAYER_PAR ? edit_cc_number : current_value;
+
+	      if( edit_value >= 0x80 ) {
+        SEQ_LCD_PrintFormattedString("off%c(no %s   ) ", (current_value != edit_value) ? '!' : ' ', (assignment == SEQ_PAR_Type_PolyPressure) ? "PP" : "CC");
+	      } else {
+		SEQ_LCD_PrintFormattedString("%03d%c(%s) ", edit_value,
+					     (current_value != edit_value) ? '!' : ' ',
+					     (assignment == SEQ_PAR_Type_PolyPressure) ? SEQ_PP_LABELS_Get(edit_value) : SEQ_CC_LABELS_Get(port, edit_value));
+	      }
+	    } break;
+
+            default:
+	      SEQ_LCD_PrintSpaces(15);
+	  }
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+
+
+seq_lfo.h -->
+
+//#################################################
+//# RIO: Added new commands
+//#################################################
+
+typedef union {
+  u8 ALL;
+  struct {
+    u8 ONE_SHOT:1;
+    u8 NOTE:1;
+    u8 VELOCITY:1;
+    u8 LENGTH:1;
+    u8 CC:1;
+    u8 REVERSE:1;       // RIO: added Reverse
+    u8 FADEUP:1;        // RIO: added Fade OUT
+    u8 POLYPRESSURE:1;  // RIO: added PolyPressure
+  };
+} seq_lfo_enable_flags_t;
+
+//#################################################
+//# RIO: END MODIFICATION
+//#################################################
+
+
+seq_lfo.c -->
+
+s32 SEQ_LFO_FastCC_Event(u8 track, u32 bpm_tick, mios32_midi_package_t *p, u8 ignore_waveform)
+  ..
+
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+  p->type      = (tcc->lfo_enable_flags.POLYPRESSURE) ? PolyPressure : CC;
+  p->cable     = track;
+  p->event     = (tcc->lfo_enable_flags.POLYPRESSURE) ? PolyPressure : CC;
+  p->chn       = tcc->midi_chn;
+  p->cc_number = tcc->lfo_cc;
+  p->value     = lfo_value;
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+
+
+seq_ui_fx_lfo.c -->
+
+//####################################
+//# RIO: POLYPHONIC PRESSURE
+//####################################
+#define NUM_OF_ITEMS       15
+#define ITEM_GXTY          0
+#define ITEM_WAVEFORM      1
+#define ITEM_AMPLITUDE     2
+#define ITEM_PHASE         3
+#define ITEM_STEPS         4
+#define ITEM_STEPS_RST     5
+#define ITEM_ENABLE_ONE_SHOT  6
+#define ITEM_ENABLE_NOTE   7
+#define ITEM_ENABLE_VELOCITY 8
+#define ITEM_ENABLE_LENGTH 9
+#define ITEM_ENABLE_CC     10
+#define ITEM_CC            11
+#define ITEM_CC_OFFSET     12
+#define ITEM_ENABLE_PP     13
+#define ITEM_CC_PPQN       14
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+static s32 LED_Handler(u16 *gp_leds)
+  ..
+    case ITEM_ENABLE_CC: *gp_leds = 0x0800; break;
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
+    case ITEM_ENABLE_PP: *gp_leds = 0x1000; break;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+
+
+static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
+  ..
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
+    case SEQ_UI_ENCODER_GP13:
+      ui_selected_item = ITEM_ENABLE_PP;
+      break;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+
+    ..
+
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
+    case ITEM_ENABLE_ONE_SHOT:
+    case ITEM_ENABLE_NOTE:
+    case ITEM_ENABLE_VELOCITY:
+    case ITEM_ENABLE_LENGTH:
+    case ITEM_ENABLE_CC:
+    case ITEM_ENABLE_PP: {
+      u8 flag = ui_selected_item - ITEM_ENABLE_ONE_SHOT;
+      u8 mask = 1 << flag;
+      u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS);
+      if( incrementer == 0 ) // toggle
+	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, value ^ mask);
+      else if( incrementer > 0 )
+	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, mask);
+      else
+	SEQ_UI_CC_SetFlags(SEQ_CC_LFO_ENABLE_FLAGS, mask, 0);
+    } break;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+
+
+static s32 LCD_Handler(u8 high_prio)
+  ..
+
+  //##############################
+  //# RIO: Display Header adapted
+  //##############################
+
+  // Original:
+  //SEQ_LCD_PrintString("Trk. Wave Amp. Phs. Steps Rst OneShot   Note Vel. Len.  CC   ExtraCC# Offs. PPQN");
+
+  char buffer1[5];
+  char buffer2[5];
+  char ch = ' ';
+
+  u8 value = SEQ_CC_Get(visible_track, SEQ_CC_LFO_WAVEFORM);
+  if ( value >= SEQ_LFO_WAVEFORM___V2 && value <=SEQ_LFO_WAVEFORM_A4A4) sprintf(buffer1, "R+Q+");
+  else                                                                  sprintf(buffer1, "Wave");
+
+  if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 200) {
+    if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 6))  sprintf(buffer2, "FdUp");
+    else                                                                sprintf(buffer2, "FdDn");
+  }
+  else if (SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE) > 100)           sprintf(buffer2, "Dly.");
+  else                                                                  sprintf(buffer2, "Phs.");
+
+  SEQ_LCD_PrintFormattedString("Trk. %s%cAmp. %s Steps Rst OneShot   Note Vel. Len.  CC   Extra%s# Offs. PPQN",buffer1,ch,buffer2, (SEQ_CC_Get(visible_track, SEQ_CC_LFO_ENABLE_FLAGS) & (1 << 7)) ? "PP" : "CC");
+
+  //##############################
+  //# RIO: END MODIFICATION
+  //##############################
+
+
+seq_pp_labels.h -->
+
+// $Id$
+/*
+ * Header file for PP label array
+ *
+ * ==========================================================================
+ *
+ *  Copyright (C) 2008 Thorsten Klose (tk@midibox.org)
+ *  Licensed for personal non-commercial use only.
+ *  All other rights reserved.
+ * 
+ * ==========================================================================
+ */
+
+#ifndef _SEQ_PP_LABELS_H
+#define _SEQ_PP_LABELS_H
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Global definitions
+/////////////////////////////////////////////////////////////////////////////
+
+#define SEQ_PP_LABELS_NUM   128 // for PP0..127
+#define SEQ_PP_LABELS_WIDTH   9 // 8 characters + \0 terminator
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Global Types
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Prototypes
+/////////////////////////////////////////////////////////////////////////////
+
+extern s32 SEQ_PP_LABELS_Init(u32 mode);
+extern const char *SEQ_PP_LABELS_Get(u8 pp);
+
+/////////////////////////////////////////////////////////////////////////////
+// Export global variables
+/////////////////////////////////////////////////////////////////////////////
+
+#endif /* _SEQ_PP_LABELS_H */
+
+
+seq_pp_labels.c -->
+
+// $Id$
+/*
+ * PP Label array
+ *
+ * ==========================================================================
+ *
+ *  Access Virus Page B - PolyPressure Assignments
+ *  Licensed for personal non-commercial use only.
+ *  All other rights reserved.
+ * 
+ * ==========================================================================
+ */
+
+/////////////////////////////////////////////////////////////////////////////
+// Include files
+/////////////////////////////////////////////////////////////////////////////
+
+#include <mios32.h>
+
+#include "seq_pp_labels.h"
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Local variables
+/////////////////////////////////////////////////////////////////////////////
+
+static const char pp_labels[128][9] = {
+  // 0x00..0x0f
+  "        ",
+  "Arp Mode",
+  "Arp PSel",
+  "Arp Oct ",
+  "Arp Hold",
+  "Arp NLen",
+  "Arp Swng",
+  "LF3 Rate",
+  "LF3 Shpe",
+  "LF3 Mode",
+  "LF3 KeyF",
+  "LF3 Dest",
+  "LF3 Amnt",
+  "LF3 Fade",
+  "        ",
+  "        ",
+  
+  // 0x10..0x1f
+  "Clk Tmpo",
+  "Arp Clk ",
+  "LF1 Clk ",
+  "LF2 Clk ",
+  "Dly Clk ",
+  "LF3 Clk ",
+  "        ",
+  "        ",
+  "        ",
+  "Ctr Smoo",
+  "Bnd Up  ",
+  "Bnd Down",
+  "Bnd Scle",
+  "        ",
+  "FL1 EPol",
+  "FL2 EPol",
+  
+  // 0x20..0x2f
+  "FL2 Link",
+  "FLt Base",
+  "OSC FM M",
+  "OSC Phas",
+  "PunchInt",
+  "        ",
+  "InFollow",
+  "Voc Mode",
+  "        ",
+  "OS3 Mode",
+  "OS3 Vol ",
+  "OS3 Semi",
+  "OS3 Detu",
+  "        ",
+  "        ",
+  "OS1 SVel",
+  
+  // 0x30..0x3f
+  "OS2 SVel",
+  "PW  Velo",
+  "FM  AVel",
+  "        ",
+  "        ",
+  "        ",
+  "FL1 EAVe",
+  "FL2 EAVe",
+  "RE1 Velo",
+  "RE2 Velo",
+  "Out2 Bal",
+  "        ",
+  "Amp Velo",
+  "Pan Velo",
+  "Def1 Sng",
+  "Def2 Sng",
+  
+  // 0x40..0x4f
+  "As1 Src ",
+  "As1 Dest",
+  "As1 Amt ",
+  "As2 Src ",
+  "As2 Des1",
+  "As2 Amt1",
+  "As2 Des2",
+  "As2 Amt2",
+  "As3 Src ",
+  "As3 Des1",
+  "As3 Amt1",
+  "As3 Des2",
+  "As3 Amt2",
+  "As3 Des3",
+  "As3 Amt3",
+  "LF1 AsDs",
+
+  // 0x50..0x5f
+  "LF1 AsAm",
+  "LF2 AsDs",
+  "LF2 AsAm",
+  "        ",
+  "Phs Mode",
+  "Phs Mix ",
+  "Phs Rate",
+  "Phs Deph",
+  "Phs Freq",
+  "Phs Feed",
+  "Phs Sprd",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  
+  // 0x60..0x6f
+  "        ",
+  "BassInt ",
+  "BassTune",
+  "InRingMo",
+  "DistCurv",
+  "DistInt ",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  "        ",
+  
+  // 0x70..0x7f
+  "SNameCh1",
+  "SNameCh2",
+  "SNameCh3",
+  "SNameCh4",
+  "SNameCh5",
+  "SNameCh6",
+  "SNameCh7",
+  "SNameCh8",
+  "SNameCh9",
+  "SNameC10",
+  "FLT Sel ",
+  "Categor1",
+  "Categor2",
+  "        ",
+  "        ",
+  "        ",
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Initialisation
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_PP_LABELS_Init(u32 mode)
+{
+  // here we could also generate the labels in RAM...
+
+  return 0; // no error
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Returns PP label
+/////////////////////////////////////////////////////////////////////////////
+const char *SEQ_PP_LABELS_Get(u8 pp)
+{
+  if( pp >= 128 )
+    pp = 0; // just to avoid buffer overruns if invalid PP number selected
+
+  return pp_labels[pp];
+}
+
+
+Makefile -->
+
+####################################
+# RIO: Added NEW files
+####################################
+                ..
+		core/seq_cc_labels.c  \
+		core/seq_pp_labels.c  \
+                ..
+
+####################################
+# RIO: END MODIFICATION
+####################################
+
+-----------------------------------------------------------------
+
+22. PolyPressure in Mixer (extended CC1..4 values up to 256)
+
+
+seq_ui_mixer.c -->
+
+static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
+  ..
+
+//####################################
+//# RIO: POLYPHONIC PRESSURE MIXER
+//####################################
+	min=0x00; max=0xff;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+static s32 LCD_Handler(u8 high_prio)
+  ..
+
+//####################################
+//# RIO: POLYPHONIC PRESSURE MIXER
+//####################################
+	const char page_name[8][13] = {
+	  "MIDI Port   ",
+	  "MIDI Channel",
+	  "Prog.Change ",
+	  "Volume      ",
+	  "Panorama    ",
+	  "Reverb      ",
+	  "Chorus      ",
+	  "ModWheel    ",
+	};
+	SEQ_LCD_PrintString((char *)page_name[mixer_par]);
+      } else {
+    s32 value = SEQ_MIXER_Get(ui_selected_item, mixer_par-SEQ_MIXER_PAR_CC1+SEQ_MIXER_PAR_CC1_NUM);
+    if (value > 127)	SEQ_LCD_PrintFormattedString("PP%d #%3d    ", mixer_par-SEQ_MIXER_PAR_CC1+1, value-128);
+    else							SEQ_LCD_PrintFormattedString("CC%d #%3d    ", mixer_par-SEQ_MIXER_PAR_CC1+1, value);
+      }
+      SEQ_LCD_PrintSpaces(7);
+    } else {
+      SEQ_LCD_PrintFormattedString("Assignment CC/PP %d ", mixer_par-SEQ_MIXER_PAR_CC1_NUM+1);
+    }
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+  ..
+
+	} else {
+		//####################################
+		//# RIO: POLYPHONIC PRESSURE MIXER
+		//####################################
+		if( mixer_par >= SEQ_MIXER_PAR_CC1_NUM && mixer_par <= SEQ_MIXER_PAR_CC4_NUM && value > 127)
+			SEQ_LCD_PrintFormattedString(" %3d+", value-128);
+		else SEQ_LCD_PrintFormattedString(" %3d ", value);
+		//####################################
+		//# RIO: END MODIFICATION
+		//####################################
+	}
+
+  ..
+
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE MIXER
+    //####################################
+    SEQ_LCD_PrintString("CC/PP Assignments   LiveSend       Edit ");
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+
+
+seq_mixer.c -->
+
+//####################################
+//# RIO: POLYPHONIC PRESSURE MIXER
+//####################################
+
+/////////////////////////////////////////////////////////////////////////////
+// Sends a PP (PolyPressure) value, considers Bus target
+/////////////////////////////////////////////////////////////////////////////
+static s32 SEQ_MIXER_SendPP(mios32_midi_port_t midi_port, mios32_midi_chn_t midi_chn, u8 pp, u8 value)
+{
+  mios32_midi_package_t midi_package;
+
+  midi_package.type  = 0xa;
+  midi_package.evnt0 = 0xa0 | midi_chn;
+  midi_package.evnt1 = pp;
+  midi_package.evnt2 = value;
+
+  if( (midi_port & 0xf0) == 0xf0 ) { // send to bus?
+    // forward to router
+    SEQ_MIDI_ROUTER_Receive(midi_port, midi_package);
+
+    // forward to transposer/arpeggiator/CC parser/etc...
+    SEQ_MIDI_IN_Receive(midi_port, midi_package);
+
+    return 0; // no error
+  }
+
+  return MIOS32_MIDI_SendPackage(midi_port, midi_package);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Sends a single mixer value
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_MIXER_Send(u8 chn, seq_mixer_par_t par)
+{
+  mios32_midi_port_t midi_port = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_PORT);
+  mios32_midi_chn_t  midi_chn = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CHANNEL);
+
+  s32 value;
+  s32 value2;
+  if( (value=SEQ_MIXER_Get(chn, par)) < 0 )
+    return 0; // don't return error, as it could be misinterpreded as a MIDI interface issue
+
+  switch( par ) {
+    case SEQ_MIXER_PAR_PRG:
+      return value == 0 ? 0 : SEQ_MIXER_SendProgramChange(midi_port, midi_chn, value-1);
+    case SEQ_MIXER_PAR_VOLUME:   
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 7, value-1);
+    case SEQ_MIXER_PAR_PANORAMA: 
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 10, value-1);
+    case SEQ_MIXER_PAR_REVERB:   
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 91, value-1);
+    case SEQ_MIXER_PAR_CHORUS:
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 93, value-1);
+    case SEQ_MIXER_PAR_MODWHEEL:
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 1, value-1);
+
+    case SEQ_MIXER_PAR_CC1: 
+    case SEQ_MIXER_PAR_CC2:
+    case SEQ_MIXER_PAR_CC3:
+    case SEQ_MIXER_PAR_CC4:
+      if      (par == SEQ_MIXER_PAR_CC1)  value2 = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC1_NUM);
+      else if (par == SEQ_MIXER_PAR_CC2)  value2 = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC2_NUM);
+      else if (par == SEQ_MIXER_PAR_CC3)  value2 = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC3_NUM);
+      else                                value2 = SEQ_MIXER_Get(chn, SEQ_MIXER_PAR_CC4_NUM);
+      if (value2 > 127) return value == 0 ? 0 : SEQ_MIXER_SendPP(midi_port, midi_chn, value2-128, value-1);
+      else              return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, value2, value-1);
+  }
+
+  // not supported
+  // don't return error, as this could be misinterpreted as a MIDI interface issue
+  return 0;
+}
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+-----------------------------------------------------------------
+
+23. Upload via MIOS_STUDIO (mindestens 2.4.5)
+
+Säubern im verzeichnis in cmd: make clean
+Kompilieren im verzeichnis in cmd: make
+
+Das problem ist das der 4x USB MIDI Unterstützung des Boards unter Win7 einfach mal ausfällt. darum einfach im MIOS Terminal ein commando absetzen, z.B. help und dann packt der das für den ersten USBMIDI-Port.
+Besser noch man installiert GM5 Treiber, was aber nicht kompatibel ist, darum noch besser man deaktiviert die andern 3 durch BOOTLOADER raufspielen und set single_usb 1 und danach "store" im Terminal ausführen und
+in dafür im BOOTLOADER zu speichern. Dann APP rauf und er sollte sich immer verbinden können.

@@ -1,5 +1,5 @@
-MIO32 - MBSEQv4 - MOD
-=====================
+MIOS32 - MBSEQ v4 - MOD
+=======================
 ## Preamble
 
 This fork contains heavy modifications to the original MBSEQ v4 Master Branch. The customizations are largely compatible with the original version, but include the following changes. The modifications are compatible with the LPC1769 core. The original master branch on which the modifications are based lies in the branch 'original'. All changes in the source are uniformly marked with beginning and ending comment and described in detail in an explicite info file (in German).

@@ -8,9 +8,9 @@ This fork contains heavy modifications to the original MBSEQ v4 Master Branch. T
 
 1. Hardware Config
 
-  a. [Added: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/b33e896afac3e7300462678385642d790a279765)
+- a. [Added: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/b33e896afac3e7300462678385642d790a279765)
 
-  b. [Updated: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/6928bb396463b6587c4067984cba9d36c8f43985)
+- b. [Updated: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/6928bb396463b6587c4067984cba9d36c8f43985)
   * A new hardware-config file has been added: rio/MBSEQ_HW.V4`, which contains a few own adjustments of my hardware.
   
 2. [Set Default Mixer Map CCs (Bank #32 on CC4)](https://github.com/rio-rattenrudel/mios32/commit/f819b62f34d96abf60fec227359852559109abd5)
@@ -27,19 +27,19 @@ This fork contains heavy modifications to the original MBSEQ v4 Master Branch. T
 
 8. Little Remote Functions
 
-  a. [Feature: Little Remote Functions (+Mixer Dump +BPM)](https://github.com/rio-rattenrudel/mios32/commit/0fccefbcb7c1db8b09b6930d4b34577eadc78395)
+- a. [Feature: Little Remote Functions (+Mixer Dump +BPM)](https://github.com/rio-rattenrudel/mios32/commit/0fccefbcb7c1db8b09b6930d4b34577eadc78395)
 
-  b. [Fixed: Little Remote Functions (BPM Assignments)](https://github.com/rio-rattenrudel/mios32/commit/8e949d27a419daaf9ac75bddbe35d7a8a1c28f91)
+- b. [Fixed: Little Remote Functions (BPM Assignments)](https://github.com/rio-rattenrudel/mios32/commit/8e949d27a419daaf9ac75bddbe35d7a8a1c28f91)
 
 9. [Fixed: PATTERNS - Visual Updates for playing pattern](https://github.com/rio-rattenrudel/mios32/commit/8557f20868a7f596aa51279c8c776041be89ebb9)
 
 10. Expanded LFO
 
-  a. [Feature: Expanded LFO with special waveforms](https://github.com/rio-rattenrudel/mios32/commit/36a6266d499074261de17ed17fbb855e2cf63c79)
+- a. [Feature: Expanded LFO with special waveforms](https://github.com/rio-rattenrudel/mios32/commit/36a6266d499074261de17ed17fbb855e2cf63c79)
 
-  b. [Feature: Expanded LFO II (Reset, Delayed, Display)](https://github.com/rio-rattenrudel/mios32/commit/a3b7baff0a7a6a9e20dac2870e94182e08a8f5c2)
+- b. [Feature: Expanded LFO II (Reset, Delayed, Display)](https://github.com/rio-rattenrudel/mios32/commit/a3b7baff0a7a6a9e20dac2870e94182e08a8f5c2)
 
-  c. [Fixed: Expanded LFO - Fade out](https://github.com/rio-rattenrudel/mios32/commit/51b5e481f5b528cd8d80142f7e39f4d4a72d4546)
+- c. [Fixed: Expanded LFO - Fade out](https://github.com/rio-rattenrudel/mios32/commit/51b5e481f5b528cd8d80142f7e39f4d4a72d4546)
   * _Note: affects data storage_
 
 11. [Feature: Proteus 2000 Integration](https://github.com/rio-rattenrudel/mios32/commit/b444395fcd240f7cd091f3c7e82c5dac74b18755)
@@ -58,9 +58,9 @@ This fork contains heavy modifications to the original MBSEQ v4 Master Branch. T
 
 17. Poly Pressure Feature
 
-  a. [Feature: Poly Pressure (Poly Aftertouch)](https://github.com/rio-rattenrudel/mios32/commit/4a8d6e5bdfd01b8758e158940f10daeec616a497)
+- a. [Feature: Poly Pressure (Poly Aftertouch)](https://github.com/rio-rattenrudel/mios32/commit/4a8d6e5bdfd01b8758e158940f10daeec616a497)
 
-  b. [Feature: Poly Pressure II (Mixer)](https://github.com/rio-rattenrudel/mios32/commit/712ecbb0d744e5b73b63051a25390812f2d1bc78)
+- b. [Feature: Poly Pressure II (Mixer)](https://github.com/rio-rattenrudel/mios32/commit/712ecbb0d744e5b73b63051a25390812f2d1bc78)
   * _Note: affects data storage_
 
 ## Recompile sizes

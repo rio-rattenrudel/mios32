@@ -6,9 +6,11 @@ This fork contains heavy modifications to the original MBSEQ v4 Master Branch. T
 
 ## Modifications
 
-1a. [Added: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/b33e896afac3e7300462678385642d790a279765)
+1. Hardware Config
 
-1b. [Updated: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/6928bb396463b6587c4067984cba9d36c8f43985)
+a. [Added: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/b33e896afac3e7300462678385642d790a279765)
+
+b. [Updated: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/6928bb396463b6587c4067984cba9d36c8f43985)
   * A new hardware-config file has been added: rio/MBSEQ_HW.V4`, which contains a few own adjustments of my hardware.
   
 2. [Set Default Mixer Map CCs (Bank #32 on CC4)](https://github.com/rio-rattenrudel/mios32/commit/f819b62f34d96abf60fec227359852559109abd5)
@@ -23,33 +25,43 @@ This fork contains heavy modifications to the original MBSEQ v4 Master Branch. T
 
 7. [Changed: PATTERN - Bank Change should be set, but not executed](https://github.com/rio-rattenrudel/mios32/commit/2d8ea3485af48c657afc8e980958978c032d15ca)
 
-8a. [Feature: Little Remote Functions (+Mixer Dump +BPM)](https://github.com/rio-rattenrudel/mios32/commit/0fccefbcb7c1db8b09b6930d4b34577eadc78395)
+8. Little Remote Functions
 
-8b. [Fixed: Little Remote Functions (BPM Assignments)](https://github.com/rio-rattenrudel/mios32/commit/8e949d27a419daaf9ac75bddbe35d7a8a1c28f91)
+a. [Feature: Little Remote Functions (+Mixer Dump +BPM)](https://github.com/rio-rattenrudel/mios32/commit/0fccefbcb7c1db8b09b6930d4b34577eadc78395)
+
+b. [Fixed: Little Remote Functions (BPM Assignments)](https://github.com/rio-rattenrudel/mios32/commit/8e949d27a419daaf9ac75bddbe35d7a8a1c28f91)
 
 9. [Fixed: PATTERNS - Visual Updates for playing pattern](https://github.com/rio-rattenrudel/mios32/commit/8557f20868a7f596aa51279c8c776041be89ebb9)
 
-10a. [Feature: Expanded LFO with special waveforms](https://github.com/rio-rattenrudel/mios32/commit/36a6266d499074261de17ed17fbb855e2cf63c79)
+10. Expanded LFO
 
-10b. [Feature: Expanded LFO II (Reset, Delayed, Display)](https://github.com/rio-rattenrudel/mios32/commit/a3b7baff0a7a6a9e20dac2870e94182e08a8f5c2)
+a. [Feature: Expanded LFO with special waveforms](https://github.com/rio-rattenrudel/mios32/commit/36a6266d499074261de17ed17fbb855e2cf63c79)
 
-10c. [Fixed: Expanded LFO - Fade out](https://github.com/rio-rattenrudel/mios32/commit/51b5e481f5b528cd8d80142f7e39f4d4a72d4546)
+b. [Feature: Expanded LFO II (Reset, Delayed, Display)](https://github.com/rio-rattenrudel/mios32/commit/a3b7baff0a7a6a9e20dac2870e94182e08a8f5c2)
+
+c. [Fixed: Expanded LFO - Fade out](https://github.com/rio-rattenrudel/mios32/commit/51b5e481f5b528cd8d80142f7e39f4d4a72d4546)
+  * _Note: a changed data structure is saved_
 
 11. [Feature: Proteus 2000 Integration](https://github.com/rio-rattenrudel/mios32/commit/b444395fcd240f7cd091f3c7e82c5dac74b18755)
 
 12. [Changed: Ignore Multi-Selection for tracks](https://github.com/rio-rattenrudel/mios32/commit/703445c0ea78d9cb6e468c1eadbb31fb4eb4b528)
 
 13. [Feature: Chord3 - Replacement (root, inv I, inv II)](https://github.com/rio-rattenrudel/mios32/commit/a784a9f851fdbadba8240522bb1e1aeac09b7373)
+  * _Note: a changed data structure is saved_
 
 14. [Feature: Mutes Layer](https://github.com/rio-rattenrudel/mios32/commit/a42e063ed5b61e31ffaeedf5ccecf2914adc6a37)
+  * _Note: a changed data structure is saved_
 
 15. [Changed: Use IIC-HACK firmware to allow 8 IIC port](https://github.com/rio-rattenrudel/mios32/commit/d485d7a08f962c78dbadc1680ed094ff28c01145)
 
 16. [Fixed: Start playback once - fixed bouncing button](https://github.com/rio-rattenrudel/mios32/commit/6e905d72e1d44befa386438e57925079c7e68041)
 
-17a. [Feature: Poly Pressure (Poly Aftertouch)](https://github.com/rio-rattenrudel/mios32/commit/4a8d6e5bdfd01b8758e158940f10daeec616a497)
+17. Poly Pressure Feature
 
-17b. [Feature: Poly Pressure II (Mixer)](https://github.com/rio-rattenrudel/mios32/commit/712ecbb0d744e5b73b63051a25390812f2d1bc78)
+a. [Feature: Poly Pressure (Poly Aftertouch)](https://github.com/rio-rattenrudel/mios32/commit/4a8d6e5bdfd01b8758e158940f10daeec616a497)
+
+b. [Feature: Poly Pressure II (Mixer)](https://github.com/rio-rattenrudel/mios32/commit/712ecbb0d744e5b73b63051a25390812f2d1bc78)
+  * _Note: a changed data structure is saved_
 
 ## Recompile sizes
 

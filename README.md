@@ -8,9 +8,9 @@ This fork contains heavy modifications to the original MBSEQ v4 Master Branch. T
 
 1. Hardware Config
 
-1a. [Added: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/b33e896afac3e7300462678385642d790a279765)
+ 1a. [Added: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/b33e896afac3e7300462678385642d790a279765)
 
-1b. [Updated: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/6928bb396463b6587c4067984cba9d36c8f43985)
+ 1b. [Updated: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/6928bb396463b6587c4067984cba9d36c8f43985)
 
 * A new hardware-config file has been added: rio/MBSEQ_HW.V4`, which contains a few own adjustments of my hardware.
   
@@ -40,7 +40,7 @@ This fork contains heavy modifications to the original MBSEQ v4 Master Branch. T
 
 10b. [Feature: Expanded LFO II (Reset, Delayed, Display)](https://github.com/rio-rattenrudel/mios32/commit/a3b7baff0a7a6a9e20dac2870e94182e08a8f5c2)
 
-- c. [Fixed: Expanded LFO - Fade out](https://github.com/rio-rattenrudel/mios32/commit/51b5e481f5b528cd8d80142f7e39f4d4a72d4546)
+10c. [Fixed: Expanded LFO - Fade out](https://github.com/rio-rattenrudel/mios32/commit/51b5e481f5b528cd8d80142f7e39f4d4a72d4546)
 
 * _Note: affects data storage_
 

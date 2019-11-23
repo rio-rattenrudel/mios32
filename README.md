@@ -2,7 +2,7 @@ MIOS32 - MBSEQ v4 - MOD
 =======================
 ## Preamble
 
-This fork contains heavy modifications to the original MBSEQ v4 Master Branch. The customizations are largely compatible with the original version, but include the following changes. The modifications are compatible with the LPC1769 core. The original master branch on which the modifications are based lies in the branch 'original'. All changes in the source are uniformly marked with beginning and ending comment and described in detail in an explicite info file (in German).
+This fork contains heavy modifications to the MBSEQ v4 Master Branch. The customizations are largely compatible with the original version (especially for the LPC1769 core), but include the following changes. The master branch version on which the modifications are based lies in the branch 'original'. All changes in the source are uniformly marked with beginning and ending comment and described in detail in an explicite info file (in German).
 
 ## Modifications
 
@@ -16,15 +16,25 @@ This fork contains heavy modifications to the original MBSEQ v4 Master Branch. T
   
 2. [Set Default Mixer Map CCs (Bank #32 on CC4)](https://github.com/rio-rattenrudel/mios32/commit/f819b62f34d96abf60fec227359852559109abd5)
 
+* The default CCs have been changed, also with the background of CC #32 - the Bankchange CC always ready to have.
+  
 3. [Using the BPM DataWheel in MUTE and PATTERN SCREEN](https://github.com/rio-rattenrudel/mios32/commit/2c5c8c7cf2d13bd586ba9d1d8777219e64fb6549)
+
+* This is comfortable in these screens.
 
 4. [Disable Board LEDs](https://github.com/rio-rattenrudel/mios32/commit/86219c6bfb30c0cdc701e08f40ed9ab4c7230f5b)
 
+* The LEDs actually shimmered through the case and are irrelevant.
+
 5. [Fixed: Selected Pattern Group - Display Update](https://github.com/rio-rattenrudel/mios32/commit/b4bb6aa1a2f24036bcb2a531e550694ea790fd64)
+
+* This fix shows the patterns (you want to change) correctly.
 
 6. [Changed: MIXER - Separated Load & Dump CC](https://github.com/rio-rattenrudel/mios32/commit/458a5f7cd9f34d44d8ce48d0c27219b6607d275e)
 
-7. [Changed: PATTERN - Bank Change should be set, but not executed](https://github.com/rio-rattenrudel/mios32/commit/2d8ea3485af48c657afc8e980958978c032d15ca)
+* Mixer load and mixer dump are available here as two independent CCs as they work completely independently of each other. "Load" - loads the map time-consuming from the SD. This can happen before a pending change. The "dump", however, sends the map directly out.
+
+7. [Changed: Bank Change should be set, but not executed](https://github.com/rio-rattenrudel/mios32/commit/2d8ea3485af48c657afc8e980958978c032d15ca)
 
 8. Little Remote Functions
 

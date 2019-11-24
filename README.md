@@ -12,7 +12,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Updated: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/6928bb396463b6587c4067984cba9d36c8f43985)
 
-* A new hardware-config file has been added: rio/MBSEQ_HW.V4`, which contains a few own adjustments of my hardware.
+* A new hardware-config file has been added: rio/MBSEQ_HW.V4, which contains a few own adjustments of my hardware.
   
 2. [Set Default Mixer Map CCs (Bank #32 on CC4)](https://github.com/rio-rattenrudel/mios32/commit/f819b62f34d96abf60fec227359852559109abd5)
 

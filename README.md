@@ -16,7 +16,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
   
 2. [Set Default Mixer Map CCs (Bank #32 on CC4)](https://github.com/rio-rattenrudel/mios32/commit/f819b62f34d96abf60fec227359852559109abd5)
 
-* The default CCs have been changed, also with the background of CC #32 - the Bankchange CC always ready to have.
+* The default CCs have been changed, also with the background of CC #32 (Bankchange) always ready to have.
   
 3. [Using the BPM DataWheel in MUTE and PATTERN SCREEN](https://github.com/rio-rattenrudel/mios32/commit/2c5c8c7cf2d13bd586ba9d1d8777219e64fb6549)
 
@@ -36,7 +36,11 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 7. [Changed: Bank Change should be set, but not executed](https://github.com/rio-rattenrudel/mios32/commit/2d8ea3485af48c657afc8e980958978c032d15ca)
 
+* Incoming bank changes should be registered, but not immediately cause a change. This is done by the pattern change.
+
 8. Little Remote Functions
+
+* Little Remote CCs were introduced to allow fast and direct working on the sequencer externally.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Feature: Little Remote Functions (+Mixer Dump +BPM)](https://github.com/rio-rattenrudel/mios32/commit/0fccefbcb7c1db8b09b6930d4b34577eadc78395)
 

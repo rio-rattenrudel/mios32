@@ -94,7 +94,7 @@ The fade-out feature has been fixed here.
 
 17. Poly Pressure Feature
 
-* Special feature to enable sending of Poly Pressure events (equivalent to CC). It was less about the event, as the same, but rather to be able to control all the parameters of the Access Virus A,B,C... etc. Polypressure can be sent by Layer, Mixer or LFO.
+* Special feature to enable sending of Poly Pressure events (equivalent to CC). It was less about the pressure (multi aftertouch) event itself, but rather to be able to control all the parameters of the Access Virus A,B,C... etc. Polypressure can be sent by Layer, Mixer or LFO.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Feature: Poly Pressure (Poly Aftertouch)](https://github.com/rio-rattenrudel/mios32/commit/4a8d6e5bdfd01b8758e158940f10daeec616a497)
 

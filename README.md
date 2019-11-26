@@ -40,41 +40,61 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 8. Little Remote Functions
 
-* Little Remote CCs were introduced to allow fast and direct working on the sequencer externally.
+* Little Remote CCs were introduced to allow fast and direct working on the sequencer externally. Some functions allow fast movement within the views, other functions are for copying, pasting or editing steps. In addition, patterns can be muted or the tempo can be adjusted or, last but not least, a mixer dump can be triggered.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Feature: Little Remote Functions (+Mixer Dump +BPM)](https://github.com/rio-rattenrudel/mios32/commit/0fccefbcb7c1db8b09b6930d4b34577eadc78395)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Fixed: Little Remote Functions (BPM Assignments)](https://github.com/rio-rattenrudel/mios32/commit/8e949d27a419daaf9ac75bddbe35d7a8a1c28f91)
 
-9. [Fixed: PATTERNS - Visual Updates for playing pattern](https://github.com/rio-rattenrudel/mios32/commit/8557f20868a7f596aa51279c8c776041be89ebb9)
+9. [Fixed: Visual Updates for playing pattern](https://github.com/rio-rattenrudel/mios32/commit/8557f20868a7f596aa51279c8c776041be89ebb9)
 
 10. Expanded LFO
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Feature: Expanded LFO with special waveforms](https://github.com/rio-rattenrudel/mios32/commit/36a6266d499074261de17ed17fbb855e2cf63c79)
 
+The LFO has been enhanced with special waveforms: quantized saws and saws with different rising course, where in addition to the progression (quarter, half, 3 quarter, everything) a rate-multiplier and a quantizer can be set. Also, the progression can be reversed. In addition, the phase endpoint was corrected.
+
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Feature: Expanded LFO II (Reset, Delayed, Display)](https://github.com/rio-rattenrudel/mios32/commit/a3b7baff0a7a6a9e20dac2870e94182e08a8f5c2)
 
+Furthermore, a reset count was introduced for the effect of rising spirals and a delay time was introduced before the LFO starts. The first version of a fade-out (fade high/low) was implemented (here still faulty).
+
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c. [Fixed: Expanded LFO - Fade out](https://github.com/rio-rattenrudel/mios32/commit/51b5e481f5b528cd8d80142f7e39f4d4a72d4546)
+
+The fade-out feature has been fixed here.
 
 * _Note: affects data storage_
 
 11. [Feature: Proteus 2000 Integration](https://github.com/rio-rattenrudel/mios32/commit/b444395fcd240f7cd091f3c7e82c5dac74b18755)
 
+It is possible to directly select the channel of the Proteus devices - even if you have a proteus device. The metronome and scrubbing function have been overridden for this.
+
 12. [Changed: Ignore Multi-Selection for tracks](https://github.com/rio-rattenrudel/mios32/commit/703445c0ea78d9cb6e468c1eadbb31fb4eb4b528)
 
+I find it difficult to work with multiple selection, and especially since it is possible to select the tracks much faster without the multiple selection.
+
 13. [Feature: Chord3 - Replacement (root, inv I, inv II)](https://github.com/rio-rattenrudel/mios32/commit/a784a9f851fdbadba8240522bb1e1aeac09b7373)
+
+A complete and very own chord replacement with a lot of inversions
 
 * _Note: affects data storage_
 
 14. [Feature: Mutes Layer](https://github.com/rio-rattenrudel/mios32/commit/a42e063ed5b61e31ffaeedf5ccecf2914adc6a37)
 
+A mute-layer parameter is the fastest and most direct way (without latences) to automatically mute or unmute tracks.
+
 * _Note: affects data storage_
 
 15. [Changed: Use IIC-HACK firmware to allow 8 IIC port](https://github.com/rio-rattenrudel/mios32/commit/d485d7a08f962c78dbadc1680ed094ff28c01145)
 
+This hack allows you to switch 2x Quad IIC modules in a row. The requirement is that the firmware of the IIC Pics get its own (and therefore higher) ID.
+
 16. [Fixed: Start playback once - fixed bouncing button](https://github.com/rio-rattenrudel/mios32/commit/6e905d72e1d44befa386438e57925079c7e68041)
 
+Simpler Fix to prevent the bouncing of a more used button.
+
 17. Poly Pressure Feature
+
+Special feature to enable sending of Poly Pressure events (equivalent to CC). It was less about the event, as the same, but rather to be able to control all the parameters of the Access Virus A,B,C... etc. Polypressure can be sent by Layer, Mixer or LFO.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Feature: Poly Pressure (Poly Aftertouch)](https://github.com/rio-rattenrudel/mios32/commit/4a8d6e5bdfd01b8758e158940f10daeec616a497)
 

@@ -98,7 +98,11 @@ The fade-out feature has been fixed here.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Feature: Poly Pressure (Poly Aftertouch)](https://github.com/rio-rattenrudel/mios32/commit/4a8d6e5bdfd01b8758e158940f10daeec616a497)
 
+* The Extra-CC assignment can be changed by the 13th button to PP (PolyPressure). Then the LFO will be sent out as a PolyPressure Event. In the track layer, the PP event can now also be selected equivalently to the CC.
+
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Feature: Poly Pressure II (Mixer)](https://github.com/rio-rattenrudel/mios32/commit/712ecbb0d744e5b73b63051a25390812f2d1bc78)
+
+* In the Mixer Map, the CC assignments (128..255) are considered PP assignments (PolyPressure). These PP assignments are represented by the number 1..127 and a '+' character.
 
 * _Note: affects data storage_
 

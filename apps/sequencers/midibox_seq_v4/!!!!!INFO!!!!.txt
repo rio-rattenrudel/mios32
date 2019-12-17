@@ -11,7 +11,7 @@ original max size:
 ------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 406964     936   62536  470436   72da4 project_build/project.elf
+ 406932     936   62536  470404   72d84 project_build/project.elf
 10000000 B __ram_start
 10007d48 B __ram_end
 2007c000 D __ram_start_ahb
@@ -21,7 +21,7 @@ modified size (mit IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 415828     936   62896  479660   751ac project_build/project.elf
+ 415804     936   62896  479636   75194 project_build/project.elf
 10000000 B __ram_start
 10007eb0 B __ram_end
 2007c000 D __ram_start_ahb

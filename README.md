@@ -106,6 +106,10 @@ The fade-out feature has been fixed here.
 
 * _Note: affects data storage_
 
+18. [Feature: Tap Tempo - Beat Controller](https://github.com/rio-rattenrudel/mios32/commit/b7834298602f0dbf8bf8d3313261790ad375a609)
+
+* This feature allows the (repeated) sending of tap tempo information to a selected port. The tap tempo is triggered again by "Start" and "BPM" updates.
+
 ## Recompile sizes
 
 ```
@@ -131,7 +135,7 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 415828     936   62896  479660   751ac project_build/project.elf
+ 416236     936   62896  480068   75344 project_build/project.elf
 10000000 B __ram_start
 10007eb0 B __ram_end
 2007c000 D __ram_start_ahb

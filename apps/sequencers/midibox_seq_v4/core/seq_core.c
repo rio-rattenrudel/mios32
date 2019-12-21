@@ -49,6 +49,13 @@
 #include "seq_statistics.h"
 #include "seq_ui.h"
 
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+#include "seq_hwcfg.h"
+//##################################
+//# RIO: END MODIFICATION
+//##################################
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -118,6 +125,13 @@ seq_core_loop_mode_t seq_core_glb_loop_mode;
 u8 seq_core_glb_loop_offset;
 u8 seq_core_glb_loop_steps;
 
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+u8 seq_core_tap_tempo_cc;
+//##################################
+//# RIO: END MODIFICATION
+//##################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Local variables
@@ -453,6 +467,14 @@ s32 SEQ_CORE_Handler(void)
       SEQ_SONG_Reset(0);
       SEQ_CORE_Reset(0);
       SEQ_MIDPLY_Reset();
+
+      //##################################
+      //# RIO: TAP TEMPO - BEAT CONVERTER
+      //##################################
+      seq_core_tap_tempo_cc = 0;
+      //##################################
+      //# RIO: END MODIFICATION
+      //##################################
 
       // song page: start song at current edit position
       if( ui_page == SEQ_UI_PAGE_SONG ) {
@@ -798,6 +820,36 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	}
       }
     }
+
+    //##################################
+    //# RIO: TAP TEMPO - BEAT CONVERTER
+    //##################################
+    if (bpm_tick % 384 == 0) {
+
+      if( seq_hwcfg_tap_tempo.port &&
+          seq_hwcfg_tap_tempo.cc &&
+          seq_hwcfg_tap_tempo.value &&
+          seq_hwcfg_tap_tempo.retries) {
+
+        if (seq_hwcfg_tap_tempo.retries <= 255 &&
+            seq_hwcfg_tap_tempo.retries > seq_core_tap_tempo_cc) {
+            seq_core_tap_tempo_cc++;
+
+            mios32_midi_package_t p;
+
+            p.type      = CC;
+            p.event     = CC;
+            p.chn       = 0;
+            p.cc_number = seq_hwcfg_tap_tempo.cc;
+            p.value     = seq_hwcfg_tap_tempo.value;
+
+            SEQ_MIDI_OUT_Send(seq_hwcfg_tap_tempo.port, p, SEQ_MIDI_OUT_CCEvent, bpm_tick, 0); 
+        }
+      }
+    }
+    //##################################
+    //# RIO: END MODIFICATION
+    //##################################
 
     // send metronome tick on each beat if enabled
     if( seq_core_state.METRONOME && seq_core_metronome_chn && (bpm_tick % 96) == 0 && (seq_core_state.ref_step % 4) == 0 ) {
@@ -2411,7 +2463,7 @@ s32 SEQ_CORE_AddForwardDelay(u16 delay_ms)
 // This function updates the BPM rate in a given sweep time
 /////////////////////////////////////////////////////////////////////////////
 s32 SEQ_CORE_BPM_Update(float bpm, float sweep_ramp)
-{
+{ 
   if( sweep_ramp <= 0.0 ) {
     seq_core_bpm_target = bpm;
     SEQ_BPM_Set(seq_core_bpm_target);
@@ -2421,6 +2473,14 @@ s32 SEQ_CORE_BPM_Update(float bpm, float sweep_ramp)
     seq_core_bpm_target = bpm;
     seq_core_bpm_sweep_inc = (seq_core_bpm_target - SEQ_BPM_Get()) / (10.0 * sweep_ramp);
   }
+
+  //##################################
+  //# RIO: TAP TEMPO - BEAT CONVERTER
+  //##################################
+  seq_core_tap_tempo_cc = 0;
+  //##################################
+  //# RIO: END MODIFICATION
+  //##################################
 
   return 0; // no error
 }

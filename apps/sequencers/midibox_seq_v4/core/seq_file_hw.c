@@ -1254,6 +1254,45 @@ s32 SEQ_FILE_HW_Read(void)
 #endif
 	  }	  
 
+	//##################################
+	//# RIO: TAP TEMPO - BEAT CONVERTER
+	//##################################
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// TAP_TEMPO_
+	////////////////////////////////////////////////////////////////////////////////////////////
+	} else if( strncasecmp(parameter, "TAP_TEMPO_", 10) == 0 ) {
+	  parameter += 10;
+
+	  char *word = strtok_r(NULL, separators, &brkt);
+	  s32 value = get_dec(word);
+	  if( value < 0 ) {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR in TAP_TEMPO_%s definition: invalid value '%s'!", parameter, word);
+#endif
+	    continue;
+	  }
+
+#if DEBUG_VERBOSE_LEVEL >= 3
+	  DEBUG_MSG("[SEQ_FILE_HW] TAP_TEMPO_%s: %d", parameter, value);
+#endif
+
+	  if( strcasecmp(parameter, "PORT") == 0 ) {
+	    seq_hwcfg_tap_tempo.port = value;
+	  } else if( strcasecmp(parameter, "CC") == 0 ) {
+	    seq_hwcfg_tap_tempo.cc = value;
+	  } else if( strcasecmp(parameter, "VALUE") == 0 ) {
+	    seq_hwcfg_tap_tempo.value = value;
+	  } else if( strcasecmp(parameter, "RETRIES") == 0 ) {
+	    seq_hwcfg_tap_tempo.retries = value;
+	  } else {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown TAP_TEMPO_* name '%s'!", parameter);
+#endif
+	  }
+	//##################################
+	//# RIO: END MODIFICATION
+	//##################################
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	// misc
 	////////////////////////////////////////////////////////////////////////////////////////////

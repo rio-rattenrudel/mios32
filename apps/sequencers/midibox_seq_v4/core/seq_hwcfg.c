@@ -501,6 +501,20 @@ seq_hwcfg_tpd_t seq_hwcfg_tpd = {
 };
 
 
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+seq_hwcfg_tap_tempo_t seq_hwcfg_tap_tempo = {
+  .port = 0,
+  .cc = 0,
+  .value = 0,
+  .retries = 0,
+};
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+
 u8 seq_hwcfg_dout_gate_sr[SEQ_HWCFG_NUM_SR_DOUT_GATES];
 u8 seq_hwcfg_cv_gate_sr[SEQ_HWCFG_NUM_SR_CV_GATES];
 u8 seq_hwcfg_clk_sr = 0;

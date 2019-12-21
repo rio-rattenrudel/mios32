@@ -301,6 +301,18 @@ typedef struct {
   u8 rows_sr_red[2];
 } seq_hwcfg_tpd_t;
 
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+typedef struct {
+  u8 port;
+  u8 cc;
+  u8 value;
+  u8 retries;
+} seq_hwcfg_tap_tempo_t;
+//##################################
+//# RIO: END MODIFICATION
+//##################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Prototypes
@@ -321,6 +333,13 @@ extern seq_hwcfg_enc_t seq_hwcfg_enc;
 extern seq_hwcfg_bpm_digits_t seq_hwcfg_bpm_digits;
 extern seq_hwcfg_step_digits_t seq_hwcfg_step_digits;
 extern seq_hwcfg_tpd_t seq_hwcfg_tpd;
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+extern seq_hwcfg_tap_tempo_t seq_hwcfg_tap_tempo;
+//##################################
+//# RIO: END MODIFICATION
+//##################################
 
 extern u8 seq_hwcfg_dout_gate_sr[SEQ_HWCFG_NUM_SR_DOUT_GATES];
 extern u8 seq_hwcfg_cv_gate_sr[SEQ_HWCFG_NUM_SR_CV_GATES];

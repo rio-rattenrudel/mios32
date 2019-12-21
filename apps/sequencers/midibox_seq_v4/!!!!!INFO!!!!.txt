@@ -21,7 +21,7 @@ modified size (mit IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 415804     936   62896  479636   75194 project_build/project.elf
+ 416236     936   62896  480068   75344 project_build/project.elf
 10000000 B __ram_start
 10007eb0 B __ram_end
 2007c000 D __ram_start_ahb
@@ -80,6 +80,9 @@ seq_core.c
 seq_layer.c
 seq_pp_labels.c  (neu erstellt!)
 seq_pp_labels.h  (neu erstellt!)
+seq_hwcfg.c
+seq_hwcfg.h
+seq_file_hw.c
 Makefile
 
 -----------------------------------------------------------------
@@ -4623,7 +4626,230 @@ s32 SEQ_MIXER_Send(u8 chn, seq_mixer_par_t par)
 
 -----------------------------------------------------------------
 
-23. Upload via MIOS_STUDIO (mindestens 2.4.5)
+23. Tap Tempo - Beat Converter
+
+MBSEQ_HW.V4 -->
+
+##################################################
+# RIO: Tap Tempo - Beat Converter
+##################################################
+
+TAP_TEMPO_PORT    0
+TAP_TEMPO_CC    0
+TAP_TEMPO_VALUE   0
+TAP_TEMPO_RETRIES 0
+
+
+seq_hwcfg.h -->
+
+..
+} seq_hwcfg_tpd_t;
+
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+typedef struct {
+  u8 port;
+  u8 cc;
+  u8 value;
+  u8 retries;
+} seq_hwcfg_tap_tempo_t;
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Export global variables
+/////////////////////////////////////////////////////////////////////////////
+
+..
+extern seq_hwcfg_tpd_t seq_hwcfg_tpd;
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+extern seq_hwcfg_tap_tempo_t seq_hwcfg_tap_tempo;
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+
+seq_hwcfg.c -->
+
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+seq_hwcfg_tap_tempo_t seq_hwcfg_tap_tempo = {
+  .port = 0,
+  .cc = 0,
+  .value = 0,
+  .retries = 0,
+};
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+
+seq_file_hw.c -->
+
+s32 SEQ_FILE_HW_Read(void)
+{
+	..
+
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown STEP_TPM_* name '%s'!", parameter);
+#endif
+	  }	  
+
+	//##################################
+	//# RIO: TAP TEMPO - BEAT CONVERTER
+	//##################################
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// TAP_TEMPO_
+	////////////////////////////////////////////////////////////////////////////////////////////
+	} else if( strncasecmp(parameter, "TAP_TEMPO_", 10) == 0 ) {
+	  parameter += 10;
+
+	  char *word = strtok_r(NULL, separators, &brkt);
+	  s32 value = get_dec(word);
+	  if( value < 0 ) {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR in TAP_TEMPO_%s definition: invalid value '%s'!", parameter, word);
+#endif
+	    continue;
+	  }
+
+#if DEBUG_VERBOSE_LEVEL >= 3
+	  DEBUG_MSG("[SEQ_FILE_HW] TAP_TEMPO_%s: %d", parameter, value);
+#endif
+
+	  if( strcasecmp(parameter, "PORT") == 0 ) {
+	    seq_hwcfg_tap_tempo.port = value;
+	  } else if( strcasecmp(parameter, "CC") == 0 ) {
+	    seq_hwcfg_tap_tempo.cc = value;
+	  } else if( strcasecmp(parameter, "VALUE") == 0 ) {
+	    seq_hwcfg_tap_tempo.value = value;
+	  } else if( strcasecmp(parameter, "RETRIES") == 0 ) {
+	    seq_hwcfg_tap_tempo.retries = value;
+	  } else {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown TAP_TEMPO_* name '%s'!", parameter);
+#endif
+	  }
+	//##################################
+	//# RIO: END MODIFICATION
+	//##################################
+
+
+seq_core -->
+
+..
+#include "seq_ui.h"
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+#include "seq_hwcfg.h"
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+/////////////////////////////////////////////////////////////////////////////
+// Global variables
+/////////////////////////////////////////////////////////////////////////////
+
+..
+u8 seq_core_glb_loop_steps;
+
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+u8 seq_core_tap_tempo_cc;
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+
+s32 SEQ_CORE_BPM_Update(float bpm, float sweep_ramp)
+{ 
+  if( sweep_ramp <= 0.0 ) {
+    seq_core_bpm_target = bpm;
+    SEQ_BPM_Set(seq_core_bpm_target);
+    SEQ_MIDI_PORT_ClkDelayUpdateAll();
+    seq_core_bpm_sweep_inc = 0.0;
+  } else {
+    seq_core_bpm_target = bpm;
+    seq_core_bpm_sweep_inc = (seq_core_bpm_target - SEQ_BPM_Get()) / (10.0 * sweep_ramp);
+  }
+
+  //##################################
+  //# RIO: TAP TEMPO - BEAT CONVERTER
+  //##################################
+  seq_core_tap_tempo_cc = 0;
+  //##################################
+  //# RIO: END MODIFICATION
+  //##################################
+
+  return 0; // no error
+}
+
+
+s32 SEQ_CORE_Handler(void)
+{
+	..
+    if( SEQ_BPM_ChkReqStart() ) {
+    	..
+      SEQ_MIDPLY_Reset();
+
+      //##################################
+      //# RIO: TAP TEMPO - BEAT CONVERTER
+      //##################################
+      seq_core_tap_tempo_cc = 0;
+      //##################################
+      //# RIO: END MODIFICATION
+      //##################################
+
+
+s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
+{
+	..
+	  SEQ_MIDI_OUT_Send(0xff, p, SEQ_MIDI_OUT_ClkEvent, bpm_tick, 0);
+	}
+      }
+    }
+
+    //##################################
+    //# RIO: TAP TEMPO - BEAT CONVERTER
+    //##################################
+    if (bpm_tick % 384 == 0) {
+
+      if( seq_hwcfg_tap_tempo.port &&
+          seq_hwcfg_tap_tempo.cc &&
+          seq_hwcfg_tap_tempo.value &&
+          seq_hwcfg_tap_tempo.retries) {
+
+        if (seq_hwcfg_tap_tempo.retries <= 255 &&
+            seq_hwcfg_tap_tempo.retries > seq_core_tap_tempo_cc) {
+            seq_core_tap_tempo_cc++;
+
+            mios32_midi_package_t p;
+
+            p.type      = CC;
+            p.event     = CC;
+            p.chn       = 0;
+            p.cc_number = seq_hwcfg_tap_tempo.cc;
+            p.value     = seq_hwcfg_tap_tempo.value;
+
+            SEQ_MIDI_OUT_Send(seq_hwcfg_tap_tempo.port, p, SEQ_MIDI_OUT_CCEvent, bpm_tick, 0); 
+        }
+      }
+    }
+    //##################################
+    //# RIO: END MODIFICATION
+    //##################################
+
+-----------------------------------------------------------------
+
+24. Upload via MIOS_STUDIO (mindestens 2.4.5)
 
 Säubern im verzeichnis in cmd: make clean
 Kompilieren im verzeichnis in cmd: make

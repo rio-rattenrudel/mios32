@@ -2518,6 +2518,18 @@ s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
     if( pin == seq_hwcfg_button.group[i] )
       return SEQ_UI_Button_Group(pin_value, i);
 
+  //##################################
+  //# RIO: NEXT/PREV GROUP
+  //##################################
+  if( pin == seq_hwcfg_button.prev_grp )
+    return SEQ_UI_Button_Group(pin_value, ui_selected_group-1);
+
+  if( pin == seq_hwcfg_button.next_grp )
+    return SEQ_UI_Button_Group(pin_value, ui_selected_group+1);
+  //##################################
+  //# RIO: END MODIFICATION
+  //##################################
+
   for(i=0; i<SEQ_HWCFG_NUM_PAR_LAYER; ++i)
     if( pin == seq_hwcfg_button.par_layer[i] )
       return SEQ_UI_Button_ParLayer(pin_value, i);

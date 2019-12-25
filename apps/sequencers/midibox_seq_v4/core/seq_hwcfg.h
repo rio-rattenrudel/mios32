@@ -94,6 +94,15 @@ typedef struct {
 
   u16 group[SEQ_HWCFG_NUM_GROUP];
 
+  //##################################
+  //# RIO: NEXT/PREV GROUP
+  //##################################
+  u16 prev_grp;
+  u16 next_grp;
+  //##################################
+  //# RIO: END MODIFICATION
+  //##################################
+
   u16 trg_layer[SEQ_HWCFG_NUM_TRG_LAYER];
 
   u16 utility;

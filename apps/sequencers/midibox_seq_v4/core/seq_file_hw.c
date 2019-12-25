@@ -492,6 +492,16 @@ s32 SEQ_FILE_HW_Read(void)
 	  } else if( strncasecmp(parameter, "GROUP", 5) == 0 && // GROUP[1234]
 		     (hlp=parameter[5]-'1') >= 0 && hlp < 4 ) {
 	    seq_hwcfg_button.group[hlp] = din_value;
+	  //##################################
+	  //# RIO: NEXT/PREV GROUP
+	  //##################################
+	  } else if( strcasecmp(parameter, "PREV_GRP") == 0 ) {
+	    seq_hwcfg_button.prev_grp = din_value;
+	  } else if( strcasecmp(parameter, "NEXT_GRP") == 0 ) {
+	    seq_hwcfg_button.next_grp = din_value;
+	  //##################################
+	  //# RIO: END MODIFICATION
+	  //##################################
 	  } else if( strncasecmp(parameter, "TRG_LAYER_", 10) == 0 && // TRG_LAYER_[ABC]
 		     (hlp=parameter[10]-'A') >= 0 && hlp < 3 ) {
 	    seq_hwcfg_button.trg_layer[hlp] = din_value;

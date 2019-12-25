@@ -21,11 +21,11 @@ modified size (mit IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 416236     936   62896  480068   75344 project_build/project.elf
+ 416348     944   62904  480196   753c4 project_build/project.elf
 10000000 B __ram_start
-10007eb0 B __ram_end
+10007eb8 B __ram_end
 2007c000 D __ram_start_ahb
-20083aa8 B __ram_end_ahb
+20083ab0 B __ram_end_ahb
 
 -----------------------------------------------------------------
 Erklärung:
@@ -4849,7 +4849,97 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 
 -----------------------------------------------------------------
 
-24. Upload via MIOS_STUDIO (mindestens 2.4.5)
+25. Next/Prev Group Button
+
+MBSEQ_HW.V4 -->
+
+###########################
+# RIO: NEXT/PREV GROUP
+###########################
+
+BUTTON_PREV_GRP	13   4
+BUTTON_NEXT_GRP	13   5
+
+###########################
+# RIO: END MODIFICATION
+###########################
+
+
+seq_hwcfg.h -->
+
+..
+  u16 group[SEQ_HWCFG_NUM_GROUP];
+
+  //##################################
+  //# RIO: NEXT/PREV GROUP
+  //##################################
+  u16 prev_grp;
+  u16 next_grp;
+  //##################################
+  //# RIO: END MODIFICATION
+  //##################################
+
+
+seq_hwcfg.c -->
+
+	..
+  .group[3] = (((13   -1)<<3)+    3),
+
+  //##################################
+  //# RIO: NEXT/PREV GROUP
+  //##################################
+  .prev_grp = (((13   -1)<<3)+    0),
+  .next_grp = (((13   -1)<<3)+    0),
+  //##################################
+  //# RIO: END MODIFICATION
+  //##################################
+
+
+seq_file_hw.c -->
+
+s32 SEQ_FILE_HW_Read(void)
+{
+	..
+
+	  } else if( strncasecmp(parameter, "GROUP", 5) == 0 && // GROUP[1234]
+		     (hlp=parameter[5]-'1') >= 0 && hlp < 4 ) {
+	    seq_hwcfg_button.group[hlp] = din_value;
+	  //##################################
+	  //# RIO: NEXT/PREV GROUP
+	  //##################################
+	  } else if( strcasecmp(parameter, "PREV_GRP") == 0 ) {
+	    seq_hwcfg_button.prev_grp = din_value;
+	  } else if( strcasecmp(parameter, "NEXT_GRP") == 0 ) {
+	    seq_hwcfg_button.next_grp = din_value;
+	  //##################################
+	  //# RIO: END MODIFICATION
+	  //##################################
+
+
+seq_ui.c -->
+
+s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
+{
+	..
+  for(i=0; i<SEQ_HWCFG_NUM_GROUP; ++i)
+    if( pin == seq_hwcfg_button.group[i] )
+      return SEQ_UI_Button_Group(pin_value, i);
+
+  //##################################
+  //# RIO: NEXT/PREV GROUP
+  //##################################
+  if( pin == seq_hwcfg_button.prev_grp )
+    return SEQ_UI_Button_Group(pin_value, ui_selected_group-1);
+
+  if( pin == seq_hwcfg_button.next_grp )
+    return SEQ_UI_Button_Group(pin_value, ui_selected_group+1);
+  //##################################
+  //# RIO: END MODIFICATION
+  //##################################
+
+-----------------------------------------------------------------
+
+25. Upload via MIOS_STUDIO (mindestens 2.4.5)
 
 Säubern im verzeichnis in cmd: make clean
 Kompilieren im verzeichnis in cmd: make

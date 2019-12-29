@@ -1213,16 +1213,11 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
                       break;
 
           case 15:    // NEXT TRACK
+                      SEQ_UI_GxTyInc(1);
+                      break;
+
           case 16:    // PREV TRACK
-
-                      // switch to next track
-                      if ((value == 15) && (visible_track < (SEQ_CORE_NUM_TRACKS - 1)) ) visible_track++;
-
-                      // switch to previous track
-                      if ((value == 16) && (visible_track >= 1 ) ) visible_track--;
-
-                      ui_selected_tracks = (1 << visible_track);
-                      ui_selected_group = visible_track / 4;
+                      SEQ_UI_GxTyInc(-1);
                       break;
 
           case 17:    // MUTE TRACK

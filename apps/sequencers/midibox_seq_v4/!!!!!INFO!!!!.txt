@@ -21,7 +21,7 @@ modified size (mit IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 416348     944   62904  480196   753c4 project_build/project.elf
+ 416316     944   62904  480164   753a4 project_build/project.elf
 10000000 B __ram_start
 10007eb8 B __ram_end
 2007c000 D __ram_start_ahb
@@ -794,16 +794,11 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value):
                       break;
 
           case 15:    // NEXT TRACK
+                      SEQ_UI_GxTyInc(1);
+                      break;
+
           case 16:    // PREV TRACK
-
-                      // switch to next track
-                      if ((value == 15) && (visible_track < (SEQ_CORE_NUM_TRACKS - 1)) ) visible_track++;
-
-                      // switch to previous track
-                      if ((value == 16) && (visible_track >= 1 ) ) visible_track--;
-
-                      ui_selected_tracks = (1 << visible_track);
-                      ui_selected_group = visible_track / 4;
+                      SEQ_UI_GxTyInc(-1);
                       break;
 
           case 17:    // MUTE TRACK

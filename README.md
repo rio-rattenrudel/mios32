@@ -86,7 +86,7 @@ The fade-out feature has been fixed here.
 
 15. [Changed: Use IIC-HACK firmware to allow 8 IIC port](https://github.com/rio-rattenrudel/mios32/commit/d485d7a08f962c78dbadc1680ed094ff28c01145)
 
-* This hack allows you to switch 2x Quad IIC modules in a row. The requirement is that the firmware of the IIC Pics get its own (and therefore higher) ID.
+* This hack allows you to use 2x Quad IIC modules in a row. The requirement is that the firmware of the IIC Pics get its own (and therefore higher) ID.
 
 16. [Fixed: Start playback once - fixed bouncing button](https://github.com/rio-rattenrudel/mios32/commit/6e905d72e1d44befa386438e57925079c7e68041)
 
@@ -112,7 +112,7 @@ The fade-out feature has been fixed here.
 
 19. [Feature: Clock Shifter](https://github.com/rio-rattenrudel/mios32/commit/924bd56061c24017291fae6e4347e30b93476cf0)
 
-* This function adds the clock shifter algorithm to a selected port. A port and a standard offset can be defined in the hardware configuration. The offset ranges from 0..95 (= 1bar [4/4 beat], values> 48 representing the negative values). With a user adjustment (via buttons), the offset can be moved forward or backward indefinitely.
+* This feature adds the clock shifter algorithm to a selected port. A port and a standard offset can be defined in the hardware configuration. The offset ranges from 0..95 (= 1bar [4/4 beat], values> 48 representing the negative values). With a user adjustment (via buttons), the offset can be moved forward or backward indefinitely.
 
 ## Recompile sizes
 

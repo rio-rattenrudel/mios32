@@ -250,7 +250,9 @@ s32 SEQ_MIDI_ROUTER_MIDIClockOutSet(mios32_midi_port_t port, u8 enable)
   return -1; // port not supported
 }
 
-
+//#######################################
+//# RIO: CLOCK SHIFTER
+//#######################################
 /////////////////////////////////////////////////////////////////////////////
 // This function sends a MIDI clock/Start/Stop/Continue event to all output
 // ports which have been enabled for this function.
@@ -259,12 +261,17 @@ s32 SEQ_MIDI_ROUTER_MIDIClockOutSet(mios32_midi_port_t port, u8 enable)
 /////////////////////////////////////////////////////////////////////////////
 s32 SEQ_MIDI_ROUTER_SendMIDIClockEvent(u8 evnt0, u32 bpm_tick)
 {
-  int i;
+  int i,j;
 
   mios32_midi_package_t p;
   p.ALL = 0;
   p.type = 0x5; // Single-byte system common message
   p.evnt0 = evnt0;
+
+  mios32_midi_package_t e;
+  e.ALL = 0;
+  e.type = 0x5; // Single-byte system common message
+  e.evnt0 = 0xf8;
 
   u32 port_mask = 0x00000001;
   for(i=0; i<32; ++i, port_mask<<=1) {
@@ -274,11 +281,51 @@ s32 SEQ_MIDI_ROUTER_SendMIDIClockEvent(u8 evnt0, u32 bpm_tick)
 
       // TODO: special check for OSC, since MIOS32_MIDI_CheckAvailable() won't work here
       if( MIOS32_MIDI_CheckAvailable(port) ) {
+
+        if( seq_ui_clk_shift_port == port ) {
+
+            if (evnt0 == 0xf8) {
+
+                // BACKWARD -OFFSET
+                if (seq_ui_clk_shift_status > 48) {
+                    if (seq_ui_clk_shift_status < 95) 
+                        seq_ui_clk_shift_status++;
+                    else seq_ui_clk_shift_status = 0;
+                    continue;
+                }
+
+                // BACKWARD -1
+                if (seq_ui_clk_shift_status == SEQ_UI_SHIFT_DOWN) {
+                    seq_ui_clk_shift_status = 0;
+                    continue;
+                }
+
+                // FORWARD +1
+                if (seq_ui_clk_shift_status == SEQ_UI_SHIFT_UP) {
+                    seq_ui_clk_shift_status = 0;
+                    SEQ_MIDI_OUT_Send(port, p, SEQ_MIDI_OUT_ClkEvent, bpm_tick, 0);
+                }
+            }
+        }
+
 	if( bpm_tick )
 	  SEQ_MIDI_OUT_Send(port, p, SEQ_MIDI_OUT_ClkEvent, bpm_tick, 0);
 	else {
 	  MUTEX_MIDIOUT_TAKE;
 	  MIOS32_MIDI_SendPackage(port, p);
+
+        if (evnt0 == 0xfa && seq_ui_clk_shift_port == port ) {
+            
+            if (seq_ui_clk_shift_offset > 48) 
+                seq_ui_clk_shift_status = seq_ui_clk_shift_offset;
+            else {
+                // FORWARD +OFFSET
+                seq_ui_clk_shift_status = 0;
+                for(j=0; j<seq_ui_clk_shift_offset; ++j)
+                    MIOS32_MIDI_SendPackage(port, e);
+            }
+        }
+
 	  MUTEX_MIDIOUT_GIVE;
 	}
       }
@@ -287,3 +334,6 @@ s32 SEQ_MIDI_ROUTER_SendMIDIClockEvent(u8 evnt0, u32 bpm_tick)
 
   return 0; // no error;
 }
+//#######################################
+//# RIO: END MODIFICATION
+//#######################################

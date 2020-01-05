@@ -492,6 +492,20 @@ extern s32 SEQ_UI_SONG_Button_Handler(seq_ui_button_t button, s32 depressed);
 extern u8 seq_ui_display_update_req;
 extern u8 seq_ui_display_init_req;
 
+//#######################################
+//# RIO: CLOCK SHIFTER
+//#######################################
+#define SEQ_UI_SHIFT_DOWN 2
+#define SEQ_UI_SHIFT_UP   1
+
+extern u16 seq_ui_clk_shift_update_cnt;
+extern u8 seq_ui_clk_shift_port;
+extern u8 seq_ui_clk_shift_offset;
+extern u8 seq_ui_clk_shift_status;
+//#######################################
+//# RIO: END MODIFICATION
+//#######################################
+
 extern seq_ui_button_state_t seq_ui_button_state;
 
 extern u8 ui_selected_group;

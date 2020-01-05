@@ -492,16 +492,20 @@ s32 SEQ_FILE_HW_Read(void)
 	  } else if( strncasecmp(parameter, "GROUP", 5) == 0 && // GROUP[1234]
 		     (hlp=parameter[5]-'1') >= 0 && hlp < 4 ) {
 	    seq_hwcfg_button.group[hlp] = din_value;
-	  //##################################
-	  //# RIO: NEXT/PREV GROUP
-	  //##################################
+	  //#######################################
+	  //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+	  //#######################################
 	  } else if( strcasecmp(parameter, "PREV_GRP") == 0 ) {
 	    seq_hwcfg_button.prev_grp = din_value;
 	  } else if( strcasecmp(parameter, "NEXT_GRP") == 0 ) {
 	    seq_hwcfg_button.next_grp = din_value;
-	  //##################################
+	  } else if( strcasecmp(parameter, "CLOCK_SHIFT_DN") == 0 ) {
+	    seq_hwcfg_button.clk_shift_dn = din_value;
+	  } else if( strcasecmp(parameter, "CLOCK_SHIFT_UP") == 0 ) {
+	    seq_hwcfg_button.clk_shift_up = din_value;
+	  //#######################################
 	  //# RIO: END MODIFICATION
-	  //##################################
+	  //#######################################
 	  } else if( strncasecmp(parameter, "TRG_LAYER_", 10) == 0 && // TRG_LAYER_[ABC]
 		     (hlp=parameter[10]-'A') >= 0 && hlp < 3 ) {
 	    seq_hwcfg_button.trg_layer[hlp] = din_value;
@@ -1265,7 +1269,7 @@ s32 SEQ_FILE_HW_Read(void)
 	  }	  
 
 	//##################################
-	//# RIO: TAP TEMPO - BEAT CONVERTER
+	//# RIO: TAP TEMPO / CLOCK SHIFTER
 	//##################################
 	////////////////////////////////////////////////////////////////////////////////////////////
 	// TAP_TEMPO_
@@ -1297,6 +1301,35 @@ s32 SEQ_FILE_HW_Read(void)
 	  } else {
 #if DEBUG_VERBOSE_LEVEL >= 1
 	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown TAP_TEMPO_* name '%s'!", parameter);
+#endif
+	  }
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// CLOCK_SHIFT_
+	////////////////////////////////////////////////////////////////////////////////////////////
+	} else if( strncasecmp(parameter, "CLOCK_SHIFT_", 12) == 0 ) {
+	  parameter += 12;
+
+	  char *word = strtok_r(NULL, separators, &brkt);
+	  s32 value = get_dec(word);
+	  if( value < 0 ) {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR in CLOCK_SHIFT_%s definition: invalid value '%s'!", parameter, word);
+#endif
+	    continue;
+	  }
+
+#if DEBUG_VERBOSE_LEVEL >= 3
+	  DEBUG_MSG("[SEQ_FILE_HW] CLOCK_SHIFT_%s: %d", parameter, value);
+#endif
+
+	  if( strcasecmp(parameter, "PORT") == 0 ) {
+	    seq_ui_clk_shift_port = value;
+	  } else if( strcasecmp(parameter, "OFFSET") == 0 ) {
+	    seq_ui_clk_shift_offset = value;
+	  } else {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown CLOCK_SHIFT_* name '%s'!", parameter);
 #endif
 	  }
 	//##################################

@@ -13,6 +13,17 @@ TAP_TEMPO_VALUE     0
 TAP_TEMPO_RETRIES   0
 
 ##################################################
+# RIO: Clock Shifter (Off: 0..95 [48:1/2 72:3/4])
+##################################################
+
+CLOCK_SHIFT_PORT    0
+CLOCK_SHIFT_OFFSET  72
+
+##################################################
+# RIO: END MODIFICATION
+##################################################
+
+##################################################
 # Shift Register Setup
 ##################################################
 
@@ -460,10 +471,23 @@ BUTTON_GP15  10   6
 BUTTON_GP16  10   7
 
 #              SR  Pin
-BUTTON_GROUP1	13   4
-BUTTON_GROUP2	13   5
-BUTTON_GROUP3	13   6
-BUTTON_GROUP4	13   7
+BUTTON_GROUP1	0   0
+BUTTON_GROUP2	0   0
+BUTTON_GROUP3	0   0
+BUTTON_GROUP4	0   0
+
+#######################################
+# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+#######################################
+
+BUTTON_PREV_GRP			13   4
+BUTTON_NEXT_GRP			13   5
+BUTTON_CLOCK_SHIFT_DN	13   6
+BUTTON_CLOCK_SHIFT_UP	13   7
+
+#######################################
+# RIO: END MODIFICATION
+#######################################
 
 # alternative (individual) track selection buttons
 # LEDs have to be assigned to TRACKS_DOUT_L_SR and TRACKS_DOUT_R_SR

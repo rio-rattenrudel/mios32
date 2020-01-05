@@ -57,6 +57,17 @@
 u8 seq_ui_display_update_req;
 u8 seq_ui_display_init_req;
 
+//#######################################
+//# RIO: CLOCK SHIFTER
+//#######################################
+u16 seq_ui_clk_shift_update_cnt;
+u8 seq_ui_clk_shift_port;
+u8 seq_ui_clk_shift_offset;
+u8 seq_ui_clk_shift_status;
+//#######################################
+//# RIO: END MODIFICATION
+//#######################################
+
 seq_ui_button_state_t seq_ui_button_state;
 
 u8 ui_selected_group;
@@ -2518,17 +2529,38 @@ s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
     if( pin == seq_hwcfg_button.group[i] )
       return SEQ_UI_Button_Group(pin_value, i);
 
-  //##################################
-  //# RIO: NEXT/PREV GROUP
-  //##################################
+  //#######################################
+  //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+  //#######################################
   if( pin == seq_hwcfg_button.prev_grp )
     return SEQ_UI_Button_Group(pin_value, ui_selected_group-1);
 
   if( pin == seq_hwcfg_button.next_grp )
     return SEQ_UI_Button_Group(pin_value, ui_selected_group+1);
-  //##################################
+
+  if( pin == seq_hwcfg_button.clk_shift_dn ) {
+    if (!pin_value) {
+      seq_ui_clk_shift_status = SEQ_UI_SHIFT_DOWN;
+      seq_ui_clk_shift_offset--;
+      if (seq_ui_clk_shift_offset > 95) seq_ui_clk_shift_offset = 95;
+      seq_ui_clk_shift_update_cnt = 0x3ff;
+    }
+    return 0;
+  }
+
+  if( pin == seq_hwcfg_button.clk_shift_up ) {
+    if (!pin_value) {
+      seq_ui_clk_shift_offset++;
+      if (seq_ui_clk_shift_offset > 95) seq_ui_clk_shift_offset = 0;
+      seq_ui_clk_shift_status = SEQ_UI_SHIFT_UP;
+      seq_ui_clk_shift_update_cnt = 0x3ff; 
+    }
+    return 0;
+  }
+
+  //#######################################
   //# RIO: END MODIFICATION
-  //##################################
+  //#######################################
 
   for(i=0; i<SEQ_HWCFG_NUM_PAR_LAYER; ++i)
     if( pin == seq_hwcfg_button.par_layer[i] )

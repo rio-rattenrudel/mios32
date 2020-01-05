@@ -312,6 +312,15 @@ void APP_SRIO_ServicePrepare(void)
     u8 common_enable = (seq_hwcfg_step_digits.enabled == 2) ? 1 : 0;
     
     int step = (int)(SEQ_BPM_IsRunning() ? seq_core_trk[SEQ_UI_VisibleTrackGet()].step : ui_selected_step) + 1;
+
+    //#######################################
+    //# RIO: CLOCK SHIFTER
+    //#######################################
+    if (seq_ui_clk_shift_update_cnt > 0) {
+      seq_ui_clk_shift_update_cnt--;
+      step = seq_ui_clk_shift_offset > 48 ? 96-seq_ui_clk_shift_offset : seq_ui_clk_shift_offset;
+    }
+
     if( led_digit_ctr == 4 ) {
       u8 sr_value = SEQ_LED_DigitPatternGet(step % 10);
       MIOS32_DOUT_SRSet(seq_hwcfg_step_digits.segments_sr - 1, sr_value ^ inversion_mask);
@@ -326,6 +335,7 @@ void APP_SRIO_ServicePrepare(void)
       MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common3_pin, !common_enable);
     } else if( led_digit_ctr == 6 ) {
       u8 sr_value = SEQ_LED_DigitPatternGet((step / 100) % 10);
+      if (seq_ui_clk_shift_update_cnt) sr_value = seq_ui_clk_shift_offset > 48 ? 0x01 : 0x00;
       MIOS32_DOUT_SRSet(seq_hwcfg_step_digits.segments_sr - 1, sr_value ^ inversion_mask);
       MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common1_pin, !common_enable);
       MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common2_pin, !common_enable);
@@ -336,6 +346,9 @@ void APP_SRIO_ServicePrepare(void)
       MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common2_pin, !common_enable);
       MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common3_pin, !common_enable);
     }    
+    //#######################################
+    //# RIO: END MODIFICATION
+    //#######################################
   }
   
   SEQ_TPD_LED_Update();     

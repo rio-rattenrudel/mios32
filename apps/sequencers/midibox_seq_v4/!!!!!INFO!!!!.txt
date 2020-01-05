@@ -21,7 +21,7 @@ modified size (mit IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 416316     944   62904  480164   753a4 project_build/project.elf
+ 417020     944   62904  480868   75664 project_build/project.elf
 10000000 B __ram_start
 10007eb8 B __ram_end
 2007c000 D __ram_start_ahb
@@ -49,6 +49,7 @@ Modifizierte Dateien:
 
 MBSEQ_HW.V4
 mios32_config.h
+app.c
 seq_lfo.c
 seq_lfo.h
 seq_midi_in.c
@@ -83,6 +84,7 @@ seq_pp_labels.h  (neu erstellt!)
 seq_hwcfg.c
 seq_hwcfg.h
 seq_file_hw.c
+seq_midi_router.c
 Makefile
 
 -----------------------------------------------------------------
@@ -4844,20 +4846,35 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 
 -----------------------------------------------------------------
 
-25. Next/Prev Group Button
+24. Next/Prev Group Button / Clock Shifter
 
 MBSEQ_HW.V4 -->
 
-###########################
-# RIO: NEXT/PREV GROUP
-###########################
+##################################################
+# RIO: Clock Shifter (Off: 0..95 [48:1/2 72:3/4])
+##################################################
 
-BUTTON_PREV_GRP	13   4
-BUTTON_NEXT_GRP	13   5
+CLOCK_SHIFT_PORT    0
+CLOCK_SHIFT_OFFSET  72
 
-###########################
+##################################################
 # RIO: END MODIFICATION
-###########################
+##################################################
+
+..
+
+#######################################
+# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+#######################################
+
+BUTTON_PREV_GRP			13   4
+BUTTON_NEXT_GRP			13   5
+BUTTON_CLOCK_SHIFT_DN	13   6
+BUTTON_CLOCK_SHIFT_UP	13   7
+
+#######################################
+# RIO: END MODIFICATION
+#######################################
 
 
 seq_hwcfg.h -->
@@ -4865,14 +4882,16 @@ seq_hwcfg.h -->
 ..
   u16 group[SEQ_HWCFG_NUM_GROUP];
 
-  //##################################
-  //# RIO: NEXT/PREV GROUP
-  //##################################
+  //#######################################
+  //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+  //#######################################
   u16 prev_grp;
   u16 next_grp;
-  //##################################
+  u16 clk_shift_dn;
+  u16 clk_shift_up;
+  //#######################################
   //# RIO: END MODIFICATION
-  //##################################
+  //#######################################
 
 
 seq_hwcfg.c -->
@@ -4880,17 +4899,70 @@ seq_hwcfg.c -->
 	..
   .group[3] = (((13   -1)<<3)+    3),
 
+  //#######################################
+  //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+  //#######################################
+  .prev_grp     = (((13   -1)<<3)+    0),
+  .next_grp     = (((13   -1)<<3)+    0),
+  .clk_shift_dn = (((13   -1)<<3)+    0),
+  .clk_shift_up = (((13   -1)<<3)+    0),
+  //#######################################
+  //# RIO: END MODIFICATION
+  //#######################################
+
+
+seq_file_hw.c -->
+
+s32 SEQ_FILE_HW_Read(void)
+{
+  ..
+
+#if DEBUG_VERBOSE_LEVEL >= 1
+      DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown STEP_TPM_* name '%s'!", parameter);
+#endif
+    }   
+
   //##################################
-  //# RIO: NEXT/PREV GROUP
+  //# RIO: TAP TEMPO / CLOCK SHIFTER
   //##################################
-  .prev_grp = (((13   -1)<<3)+    0),
-  .next_grp = (((13   -1)<<3)+    0),
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // TAP_TEMPO_
+  ////////////////////////////////////////////////////////////////////////////////////////////
+
+  ..
+
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // CLOCK_SHIFT_
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  } else if( strncasecmp(parameter, "CLOCK_SHIFT_", 12) == 0 ) {
+    parameter += 12;
+
+    char *word = strtok_r(NULL, separators, &brkt);
+    s32 value = get_dec(word);
+    if( value < 0 ) {
+#if DEBUG_VERBOSE_LEVEL >= 1
+      DEBUG_MSG("[SEQ_FILE_HW] ERROR in CLOCK_SHIFT_%s definition: invalid value '%s'!", parameter, word);
+#endif
+      continue;
+    }
+
+#if DEBUG_VERBOSE_LEVEL >= 3
+    DEBUG_MSG("[SEQ_FILE_HW] CLOCK_SHIFT_%s: %d", parameter, value);
+#endif
+
+    if( strcasecmp(parameter, "PORT") == 0 ) {
+      seq_ui_clk_shift_port = value;
+    } else if( strcasecmp(parameter, "OFFSET") == 0 ) {
+      seq_ui_clk_shift_offset = value;
+    } else {
+#if DEBUG_VERBOSE_LEVEL >= 1
+      DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown CLOCK_SHIFT_* name '%s'!", parameter);
+#endif
+    }
   //##################################
   //# RIO: END MODIFICATION
   //##################################
 
-
-seq_file_hw.c -->
 
 s32 SEQ_FILE_HW_Read(void)
 {
@@ -4899,19 +4971,41 @@ s32 SEQ_FILE_HW_Read(void)
 	  } else if( strncasecmp(parameter, "GROUP", 5) == 0 && // GROUP[1234]
 		     (hlp=parameter[5]-'1') >= 0 && hlp < 4 ) {
 	    seq_hwcfg_button.group[hlp] = din_value;
-	  //##################################
-	  //# RIO: NEXT/PREV GROUP
-	  //##################################
+	  //#######################################
+	  //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+	  //#######################################
 	  } else if( strcasecmp(parameter, "PREV_GRP") == 0 ) {
 	    seq_hwcfg_button.prev_grp = din_value;
 	  } else if( strcasecmp(parameter, "NEXT_GRP") == 0 ) {
 	    seq_hwcfg_button.next_grp = din_value;
-	  //##################################
+	  } else if( strcasecmp(parameter, "CLOCK_SHIFT_DN") == 0 ) {
+	    seq_hwcfg_button.clk_shift_dn = din_value;
+	  } else if( strcasecmp(parameter, "CLOCK_SHIFT_UP") == 0 ) {
+	    seq_hwcfg_button.clk_shift_up = din_value;
+	  //#######################################
 	  //# RIO: END MODIFICATION
-	  //##################################
+	  //#######################################
 
 
 seq_ui.c -->
+
+/////////////////////////////////////////////////////////////////////////////
+// Global variables
+/////////////////////////////////////////////////////////////////////////////
+..
+
+//#######################################
+//# RIO: CLOCK SHIFTER
+//#######################################
+u16 seq_ui_clk_shift_update_cnt;
+u8 seq_ui_clk_shift_port;
+u8 seq_ui_clk_shift_offset;
+u8 seq_ui_clk_shift_status;
+//#######################################
+//# RIO: END MODIFICATION
+//#######################################
+
+
 
 s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
 {
@@ -4920,17 +5014,211 @@ s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
     if( pin == seq_hwcfg_button.group[i] )
       return SEQ_UI_Button_Group(pin_value, i);
 
-  //##################################
-  //# RIO: NEXT/PREV GROUP
-  //##################################
+  //#######################################
+  //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+  //#######################################
   if( pin == seq_hwcfg_button.prev_grp )
     return SEQ_UI_Button_Group(pin_value, ui_selected_group-1);
 
   if( pin == seq_hwcfg_button.next_grp )
     return SEQ_UI_Button_Group(pin_value, ui_selected_group+1);
-  //##################################
+
+  if( pin == seq_hwcfg_button.clk_shift_dn ) {
+    if (!pin_value) {
+      seq_ui_clk_shift_status = SEQ_UI_SHIFT_DOWN;
+      seq_ui_clk_shift_offset--;
+      if (seq_ui_clk_shift_offset > 95) seq_ui_clk_shift_offset = 95;
+      seq_ui_clk_shift_update_cnt = 0x3ff;
+    }
+    return 0;
+  }
+
+  if( pin == seq_hwcfg_button.clk_shift_up ) {
+    if (!pin_value) {
+      seq_ui_clk_shift_offset++;
+      if (seq_ui_clk_shift_offset > 95) seq_ui_clk_shift_offset = 0;
+      seq_ui_clk_shift_status = SEQ_UI_SHIFT_UP;
+      seq_ui_clk_shift_update_cnt = 0x3ff; 
+    }
+    return 0;
+  }
+
+  //#######################################
   //# RIO: END MODIFICATION
-  //##################################
+  //#######################################
+
+
+seq_ui.h -->
+
+/////////////////////////////////////////////////////////////////////////////
+// Export global variables
+/////////////////////////////////////////////////////////////////////////////
+..
+
+//#######################################
+//# RIO: CLOCK SHIFTER
+//#######################################
+#define SEQ_UI_SHIFT_DOWN 2
+#define SEQ_UI_SHIFT_UP   1
+
+extern u16 seq_ui_clk_shift_update_cnt;
+extern u8 seq_ui_clk_shift_port;
+extern u8 seq_ui_clk_shift_offset;
+extern u8 seq_ui_clk_shift_status;
+//#######################################
+//# RIO: END MODIFICATION
+//#######################################
+
+
+app.c -->
+
+void APP_SRIO_ServicePrepare(void)
+{
+  ..
+    //#######################################
+    //# RIO: CLOCK SHIFTER
+    //#######################################
+    if (seq_ui_clk_shift_update_cnt > 0) {
+      seq_ui_clk_shift_update_cnt--;
+      step = seq_ui_clk_shift_offset > 48 ? 96-seq_ui_clk_shift_offset : seq_ui_clk_shift_offset;
+    }
+
+    if( led_digit_ctr == 4 ) {
+      u8 sr_value = SEQ_LED_DigitPatternGet(step % 10);
+      MIOS32_DOUT_SRSet(seq_hwcfg_step_digits.segments_sr - 1, sr_value ^ inversion_mask);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common1_pin, common_enable);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common2_pin, !common_enable);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common3_pin, !common_enable);
+    } else if( led_digit_ctr == 5 ) {
+      u8 sr_value = SEQ_LED_DigitPatternGet((step / 10) % 10);
+      MIOS32_DOUT_SRSet(seq_hwcfg_step_digits.segments_sr - 1, sr_value ^ inversion_mask);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common1_pin, !common_enable);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common2_pin, common_enable);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common3_pin, !common_enable);
+    } else if( led_digit_ctr == 6 ) {
+      u8 sr_value = SEQ_LED_DigitPatternGet((step / 100) % 10);
+      if (seq_ui_clk_shift_update_cnt) sr_value = seq_ui_clk_shift_offset > 48 ? 0x01 : 0x00;
+      MIOS32_DOUT_SRSet(seq_hwcfg_step_digits.segments_sr - 1, sr_value ^ inversion_mask);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common1_pin, !common_enable);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common2_pin, !common_enable);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common3_pin, common_enable);
+    }
+    else { // not displaying step digit in this cycle, disable common pins
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common1_pin, !common_enable);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common2_pin, !common_enable);
+      MIOS32_DOUT_PinSet(seq_hwcfg_step_digits.common3_pin, !common_enable);
+    }    
+    //#######################################
+    //# RIO: END MODIFICATION
+    //#######################################
+
+
+
+    //#######################################
+    //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+    //#######################################
+    } else if( strcasecmp(parameter, "PREV_GRP") == 0 ) {
+      seq_hwcfg_button.prev_grp = din_value;
+    } else if( strcasecmp(parameter, "NEXT_GRP") == 0 ) {
+      seq_hwcfg_button.next_grp = din_value;
+    } else if( strcasecmp(parameter, "CLOCK_SHIFT_DN") == 0 ) {
+      seq_hwcfg_button.clk_shift_dn = din_value;
+    } else if( strcasecmp(parameter, "CLOCK_SHIFT_UP") == 0 ) {
+      seq_hwcfg_button.clk_shift_up = din_value;
+    //#######################################
+    //# RIO: END MODIFICATION
+    //#######################################
+
+
+seq_midi_router.c -->
+
+//#######################################
+//# RIO: CLOCK SHIFTER
+//#######################################
+/////////////////////////////////////////////////////////////////////////////
+// This function sends a MIDI clock/Start/Stop/Continue event to all output
+// ports which have been enabled for this function.
+// if bpm_tick == 0, the event will be sent immediately, otherwise it will
+// be queued
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_MIDI_ROUTER_SendMIDIClockEvent(u8 evnt0, u32 bpm_tick)
+{
+  int i,j;
+
+  mios32_midi_package_t p;
+  p.ALL = 0;
+  p.type = 0x5; // Single-byte system common message
+  p.evnt0 = evnt0;
+
+  mios32_midi_package_t e;
+  e.ALL = 0;
+  e.type = 0x5; // Single-byte system common message
+  e.evnt0 = 0xf8;
+
+  u32 port_mask = 0x00000001;
+  for(i=0; i<32; ++i, port_mask<<=1) {
+    if( seq_midi_router_mclk_out & port_mask & 0xffffff0f ) { // filter USB5..USB8 to avoid unwanted clock events to non-existent ports
+      // coding: USB0..7, UART0..7, IIC0..7, OSC0..7
+      mios32_midi_port_t port = (USB0 + ((i&0x18) << 1)) | (i&7);
+
+      // TODO: special check for OSC, since MIOS32_MIDI_CheckAvailable() won't work here
+      if( MIOS32_MIDI_CheckAvailable(port) ) {
+
+        if( seq_ui_clk_shift_port == port ) {
+
+            if (evnt0 == 0xf8) {
+
+                // BACKWARD -OFFSET
+                if (seq_ui_clk_shift_status > 48) {
+                    if (seq_ui_clk_shift_status < 95) 
+                        seq_ui_clk_shift_status++;
+                    else seq_ui_clk_shift_status = 0;
+                    continue;
+                }
+
+                // BACKWARD -1
+                if (seq_ui_clk_shift_status == SEQ_UI_SHIFT_DOWN) {
+                    seq_ui_clk_shift_status = 0;
+                    continue;
+                }
+
+                // FORWARD +1
+                if (seq_ui_clk_shift_status == SEQ_UI_SHIFT_UP) {
+                    seq_ui_clk_shift_status = 0;
+                    SEQ_MIDI_OUT_Send(port, p, SEQ_MIDI_OUT_ClkEvent, bpm_tick, 0);
+                }
+            }
+        }
+
+	if( bpm_tick )
+	  SEQ_MIDI_OUT_Send(port, p, SEQ_MIDI_OUT_ClkEvent, bpm_tick, 0);
+	else {
+	  MUTEX_MIDIOUT_TAKE;
+	  MIOS32_MIDI_SendPackage(port, p);
+
+        if (evnt0 == 0xfa && seq_ui_clk_shift_port == port ) {
+            
+            if (seq_ui_clk_shift_offset > 48) 
+                seq_ui_clk_shift_status = seq_ui_clk_shift_offset;
+            else {
+                // FORWARD +OFFSET
+                seq_ui_clk_shift_status = 0;
+                for(j=0; j<seq_ui_clk_shift_offset; ++j)
+                    MIOS32_MIDI_SendPackage(port, e);
+            }
+        }
+
+	  MUTEX_MIDIOUT_GIVE;
+	}
+      }
+    }
+  }
+
+  return 0; // no error;
+}
+//#######################################
+//# RIO: END MODIFICATION
+//#######################################
 
 -----------------------------------------------------------------
 

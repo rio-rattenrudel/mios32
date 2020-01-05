@@ -110,6 +110,10 @@ The fade-out feature has been fixed here.
 
 * This feature allows the (repeated) sending of tap tempo information to a selected port. The tap tempo is triggered again by "Start" and "BPM" updates.
 
+19. [Feature: Clock Shifter](https://github.com/rio-rattenrudel/mios32/commit/924bd56061c24017291fae6e4347e30b93476cf0)
+
+* This function adds the clock shifter algorithm to a selected port. A port and a standard offset can be defined in the hardware configuration. The offset ranges from 0..95 (= 1bar [4/4 beat], values> 48 representing the negative values). With a user adjustment (via buttons), the offset can be moved forward or backward indefinitely.
+
 ## Recompile sizes
 
 ```

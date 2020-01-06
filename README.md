@@ -117,7 +117,7 @@ The fade-out feature has been fixed here.
 ## Recompile sizes
 
 ```
-Recompiling 4.096:
+Recompiling 4.096 for LPC1769:
 --------------------------------------------------------------------
 Application successfully built for:
 Processor: LPC1769
@@ -125,7 +125,7 @@ Family:    LPC17xx
 Board:     MBHP_CORE_LPC17
 LCD:       universal
 --------------------------------------------------------------------
-original max size:
+original size:
 ------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename

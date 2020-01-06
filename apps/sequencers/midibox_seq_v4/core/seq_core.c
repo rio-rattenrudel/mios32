@@ -801,9 +801,9 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
     if( (bpm_tick % 16) == 0 )
       SEQ_MIDI_ROUTER_SendMIDIClockEvent(0xf8, bpm_tick);
 
+#if !defined(MIOS32_DONT_USE_AOUT)
     // trigger DIN Sync clock with a special event (0xf9 normaly used for "MIDI tick")
     // SEQ_MIDI_PORT_NotifyMIDITx filters it before it will be forwarded to physical ports
-
     {
       int clkout;
 
@@ -820,6 +820,7 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	}
       }
     }
+#endif
 
     //##################################
     //# RIO: TAP TEMPO - BEAT CONVERTER
@@ -1188,7 +1189,7 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	    *next_ptr++ = 0;
 	  }
 	}
-
+	
 #ifdef MBSEQV4P
         seq_layer_evnt_t layer_events[83];
         s32 number_of_events = 0;

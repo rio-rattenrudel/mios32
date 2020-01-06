@@ -125,24 +125,24 @@ Family:    LPC17xx
 Board:     MBHP_CORE_LPC17
 LCD:       universal
 --------------------------------------------------------------------
-original size:
+original max size:
 ------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 406964     936   62536  470436   72da4 project_build/project.elf
+ 406932     936   62536  470404   72d84 project_build/project.elf
 10000000 B __ram_start
 10007d48 B __ram_end
 2007c000 D __ram_start_ahb
 20083aa8 B __ram_end_ahb
 
-modified size (with IIC Hack):
+modified size (mit IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 416236     936   62896  480068   75344 project_build/project.elf
+ 417020     944   62904  480868   75664 project_build/project.elf
 10000000 B __ram_start
-10007eb0 B __ram_end
+10007eb8 B __ram_end
 2007c000 D __ram_start_ahb
-20083aa8 B __ram_end_ahb
+20083ab0 B __ram_end_ahb
 -----------------------------------------------------------------
 ```

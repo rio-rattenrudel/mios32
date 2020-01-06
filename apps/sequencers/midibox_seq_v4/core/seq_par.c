@@ -63,29 +63,6 @@ static const char seq_par_type_names[SEQ_PAR_NUM_TYPES][6] = {
   "Root ", // 16
   "Scale", // 17
   "Chrd3", // 18
-//########################################
-//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
-//########################################
-  "Mute1", // 19
-  "Mute2", // 20
-  "Mute3", // 21
-  "Mute4", // 22
-  "Mute5", // 23
-  "Mute6", // 24
-  "Mute7", // 25
-  "Mute8", // 26
-  "Mute9", // 27
-  "Mut10", // 28
-  "Mut11", // 29
-  "Mut12", // 30
-  "Mut13", // 31
-  "Mut14", // 32
-  "Mut15", // 33
-  "Mut16", // 34
-  " PP  ", // 35
-//########################################
-//# RIO: END MODIFICATION
-//########################################
 };
 
 static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order for the UI selection
@@ -97,13 +74,6 @@ static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order
   SEQ_PAR_Type_Velocity,
   SEQ_PAR_Type_Length,
   SEQ_PAR_Type_CC,
-//####################################
-//# RIO: POLYPHONIC PRESSURE
-//####################################
-  SEQ_PAR_Type_PolyPressure,
-//####################################
-//# RIO: END MODIFICATION
-//####################################
   SEQ_PAR_Type_PitchBend,
   SEQ_PAR_Type_Aftertouch,
   SEQ_PAR_Type_ProgramChange,
@@ -115,28 +85,6 @@ static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order
   SEQ_PAR_Type_Nth2,
   SEQ_PAR_Type_Root,
   SEQ_PAR_Type_Scale,
-//####################################
-//# RIO: MUTES LAYER
-//####################################
-  SEQ_PAR_Type_Mute1,
-  SEQ_PAR_Type_Mute2,
-  SEQ_PAR_Type_Mute3,
-  SEQ_PAR_Type_Mute4,
-  SEQ_PAR_Type_Mute5,
-  SEQ_PAR_Type_Mute6,
-  SEQ_PAR_Type_Mute7,
-  SEQ_PAR_Type_Mute8,
-  SEQ_PAR_Type_Mute9,
-  SEQ_PAR_Type_Mute10,
-  SEQ_PAR_Type_Mute11,
-  SEQ_PAR_Type_Mute12,
-  SEQ_PAR_Type_Mute13,
-  SEQ_PAR_Type_Mute14,
-  SEQ_PAR_Type_Mute15,
-  SEQ_PAR_Type_Mute16,
-//####################################
-//# RIO: END MODIFICATION
-//####################################
 };
 
 static const u8 seq_par_default_value[SEQ_PAR_NUM_TYPES] = {
@@ -159,29 +107,6 @@ static const u8 seq_par_default_value[SEQ_PAR_NUM_TYPES] = {
   0,    // Root: C
   0,    // Scale: 0
   0x01, // Chord3: 1
-//########################################
-//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
-//########################################
-  0,    // Mute1: 0
-  0,    // Mute2: 0
-  0,    // Mute3: 0
-  0,    // Mute4: 0
-  0,    // Mute5: 0
-  0,    // Mute6: 0
-  0,    // Mute7: 0
-  0,    // Mute8: 0
-  0,    // Mute9: 0
-  0,    // Mute10: 0
-  0,    // Mute11: 0
-  0,    // Mute12: 0
-  0,    // Mute13: 0
-  0,    // Mute14: 0
-  0,    // Mute15: 0
-  0,    // Mute16: 0
-  0x80, // PolyPressure
-//########################################
-//# RIO: END MODIFICATION
-//########################################
 };
 
 static const u8 seq_par_max_value[SEQ_PAR_NUM_TYPES] = {
@@ -204,29 +129,6 @@ static const u8 seq_par_max_value[SEQ_PAR_NUM_TYPES] = {
   0x7f, // Root
   0x7f, // Scale
   0x7f, // Chord3
-//########################################
-//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
-//########################################
-  2,    // Mute1
-  2,    // Mute2
-  2,    // Mute3
-  2,    // Mute4
-  2,    // Mute5
-  2,    // Mute6
-  2,    // Mute7
-  2,    // Mute8
-  2,    // Mute9
-  2,    // Mute10
-  2,    // Mute11
-  2,    // Mute12
-  2,    // Mute13
-  2,    // Mute14
-  2,    // Mute15
-  2,    // Mute16
-  0x80, // PolyPressure
-//########################################
-//# RIO: END MODIFICATION
-//########################################
 };
 
 
@@ -591,90 +493,6 @@ s32 SEQ_PAR_ScaleValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted)
 
   return 0; // no scale
 }
-
-//####################################
-//# RIO: MUTES LAYER
-//####################################
-/////////////////////////////////////////////////////////////////////////////
-// returns the Mute value of layer type if assigned to any parameter layer
-/////////////////////////////////////////////////////////////////////////////
-s32 SEQ_PAR_MuteValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted, u8 layer_type)
-{
-  seq_cc_trk_t *tcc = &seq_cc_trk[track];
-  s8 par_layer;
-
-  switch (layer_type) {
-
-    case SEQ_PAR_Type_Mute1:  if( (par_layer=tcc->link_par_layer_mute1) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute2:  if( (par_layer=tcc->link_par_layer_mute2) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute3:  if( (par_layer=tcc->link_par_layer_mute3) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute4:  if( (par_layer=tcc->link_par_layer_mute4) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute5:  if( (par_layer=tcc->link_par_layer_mute5) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute6:  if( (par_layer=tcc->link_par_layer_mute6) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute7:  if( (par_layer=tcc->link_par_layer_mute7) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute8:  if( (par_layer=tcc->link_par_layer_mute8) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute9:  if( (par_layer=tcc->link_par_layer_mute9) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute10: if( (par_layer=tcc->link_par_layer_mute10) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute11: if( (par_layer=tcc->link_par_layer_mute11) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute12: if( (par_layer=tcc->link_par_layer_mute12) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute13: if( (par_layer=tcc->link_par_layer_mute13) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute14: if( (par_layer=tcc->link_par_layer_mute14) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute15: if( (par_layer=tcc->link_par_layer_mute15) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-
-    case SEQ_PAR_Type_Mute16: if( (par_layer=tcc->link_par_layer_mute16) >= 0 && !(layer_muted & (1 << par_layer)) )
-                                return SEQ_PAR_Get(track, step, par_layer, par_instrument);
-                              break;
-  }
-
-  return 0; // no mute value
-}
-//####################################
-//# RIO: END MODIFICATION
-//####################################
 
 /////////////////////////////////////////////////////////////////////////////
 // This function returns the string to a parameter assignment type

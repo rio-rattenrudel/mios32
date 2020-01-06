@@ -53,32 +53,10 @@ typedef enum {
   SEQ_PAR_Type_Root=16,
   SEQ_PAR_Type_Scale=17,
   SEQ_PAR_Type_Chord3=18,
-//########################################
-//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
-//########################################
-  SEQ_PAR_Type_Mute1=19,
-  SEQ_PAR_Type_Mute2=20,
-  SEQ_PAR_Type_Mute3=21,
-  SEQ_PAR_Type_Mute4=22,
-  SEQ_PAR_Type_Mute5=23,
-  SEQ_PAR_Type_Mute6=24,
-  SEQ_PAR_Type_Mute7=25,
-  SEQ_PAR_Type_Mute8=26,
-  SEQ_PAR_Type_Mute9=27,
-  SEQ_PAR_Type_Mute10=28,
-  SEQ_PAR_Type_Mute11=29, 
-  SEQ_PAR_Type_Mute12=30,
-  SEQ_PAR_Type_Mute13=31,
-  SEQ_PAR_Type_Mute14=32,
-  SEQ_PAR_Type_Mute15=33,
-  SEQ_PAR_Type_Mute16=34,
-  SEQ_PAR_Type_PolyPressure=35,
 } seq_par_layer_type_t;
 
-#define SEQ_PAR_NUM_TYPES 36
-//########################################
-//# RIO: END MODIFICATION
-//########################################
+#define SEQ_PAR_NUM_TYPES 19
+
 
 // NOTE: numbers have to be aligned with the strings in SEQ_LCD_PrintNthMode!
 #define SEQ_PAR_TYPE_NTH_OFF    0
@@ -121,13 +99,6 @@ extern s32 SEQ_PAR_Nth1ValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_
 extern s32 SEQ_PAR_Nth2ValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted);
 extern s32 SEQ_PAR_RootValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted);
 extern s32 SEQ_PAR_ScaleValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted);
-//####################################
-//# RIO: MUTES LAYER
-//####################################
-extern s32 SEQ_PAR_MuteValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted, u8 layer_type);
-//####################################
-//# RIO: END MODIFICATION
-//####################################
 
 extern char *SEQ_PAR_TypeStr(seq_par_layer_type_t par_type);
 extern s32 SEQ_PAR_AssignedTypeStr(u8 track, u8 par_layer, u8 instrument, char *str_buffer);

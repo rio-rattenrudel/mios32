@@ -7,21 +7,21 @@ Board:     MBHP_CORE_LPC17
 LCD:       universal
 --------------------------------------------------------------------
 
-original max size:
+original size:
 ------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 406932     936   62536  470404   72d84 project_build/project.elf
+ 407860     936   62528  471324   7311c project_build/project.elf
 10000000 B __ram_start
-10007d48 B __ram_end
+10007d40 B __ram_end
 2007c000 D __ram_start_ahb
 20083aa8 B __ram_end_ahb
 
-modified size (mit IIC Hack):
+modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 417020     944   62904  480868   75664 project_build/project.elf
+ 417884     944   62904  481732   759c4 project_build/project.elf
 10000000 B __ram_start
 10007eb8 B __ram_end
 2007c000 D __ram_start_ahb
@@ -226,36 +226,19 @@ seq_ui.c-->
 
 9. Board LEDs Anzeige ausschalten
 
-seq_ui.c -->
+mios32_config.h -->
 
-s32 SEQ_UI_LED_Handler_Periodic():
+extern void APP_SendDebugMessage(char *format, ...);
+#define DEBUG_MSG APP_SendDebugMessage
+..
 
-  //###################################################
-  //# RIO: Disable Board LEDs
-  //###################################################
-
-  // mirror to green status LED (inverted, so that LED is normaly on)
-  //MIOS32_BOARD_LED_Set(0x00000001, sequencer_running ? (beat_led_on ? 1 : 0) : 1);
-
-  // measure LED
-  u8 measure_led_on = sequencer_running && ((seq_core_state.ref_step % (seq_core_steps_per_measure+1)) == 0);
-  SEQ_LED_PinSet(seq_hwcfg_led.measure, measure_led_on);
-
-  // mirror to red status LED
-  //MIOS32_BOARD_LED_Set(0x00000002, measure_led_on ? 2 : 0);
-  // now used for SD Card indicator
-  //MIOS32_BOARD_LED_Set(0x00000002, FILE_SDCardAvailable() ? 2 : 0);
-
-
-  // MIDI IN/OUT LEDs
-  SEQ_LED_PinSet(seq_hwcfg_led.midi_in_combined, seq_midi_port_in_combined_ctr);
-  //MIOS32_BOARD_LED_Set(0x00000004, seq_midi_port_in_combined_ctr ? 4 : 0);
-  SEQ_LED_PinSet(seq_hwcfg_led.midi_out_combined, seq_midi_port_out_combined_ctr);  
-  //MIOS32_BOARD_LED_Set(0x00000008, seq_midi_port_out_combined_ctr ? 8 : 0);
-
-  //###################################################
-  //# RIO: END MODIFICATION
-  //###################################################
+//###################################################
+//# RIO: Disable Board LEDs
+//###################################################
+#define MIOS32_DONT_USE_BOARD_LED
+//###################################################
+//# RIO: END MODIFICATION
+//###################################################
 
 -----------------------------------------------------------------
 
@@ -3809,58 +3792,57 @@ seq_par.h -->
 
 typedef enum {
   ..
+  SEQ_PAR_Type_Ctrl=19,
 //########################################
 //# RIO: MUTES LAYER / POLYPHONIC PRESSURE
 //########################################
-  SEQ_PAR_Type_Mute1=19,
-  SEQ_PAR_Type_Mute2=20,
-  SEQ_PAR_Type_Mute3=21,
-  SEQ_PAR_Type_Mute4=22,
-  SEQ_PAR_Type_Mute5=23,
-  SEQ_PAR_Type_Mute6=24,
-  SEQ_PAR_Type_Mute7=25,
-  SEQ_PAR_Type_Mute8=26,
-  SEQ_PAR_Type_Mute9=27,
-  SEQ_PAR_Type_Mute10=28,
-  SEQ_PAR_Type_Mute11=29, 
-  SEQ_PAR_Type_Mute12=30,
-  SEQ_PAR_Type_Mute13=31,
-  SEQ_PAR_Type_Mute14=32,
-  SEQ_PAR_Type_Mute15=33,
-  SEQ_PAR_Type_Mute16=34,
-  SEQ_PAR_Type_PolyPressure=35,
-} seq_par_layer_type_t;
-
-#define SEQ_PAR_NUM_TYPES 36
+  SEQ_PAR_Type_Mute1=20,
+  SEQ_PAR_Type_Mute2=21,
+  SEQ_PAR_Type_Mute3=22,
+  SEQ_PAR_Type_Mute4=23,
+  SEQ_PAR_Type_Mute5=24,
+  SEQ_PAR_Type_Mute6=25,
+  SEQ_PAR_Type_Mute7=26,
+  SEQ_PAR_Type_Mute8=27,
+  SEQ_PAR_Type_Mute9=28,
+  SEQ_PAR_Type_Mute10=29,
+  SEQ_PAR_Type_Mute11=30, 
+  SEQ_PAR_Type_Mute12=31,
+  SEQ_PAR_Type_Mute13=32,
+  SEQ_PAR_Type_Mute14=33,
+  SEQ_PAR_Type_Mute15=34,
+  SEQ_PAR_Type_Mute16=35,
+  SEQ_PAR_Type_PolyPressure=36,
 //########################################
 //# RIO: END MODIFICATION
 //########################################
-
+  SEQ_PAR_NUM_TYPES
 
 seq_par.c -->
 
 static const char seq_par_type_names[SEQ_PAR_NUM_TYPES][6] = {
   ..
+  "Ctrl ",  // 19
 //########################################
 //# RIO: MUTES LAYER / POLYPHONIC PRESSURE
 //########################################
-  "Mute1", // 19
-  "Mute2", // 20
-  "Mute3", // 21
-  "Mute4", // 22
-  "Mute5", // 23
-  "Mute6", // 24
-  "Mute7", // 25
-  "Mute8", // 26
-  "Mute9", // 27
-  "Mut10", // 28
-  "Mut11", // 29
-  "Mut12", // 30
-  "Mut13", // 31
-  "Mut14", // 32
-  "Mut15", // 33
-  "Mut16", // 34
-  " PP  ", // 35
+  "Mute1", // 20
+  "Mute2", // 21
+  "Mute3", // 22
+  "Mute4", // 23
+  "Mute5", // 24
+  "Mute6", // 25
+  "Mute7", // 26
+  "Mute8", // 27
+  "Mute9", // 28
+  "Mut10", // 29
+  "Mut11", // 30
+  "Mut12", // 31
+  "Mut13", // 32
+  "Mut14", // 33
+  "Mut15", // 34
+  "Mut16", // 35
+  " PP  ", // 36
 //########################################
 //# RIO: END MODIFICATION
 //########################################
@@ -3868,6 +3850,7 @@ static const char seq_par_type_names[SEQ_PAR_NUM_TYPES][6] = {
 
 static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order for the UI selection
   ..
+  SEQ_PAR_Type_CC,
 //####################################
 //# RIO: POLYPHONIC PRESSURE
 //####################################
@@ -3876,9 +3859,33 @@ static const u8 seq_par_map[SEQ_PAR_NUM_TYPES] = { // allows to change the order
 //# RIO: END MODIFICATION
 //####################################
   ..
+  SEQ_PAR_Type_Ctrl,
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+  SEQ_PAR_Type_Mute1,
+  SEQ_PAR_Type_Mute2,
+  SEQ_PAR_Type_Mute3,
+  SEQ_PAR_Type_Mute4,
+  SEQ_PAR_Type_Mute5,
+  SEQ_PAR_Type_Mute6,
+  SEQ_PAR_Type_Mute7,
+  SEQ_PAR_Type_Mute8,
+  SEQ_PAR_Type_Mute9,
+  SEQ_PAR_Type_Mute10,
+  SEQ_PAR_Type_Mute11,
+  SEQ_PAR_Type_Mute12,
+  SEQ_PAR_Type_Mute13,
+  SEQ_PAR_Type_Mute14,
+  SEQ_PAR_Type_Mute15,
+  SEQ_PAR_Type_Mute16,
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 static const u8 seq_par_default_value[SEQ_PAR_NUM_TYPES] = {
   ..
+  0x00, // Ctrl
 //########################################
 //# RIO: MUTES LAYER / POLYPHONIC PRESSURE
 //########################################
@@ -3906,6 +3913,7 @@ static const u8 seq_par_default_value[SEQ_PAR_NUM_TYPES] = {
 
 static const u8 seq_par_max_value[SEQ_PAR_NUM_TYPES] = {
   ..
+  0x80, // Ctrl
 //########################################
 //# RIO: MUTES LAYER / POLYPHONIC PRESSURE
 //########################################
@@ -3999,7 +4007,7 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
         //####################################
         //# RIO: POLYPHONIC PRESSURE
         //####################################
-	      if( assignment == SEQ_PAR_Type_CC || assignment == SEQ_PAR_Type_PolyPressure ) {
+	      if( assignment == SEQ_PAR_Type_CC || assignment == SEQ_PAR_Type_Ctrl || assignment == SEQ_PAR_Type_PolyPressure ) {
 		// CC number selection now has to be confirmed with GP button
 		if( incrementer ) {
 		  if( ui_selected_item != ITEM_LAYER_PAR ) {
@@ -4034,18 +4042,19 @@ static s32 LCD_Handler(u8 high_prio)
     //# RIO: POLYPHONIC PRESSURE
     //####################################
 	  switch( assignment ) {
-            case SEQ_PAR_Type_PolyPressure:
-            case SEQ_PAR_Type_CC: {
+	  		case SEQ_PAR_Type_PolyPressure:
+            case SEQ_PAR_Type_CC:
+            case SEQ_PAR_Type_Ctrl: {
 	      mios32_midi_port_t port = SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT);
 	      u8 current_value = SEQ_CC_Get(visible_track, SEQ_CC_LAY_CONST_B1 + ui_selected_par_layer);
 	      u8 edit_value = ui_selected_item == ITEM_LAYER_PAR ? edit_cc_number : current_value;
 
 	      if( edit_value >= 0x80 ) {
-        SEQ_LCD_PrintFormattedString("off%c(no %s   ) ", (current_value != edit_value) ? '!' : ' ', (assignment == SEQ_PAR_Type_PolyPressure) ? "PP" : "CC");
+		SEQ_LCD_PrintFormattedString("off%c(TurnLeft!)", (current_value != edit_value) ? '!' : ' ');
 	      } else {
 		SEQ_LCD_PrintFormattedString("%03d%c(%s) ", edit_value,
 					     (current_value != edit_value) ? '!' : ' ',
-					     (assignment == SEQ_PAR_Type_PolyPressure) ? SEQ_PP_LABELS_Get(edit_value) : SEQ_CC_LABELS_Get(port, edit_value));
+					     (assignment == SEQ_PAR_Type_PolyPressure) ? SEQ_PP_LABELS_Get(edit_value) : SEQ_CC_LABELS_Get(port, edit_value, assignment == SEQ_PAR_Type_Ctrl));
 	      }
 	    } break;
 

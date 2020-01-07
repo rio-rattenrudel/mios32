@@ -79,6 +79,7 @@ The fade-out feature has been fixed here.
 * _Note: affects data storage_
 
 14. [Feature: Mutes Layer](https://github.com/rio-rattenrudel/mios32/commit/a42e063ed5b61e31ffaeedf5ccecf2914adc6a37)
+&nbsp;&nbsp;&nbsp;&nbsp;[Updated](https://github.com/rio-rattenrudel/mios32/commit/619b7c046dd0e69f9d7798d0c96d919ff6d9d100)
 
 * A mute-layer parameter is the fastest and most direct way (without latences) to automatically mute or unmute tracks.
 
@@ -102,6 +103,8 @@ The fade-out feature has been fixed here.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Feature: Poly Pressure II (Mixer)](https://github.com/rio-rattenrudel/mios32/commit/712ecbb0d744e5b73b63051a25390812f2d1bc78)
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Updated](https://github.com/rio-rattenrudel/mios32/commit/619b7c046dd0e69f9d7798d0c96d919ff6d9d100)
+
 * In the Mixer Map, the CC assignments (128..255) are considered PP assignments (PolyPressure). These PP assignments are represented by the number 1..127 and a '+' character.
 
 * _Note: affects data storage_
@@ -117,7 +120,7 @@ The fade-out feature has been fixed here.
 ## Recompile sizes
 
 ```
-Recompiling 4.096 for LPC1769:
+Recompiling 4.096:
 --------------------------------------------------------------------
 Application successfully built for:
 Processor: LPC1769
@@ -125,21 +128,22 @@ Family:    LPC17xx
 Board:     MBHP_CORE_LPC17
 LCD:       universal
 --------------------------------------------------------------------
+
 original size:
 ------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 406932     936   62536  470404   72d84 project_build/project.elf
+ 407860     936   62528  471324   7311c project_build/project.elf
 10000000 B __ram_start
-10007d48 B __ram_end
+10007d40 B __ram_end
 2007c000 D __ram_start_ahb
 20083aa8 B __ram_end_ahb
 
-modified size (mit IIC Hack):
+modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 417020     944   62904  480868   75664 project_build/project.elf
+ 417884     944   62904  481732   759c4 project_build/project.elf
 10000000 B __ram_start
 10007eb8 B __ram_end
 2007c000 D __ram_start_ahb

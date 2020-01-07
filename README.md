@@ -80,7 +80,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 14. [Feature: Mutes Layer](https://github.com/rio-rattenrudel/mios32/commit/a42e063ed5b61e31ffaeedf5ccecf2914adc6a37)
 
-&nbsp;&nbsp;&nbsp;&nbsp;[Updated](https://github.com/rio-rattenrudel/mios32/commit/619b7c046dd0e69f9d7798d0c96d919ff6d9d100)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Updated Version:](https://github.com/rio-rattenrudel/mios32/commit/619b7c046dd0e69f9d7798d0c96d919ff6d9d100)
 
 * A mute-layer parameter is the fastest and most direct way (without latences) to automatically mute or unmute tracks.
 
@@ -104,7 +104,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Feature: Poly Pressure II (Mixer)](https://github.com/rio-rattenrudel/mios32/commit/712ecbb0d744e5b73b63051a25390812f2d1bc78)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Updated](https://github.com/rio-rattenrudel/mios32/commit/619b7c046dd0e69f9d7798d0c96d919ff6d9d100)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Updated Version:](https://github.com/rio-rattenrudel/mios32/commit/619b7c046dd0e69f9d7798d0c96d919ff6d9d100)
 
 * In the Mixer Map, the CC assignments (128..255) are considered PP assignments (PolyPressure). These PP assignments are represented by the number 1..127 and a '+' character.
 

@@ -60,7 +60,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c. [Fixed: Expanded LFO - Fade out](https://github.com/rio-rattenrudel/mios32/commit/51b5e481f5b528cd8d80142f7e39f4d4a72d4546)
 
-The fade-out feature has been fixed here.
+* The fade-out feature has been fixed here.
 
 * _Note: affects data storage_
 
@@ -79,6 +79,7 @@ The fade-out feature has been fixed here.
 * _Note: affects data storage_
 
 14. [Feature: Mutes Layer](https://github.com/rio-rattenrudel/mios32/commit/a42e063ed5b61e31ffaeedf5ccecf2914adc6a37)
+
 &nbsp;&nbsp;&nbsp;&nbsp;[Updated](https://github.com/rio-rattenrudel/mios32/commit/619b7c046dd0e69f9d7798d0c96d919ff6d9d100)
 
 * A mute-layer parameter is the fastest and most direct way (without latences) to automatically mute or unmute tracks.

@@ -41,6 +41,13 @@
 extern void APP_SendDebugMessage(char *format, ...);
 #define DEBUG_MSG APP_SendDebugMessage
 
+//###################################################
+//# RIO: Disable Board LEDs
+//###################################################
+#define MIOS32_DONT_USE_BOARD_LED
+//###################################################
+//# RIO: END MODIFICATION
+//###################################################
 
 // Stack size for FreeRTOS tasks as defined by the programming model
 // Note that each task maintains it's own stack!

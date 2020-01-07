@@ -57,6 +57,17 @@
 u8 seq_ui_display_update_req;
 u8 seq_ui_display_init_req;
 
+//#######################################
+//# RIO: CLOCK SHIFTER
+//#######################################
+u16 seq_ui_clk_shift_update_cnt;
+u8 seq_ui_clk_shift_port;
+u8 seq_ui_clk_shift_offset;
+u8 seq_ui_clk_shift_status;
+//#######################################
+//# RIO: END MODIFICATION
+//#######################################
+
 seq_ui_button_state_t seq_ui_button_state;
 
 u8 ui_selected_group;
@@ -268,6 +279,13 @@ s32 SEQ_UI_InitEncSpeed(u32 auto_config)
     switch( SEQ_PAR_AssignmentGet(SEQ_UI_VisibleTrackGet(), ui_selected_par_layer) ) {
       case SEQ_PAR_Type_Velocity:
       case SEQ_PAR_Type_Length:
+      //####################################
+      //# RIO: POLYPHONIC PRESSURE
+      //####################################
+      case SEQ_PAR_Type_PolyPressure:
+      //####################################
+      //# RIO: END MODIFICATION
+      //####################################
       case SEQ_PAR_Type_CC:
       case SEQ_PAR_Type_Ctrl:
       case SEQ_PAR_Type_PitchBend:
@@ -667,7 +685,16 @@ static s32 SEQ_UI_Button_Pause(s32 depressed)
 
 s32 SEQ_UI_Button_Play(s32 depressed)
 {
-  if( depressed ) return -1; // ignore when button depressed
+
+  //###################################################
+  //# RIO: Start playback once - fixed bouncing button
+  //###################################################
+
+  if( depressed || SEQ_BPM_IsRunning() ) return -1; // ignore when button depressed
+
+  //###################################################
+  //# RIO: END MODIFICATION
+  //###################################################
 
   // if MENU button pressed -> tap tempo
   if( seq_ui_button_state.MENU_PRESSED )
@@ -787,7 +814,11 @@ static s32 SEQ_UI_Button_Follow(s32 depressed)
   return 0; // no error
 }
 
-static s32 SEQ_UI_Button_Scrub(s32 depressed)
+//####################################
+//# RIO: Replace with PROTEUS Handler
+//####################################
+
+/*static s32 SEQ_UI_Button_Scrub(s32 depressed)
 {
   // double function: -> Loop if menu button pressed
   if( seq_ui_button_state.MENU_PRESSED )
@@ -805,7 +836,21 @@ static s32 SEQ_UI_Button_Scrub(s32 depressed)
   SEQ_UI_Msg(SEQ_UI_MSG_USER, 1000, "Scrub Mode", seq_ui_button_state.SCRUB ? "    on" : "   off");
 
   return 0; // no error
+}*/
+
+static s32 SEQ_UI_Button_Scrub(s32 depressed)
+{
+  if( depressed ) return -1; // ignore when button depressed
+
+  // change to utility page
+  SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
+
+  return 0; // no error
 }
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 static s32 SEQ_UI_Button_TempoPreset(s32 depressed)
 {
@@ -855,7 +900,11 @@ static s32 SEQ_UI_Button_ExtRestart(s32 depressed)
   return 0; // no error
 }
 
-static s32 SEQ_UI_Button_Metronome(s32 depressed)
+//####################################
+//# RIO: Replace with XLTURBO Handler
+//####################################
+
+/*static s32 SEQ_UI_Button_Metronome(s32 depressed)
 {
   // double function: -> ExtRestart if menu button pressed
   if( seq_ui_button_state.MENU_PRESSED )
@@ -884,7 +933,21 @@ static s32 SEQ_UI_Button_Metronome(s32 depressed)
 #endif
 
   return 0; // no error
+}*/
+
+static s32 SEQ_UI_Button_Metronome(s32 depressed)
+{
+  if( depressed ) return -1; // ignore when button depressed
+
+  // change to utility page
+  SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
+
+  return 0; // no error
 }
+
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 s32 SEQ_UI_Button_Record(s32 depressed)
 {
@@ -2467,6 +2530,39 @@ s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
     if( pin == seq_hwcfg_button.group[i] )
       return SEQ_UI_Button_Group(pin_value, i);
 
+  //#######################################
+  //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
+  //#######################################
+  if( pin == seq_hwcfg_button.prev_grp )
+    return SEQ_UI_Button_Group(pin_value, ui_selected_group-1);
+
+  if( pin == seq_hwcfg_button.next_grp )
+    return SEQ_UI_Button_Group(pin_value, ui_selected_group+1);
+
+  if( pin == seq_hwcfg_button.clk_shift_dn ) {
+    if (!pin_value) {
+      seq_ui_clk_shift_status = SEQ_UI_SHIFT_DOWN;
+      seq_ui_clk_shift_offset--;
+      if (seq_ui_clk_shift_offset > 95) seq_ui_clk_shift_offset = 95;
+      seq_ui_clk_shift_update_cnt = 0x3ff;
+    }
+    return 0;
+  }
+
+  if( pin == seq_hwcfg_button.clk_shift_up ) {
+    if (!pin_value) {
+      seq_ui_clk_shift_offset++;
+      if (seq_ui_clk_shift_offset > 95) seq_ui_clk_shift_offset = 0;
+      seq_ui_clk_shift_status = SEQ_UI_SHIFT_UP;
+      seq_ui_clk_shift_update_cnt = 0x3ff; 
+    }
+    return 0;
+  }
+
+  //#######################################
+  //# RIO: END MODIFICATION
+  //#######################################
+
   for(i=0; i<SEQ_HWCFG_NUM_PAR_LAYER; ++i)
     if( pin == seq_hwcfg_button.par_layer[i] )
       return SEQ_UI_Button_ParLayer(pin_value, i);
@@ -2712,18 +2808,36 @@ s32 SEQ_UI_Encoder_Handler(u32 encoder, s32 incrementer)
   else if( incrementer < -3 )
     incrementer = -3;
 
+  //#########################################################
+  //# RIO: Using the BPM DataWheel in MUTE and PATTERN SCREEN
+  //#########################################################
+
+  // Original:
   // encoder 17 increments BPM
-  if( encoder == 17 ) {
+  // if( encoder == 17 ) {
+
+  if( (encoder == 17) || ((encoder == 0) && ((ui_page == SEQ_UI_PAGE_MUTE) || (ui_page == SEQ_UI_PAGE_PATTERN)) ) ) { //RIO: changed to BPM in MUTE and PATTERN PAGE
     u16 value = (u16)(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num]*10);
     if( SEQ_UI_Var16_Inc(&value, 25, 3000, incrementer) ) { // at 384ppqn, the minimum BPM rate is ca. 2.5
       // set new BPM
       seq_core_bpm_preset_tempo[seq_core_bpm_preset_num] = (float)value/10.0;
       SEQ_CORE_BPM_Update(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num], seq_core_bpm_preset_ramp[seq_core_bpm_preset_num]);
       //store_file_required = 1;
-      seq_ui_display_update_req = 1;      
+
+      // RIO: print BPM on LCD
+      float bpm = seq_core_bpm_preset_tempo[seq_core_bpm_preset_num];
+      char str[6];
+      sprintf(str, "%3d.%d", (int)bpm, (int)(10*bpm)%10);
+      SEQ_UI_Msg(SEQ_UI_MSG_USER, 500, "BPM", str);
+
+      seq_ui_display_update_req = 1;    
     }
     return 0;
   }
+
+  //#########################################################
+  //# RIO: END MODIFICATION
+  //#########################################################
 
   if( seq_ui_button_state.SCRUB && encoder == 0 ) {
     // if sequencer isn't already running, continue it (don't restart)

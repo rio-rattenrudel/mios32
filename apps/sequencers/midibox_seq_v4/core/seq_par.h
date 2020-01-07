@@ -54,6 +54,29 @@ typedef enum {
   SEQ_PAR_Type_Scale=17,
   SEQ_PAR_Type_Chord3=18,
   SEQ_PAR_Type_Ctrl=19,
+//########################################
+//# RIO: MUTES LAYER / POLYPHONIC PRESSURE
+//########################################
+  SEQ_PAR_Type_Mute1=20,
+  SEQ_PAR_Type_Mute2=21,
+  SEQ_PAR_Type_Mute3=22,
+  SEQ_PAR_Type_Mute4=23,
+  SEQ_PAR_Type_Mute5=24,
+  SEQ_PAR_Type_Mute6=25,
+  SEQ_PAR_Type_Mute7=26,
+  SEQ_PAR_Type_Mute8=27,
+  SEQ_PAR_Type_Mute9=28,
+  SEQ_PAR_Type_Mute10=29,
+  SEQ_PAR_Type_Mute11=30, 
+  SEQ_PAR_Type_Mute12=31,
+  SEQ_PAR_Type_Mute13=32,
+  SEQ_PAR_Type_Mute14=33,
+  SEQ_PAR_Type_Mute15=34,
+  SEQ_PAR_Type_Mute16=35,
+  SEQ_PAR_Type_PolyPressure=36,
+//########################################
+//# RIO: END MODIFICATION
+//########################################
   SEQ_PAR_NUM_TYPES
 } seq_par_layer_type_t;
 
@@ -100,6 +123,13 @@ extern s32 SEQ_PAR_Nth1ValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_
 extern s32 SEQ_PAR_Nth2ValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted);
 extern s32 SEQ_PAR_RootValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted);
 extern s32 SEQ_PAR_ScaleValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted);
+//####################################
+//# RIO: MUTES LAYER
+//####################################
+extern s32 SEQ_PAR_MuteValueGet(u8 track, u8 step, u8 par_instrument, u16 layer_muted, u8 layer_type);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 extern char *SEQ_PAR_TypeStr(seq_par_layer_type_t par_type);
 extern s32 SEQ_PAR_AssignedTypeStr(u8 track, u8 par_layer, u8 instrument, char *str_buffer);

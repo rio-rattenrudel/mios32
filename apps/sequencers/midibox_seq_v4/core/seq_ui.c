@@ -2539,6 +2539,12 @@ s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
   if( pin == seq_hwcfg_button.next_grp )
     return SEQ_UI_Button_Group(pin_value, ui_selected_group+1);
 
+  if( pin == seq_hwcfg_button.prev_trk )
+    return !pin_value ? SEQ_UI_GxTyInc(-1) : 0;
+
+  if( pin == seq_hwcfg_button.next_trk )
+    return !pin_value ? SEQ_UI_GxTyInc(1) : 0;
+
   if( pin == seq_hwcfg_button.clk_shift_dn ) {
     if (!pin_value) {
       seq_ui_clk_shift_status = SEQ_UI_SHIFT_DOWN;

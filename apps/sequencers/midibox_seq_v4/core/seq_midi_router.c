@@ -268,11 +268,6 @@ s32 SEQ_MIDI_ROUTER_SendMIDIClockEvent(u8 evnt0, u32 bpm_tick)
   p.type = 0x5; // Single-byte system common message
   p.evnt0 = evnt0;
 
-  mios32_midi_package_t e;
-  e.ALL = 0;
-  e.type = 0x5; // Single-byte system common message
-  e.evnt0 = 0xf8;
-
   u32 port_mask = 0x00000001;
   for(i=0; i<32; ++i, port_mask<<=1) {
     if( seq_midi_router_mclk_out & port_mask & 0xffffff0f ) { // filter USB5..USB8 to avoid unwanted clock events to non-existent ports
@@ -319,6 +314,12 @@ s32 SEQ_MIDI_ROUTER_SendMIDIClockEvent(u8 evnt0, u32 bpm_tick)
             if (seq_ui_clk_shift_offset > 48) 
                 seq_ui_clk_shift_status = seq_ui_clk_shift_offset;
             else {
+
+                mios32_midi_package_t e;
+                e.ALL = 0;
+                e.type = 0x5; // Single-byte system common message
+                e.evnt0 = 0xf8;
+
                 // FORWARD +OFFSET
                 seq_ui_clk_shift_status = 0;
                 for(j=0; j<seq_ui_clk_shift_offset; ++j)

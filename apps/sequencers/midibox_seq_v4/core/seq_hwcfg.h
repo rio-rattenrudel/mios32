@@ -99,6 +99,8 @@ typedef struct {
   //#######################################
   u16 prev_grp;
   u16 next_grp;
+  u16 prev_trk;
+  u16 next_trk;
   u16 clk_shift_dn;
   u16 clk_shift_up;
   //#######################################

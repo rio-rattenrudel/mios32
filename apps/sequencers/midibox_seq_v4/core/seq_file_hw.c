@@ -499,6 +499,10 @@ s32 SEQ_FILE_HW_Read(void)
 	    seq_hwcfg_button.prev_grp = din_value;
 	  } else if( strcasecmp(parameter, "NEXT_GRP") == 0 ) {
 	    seq_hwcfg_button.next_grp = din_value;
+	  } else if( strcasecmp(parameter, "PREV_TRK") == 0 ) {
+	    seq_hwcfg_button.prev_trk = din_value;
+	  } else if( strcasecmp(parameter, "NEXT_TRK") == 0 ) {
+	    seq_hwcfg_button.next_trk = din_value;
 	  } else if( strcasecmp(parameter, "CLOCK_SHIFT_DN") == 0 ) {
 	    seq_hwcfg_button.clk_shift_dn = din_value;
 	  } else if( strcasecmp(parameter, "CLOCK_SHIFT_UP") == 0 ) {

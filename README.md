@@ -114,7 +114,14 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 * This feature allows the (repeated) sending of tap tempo information to a selected port. The tap tempo is triggered again by "Start" and "BPM" updates.
 
-19. [Feature: Clock Shifter](https://github.com/rio-rattenrudel/mios32/commit/924bd56061c24017291fae6e4347e30b93476cf0)
+19. Feature: Prev/Next Button Assignments
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Added: Prev/Next Group](https://github.com/rio-rattenrudel/mios32/commit/457c1cc05d5c79efcd8d38a110f5012839b00c39)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Added: Prev/Next Track](https://github.com/rio-rattenrudel/mios32/commit/ce58c7ad02447bab5a2d71de3d0e329394826e37
+
+* This feature allows the button assignment to select previous or next groups or tracks.
+
+20. [Feature: Clock Shifter](https://github.com/rio-rattenrudel/mios32/commit/924bd56061c24017291fae6e4347e30b93476cf0)
 
 * This feature adds the clock shifter algorithm to a selected port. A port and a standard offset can be defined in the hardware configuration. The offset ranges from 0..95 (= 1bar [4/4 beat], values> 48 representing the negative values). With a user adjustment (via buttons), the offset can be moved forward or backward indefinitely.
 
@@ -144,10 +151,10 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 417884     944   62904  481732   759c4 project_build/project.elf
+ 417996     952   62896  481844   75a34 project_build/project.elf
 10000000 B __ram_start
-10007eb8 B __ram_end
+10007eb0 B __ram_end
 2007c000 D __ram_start_ahb
-20083ab0 B __ram_end_ahb
+20083ab8 B __ram_end_ahb
 -----------------------------------------------------------------
 ```

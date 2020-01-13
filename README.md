@@ -116,9 +116,9 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 19. Feature: Prev/Next Button Assignments
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Added: Prev/Next Group](https://github.com/rio-rattenrudel/mios32/commit/457c1cc05d5c79efcd8d38a110f5012839b00c39)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Added: Prev/Next Group](https://github.com/rio-rattenrudel/mios32/commit/ce58c7ad02447bab5a2d71de3d0e329394826e37)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Added: Prev/Next Track](https://github.com/rio-rattenrudel/mios32/commit/ce58c7ad02447bab5a2d71de3d0e329394826e37)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Added: Prev/Next Track](https://github.com/rio-rattenrudel/mios32/commit/457c1cc05d5c79efcd8d38a110f5012839b00c39)
 
 * This feature allows the button assignment to select previous or next groups or tracks.
 

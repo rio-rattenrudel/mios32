@@ -62,7 +62,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 * The fade-out feature has been fixed here.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d. [Fixed: Use only the activated CC values of the tracks for the LFO](https://github.com/rio-rattenrudel/mios32/commit/8b3f09a02e9457242f621ea81ca903b38fc3da1b)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d. [Fixed: Use only the activated CC values of the tracks for the LFO + Refactoring](https://github.com/rio-rattenrudel/mios32/commit/8b3f09a02e9457242f621ea81ca903b38fc3da1b)
 
 * _Note: affects data storage_
 

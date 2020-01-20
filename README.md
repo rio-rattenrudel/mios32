@@ -62,6 +62,8 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 * The fade-out feature has been fixed here.
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d. [Fixed: Use only the activated CC values of the tracks for the LFO](https://github.com/rio-rattenrudel/mios32/commit/8b3f09a02e9457242f621ea81ca903b38fc3da1b)
+
 * _Note: affects data storage_
 
 11. [Feature: Proteus 2000 Integration](https://github.com/rio-rattenrudel/mios32/commit/b444395fcd240f7cd091f3c7e82c5dac74b18755)
@@ -152,9 +154,9 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 417996     952   62896  481844   75a34 project_build/project.elf
+ 418044     952   62864  481860   75a44 project_build/project.elf
 10000000 B __ram_start
-10007eb0 B __ram_end
+10007e90 B __ram_end
 2007c000 D __ram_start_ahb
 20083ab8 B __ram_end_ahb
 -----------------------------------------------------------------

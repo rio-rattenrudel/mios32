@@ -21,16 +21,16 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 417996     952   62896  481844   75a34 project_build/project.elf
+ 418044     952   62864  481860   75a44 project_build/project.elf
 10000000 B __ram_start
-10007eb0 B __ram_end
+10007e90 B __ram_end
 2007c000 D __ram_start_ahb
 20083ab8 B __ram_end_ahb
 
 -----------------------------------------------------------------
-Erklärung:
+ErklÃ¤rung:
 ----------
-Probleme treten auf wenn __ram_end sich stark vom original vergrößert. Also z.B. im oder nach Bereich 10007d00 oder 10007e00 !!! Wo genau die Grenze ist, kann man nicht sagen, aber der Arbeitspeicher liegt genau zwischen __ram_end und __ram_start_ahb. 
+Probleme treten auf wenn __ram_end sich stark vom original vergrÃ¶ÃŸert. Also z.B. im oder nach Bereich 10007d00 oder 10007e00 !!! Wo genau die Grenze ist, kann man nicht sagen, aber der Arbeitspeicher liegt genau zwischen __ram_end und __ram_start_ahb. 
 
 Im Bereich 10007cxx (oder auch noch 10007dxx (MAX PASSED: 10007ebx)) sollte alles sauber funktionieren...., darum am besten in dem Bereich bleiben. Zum Beispiel, weist die damals Jahre stabil eingesetzte und recompilierte version 0.80 folgende Werte auf (__ram_end = 10007d20):
 
@@ -102,7 +102,7 @@ nach C:\Program Files (x86)\mios32_toolchain-Verzeichnes (aber nur die Unterverz
 
 -----------------------------------------------------------------
 
-4. Umgebungsvariablen ergänzen oder übernehmen:
+4. Umgebungsvariablen ergÃ¤nzen oder Ã¼bernehmen:
 
 USER
 ----
@@ -136,7 +136,7 @@ C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\PROGRA~2\MSYS\1.0\bin;
 -----------------------------------------------------------------
 
 5. check auf make version:
-make –version
+make â€“version
 
 sollte das kommen:
 GNU Make 3.81
@@ -318,8 +318,8 @@ seq_midi_in.c-->
 
 -----------------------------------------------------------------
 
-11. a) mixer map dump cc 111 und little remote functions hinzufügen (3x CC)
-    b) Remote Key auf 0x73 G-8 ändern (115 statt 96)
+11. a) mixer map dump cc 111 und little remote functions hinzufÃ¼gen (3x CC)
+    b) Remote Key auf 0x73 G-8 Ã¤ndern (115 statt 96)
 
  CC       | Val  | Function
 ==========+======+==========================================================
@@ -1086,14 +1086,14 @@ seq_ui_pattern.c-->
 
 seq_ui_fx_lfo.c --> (	Datei wurde komplett mit der modifizierten version 4.080 ersetzt, 
 			um ITEM_DISABLE_EXTRA_CC komplett aus der GUI zu nehmen, welches
-			in einer höheren Version vorhanden war aber nicht benötigt wird, 
+			in einer hÃ¶heren Version vorhanden war aber nicht benÃ¶tigt wird, 
 			bzw. den modifizierten Code blockiert. )
 
 //########################################################################################################
 //# RIO: END MODIFICATION
 //########################################################################################################
 
-ERKLÄRUNG:
+ERKLÃ„RUNG:
 ----------
 
 In den folgenden Abschnitten (A-E) sieht man wo ITEM_DISABLE_EXTRA_CC entfernt wurde, so wie in version 4.080 (seq_ui_fx_lfo.c Basis ist 4.080, so dass die Abschnitte wie folgt stehen):
@@ -1931,19 +1931,19 @@ static s32 SEQ_LFO_ValueGet(seq_cc_trk_t *tcc, seq_lfo_t *lfo):
     if( lfo->step_ctr > fadestart) {
 
         // store last lfo before fade out
-        if (!lfo->fadeoffset) lfo->fadeoffset = lfo_value;
+        if (!fadeoffset) fadeoffset = lfo_value;
 
         float m = (lfo->step_ctr - fadestart) / (float)fadevalue;
-        if (tcc->lfo_enable_flags.FADEUP)   lfo_value = lfo->fadeoffset + (int)((127-tcc->lfo_cc_offset-lfo->fadeoffset) * m);
-        else                                lfo_value = lfo->fadeoffset - (int)(lfo->fadeoffset * m);
+        if (tcc->lfo_enable_flags.FADEUP)   lfo_value = fadeoffset + (int)((127-tcc->lfo_cc_offset-fadeoffset) * m);
+        else                                lfo_value = fadeoffset - (int)fadeoffset * m);
 
         if      (lfo_value < 0)     lfo_value = 0;
         else if (lfo_value > 127)   lfo_value = 127;
 
-        //DEBUG_MSG("step: %d rst: %d off: %d start: %d value: %d lfo: %d stp-start+1: %d m: %d.%03d\n", lfo->step_ctr,tcc->lfo_steps_rst,lfo->fadeoffset,fadestart,fadevalue,lfo_value,lfo->step_ctr-fadestart+1,(int)m,(int)(m*1000.0)%1000);
+        //DEBUG_MSG("step: %d rst: %d off: %d start: %d value: %d lfo: %d stp-start+1: %d m: %d.%03d\n", lfo->step_ctr,tcc->lfo_steps_rst,fadeoffset,fadestart,fadevalue,lfo_value,lfo->step_ctr-fadestart+1,(int)m,(int)(m*1000.0)%1000);
         return lfo_value;
 
-    } else lfo->fadeoffset = 0;
+    } else fadeoffset = 0;
   }
 
 //#################################################
@@ -1962,8 +1962,10 @@ static s32 SEQ_LFO_ValueGet(seq_cc_trk_t *tcc, seq_lfo_t *lfo):
 typedef struct {
   u16 step_ctr;
   u16 pos;
-  u8  fadeoffset; // RIO: added fadeoffset
 } seq_lfo_t;
+
+// globals
+u8  fadeoffset;     // RIO: added fadeoffset
 
 //####################################
 //# RIO: END MODIFICATION
@@ -1981,7 +1983,8 @@ s32 SEQ_LFO_ResetTrk(u8 track)
 
   lfo->step_ctr = 0;
   lfo->pos = 0;
-  lfo->fadeoffset = 0;                                                      // RIO: added fadeoffset
+
+  fadeoffset = 0;       // RIO: added fadeoffset
 
   return 0; // no error
 }
@@ -2003,10 +2006,12 @@ seq_lfo.c -->
 typedef struct {
   u16 step_ctr;
   u16 pos;
-  u16 rstcount;   // RIO: added rstcount
-  u8  delayed;    // RIO: added delayflag
-  u8  fadeoffset; // RIO: added fadeoffset
+  u16 rstcount;     // RIO: added rstcount
 } seq_lfo_t;
+
+// globals
+u8  delayed;        // RIO: added delayflag
+u8  fadeoffset;     // RIO: added fadeoffset
 
 //###########################################################################
 //# RIO: END MODIFICATION
@@ -2027,12 +2032,13 @@ s32 SEQ_LFO_ResetTrk(u8 track)
 
   lfo->step_ctr = 0;
   lfo->pos = 0;
-  lfo->rstcount = 0;                                                        // RIO: added rstcount
-  lfo->fadeoffset = 0;                                                      // RIO: added fadeoffset
+  lfo->rstcount = 0;    // RIO: added rstcount
+
+  fadeoffset = 0;       // RIO: added fadeoffset
 
   seq_cc_trk_t *tcc = &seq_cc_trk[track];
-  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200)    lfo->delayed = 1;   // RIO: added delayed
-  else                                                  lfo->delayed = 0;
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200)    delayed = 1;   // RIO: added delayed
+  else                                                  delayed = 0;
 
   return 0; // no error
 }
@@ -2057,9 +2063,9 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
   u8 delvalue = 0;
   if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) {
     delvalue = tcc->lfo_phase-100;
-    if (lfo->delayed) {
+    if (delayed) {
       if( lfo->step_ctr >= delvalue ) {
-          lfo->delayed = 0;
+          delayed = 0;
           lfo->step_ctr = 0;
       }
     }
@@ -2086,11 +2092,11 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
       else                       lfo->pos = 0;
 
     }
-    if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) lfo->delayed = 1;            // RIO: set again delay
+    if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) delayed = 1;            // RIO: set again delay
 
   } else {
 
-    if (lfo->delayed) return 0;                                                     // RIO: no LFO increment
+    if (delayed) return 0;                                                     // RIO: no LFO increment
 
     // increment waveform pointer
     u32 lfo_ticks = (u32)(tcc->lfo_steps+1) * 96; // @384 ppqn (reference bpm_tick resolution)
@@ -5231,11 +5237,74 @@ s32 SEQ_MIDI_ROUTER_SendMIDIClockEvent(u8 evnt0, u32 bpm_tick)
 
 -----------------------------------------------------------------
 
-25. Upload via MIOS_STUDIO (mindestens 2.4.5)
+25. Use enabled CC values of track for LFO
 
-Säubern im verzeichnis in cmd: make clean
+seq_lfo.c -->
+
+//###########################################################################
+//# RIO: Added Spezial Behaviour LFO (rstcount for increment spirals, delay)
+//###########################################################################
+
+typedef struct {
+  u16 step_ctr;
+  u16 pos;
+  u16 rstcount;     // RIO: added rstcount
+} seq_lfo_t;
+
+// globals
+u8  delayed;        // RIO: added delayflag
+u8  fadeoffset;     // RIO: added fadeoffset
+u8  lasttrkccval;   // RIO: added lasttrkccval
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
+
+
+s32 SEQ_LFO_ResetTrk(u8 track)
+{
+  seq_lfo_t *lfo = &seq_lfo[track];
+
+  lfo->step_ctr = 0;
+  lfo->pos = 0;
+  lfo->rstcount = 0;    // RIO: added rstcount
+
+  fadeoffset = 0;       // RIO: added fadeoffset
+  lasttrkccval = 0;     // RIO: added lasttrkccval
+
+
+s32 SEQ_LFO_Event(u8 track, seq_layer_evnt_t *e)
+{
+  ..
+  } else if( e->midi_package.type == CC ) {
+    if( tcc->lfo_enable_flags.CC ) {
+
+      //##################################################################
+      //# RIO: Use only the activated CC values â€‹â€‹of the tracks for the LFO
+      //##################################################################
+      u8 mvalue = e->midi_package.value;
+      if (mvalue < 128) lasttrkccval = mvalue;
+      else mvalue = lasttrkccval;
+      s16 value = mvalue + lfo_value;
+      //##################################################################
+      //# RIO: END MODIFICATION
+      //##################################################################
+
+      if( value < 0 )
+  value = 0;
+      else if( value > 127 )
+  value = 127;
+      e->midi_package.value = value;
+    }
+  }
+
+-----------------------------------------------------------------
+
+26. Upload via MIOS_STUDIO (mindestens 2.4.5)
+
+SÃ¤ubern im verzeichnis in cmd: make clean
 Kompilieren im verzeichnis in cmd: make
 
-Das problem ist das der 4x USB MIDI Unterstützung des Boards unter Win7 einfach mal ausfällt. darum einfach im MIOS Terminal ein commando absetzen, z.B. help und dann packt der das für den ersten USBMIDI-Port.
-Besser noch man installiert GM5 Treiber, was aber nicht kompatibel ist, darum noch besser man deaktiviert die andern 3 durch BOOTLOADER raufspielen und set single_usb 1 und danach "store" im Terminal ausführen und
-in dafür im BOOTLOADER zu speichern. Dann APP rauf und er sollte sich immer verbinden können.
+Das problem ist das der 4x USB MIDI UnterstÃ¼tzung des Boards unter Win7 einfach mal ausfÃ¤llt. darum einfach im MIOS Terminal ein commando absetzen, z.B. help und dann packt der das fÃ¼r den ersten USBMIDI-Port.
+Besser noch man installiert GM5 Treiber, was aber nicht kompatibel ist, darum noch besser man deaktiviert die andern 3 durch BOOTLOADER raufspielen und set single_usb 1 und danach "store" im Terminal ausfÃ¼hren und
+in dafÃ¼r im BOOTLOADER zu speichern. Dann APP rauf und er sollte sich immer verbinden kÃ¶nnen.

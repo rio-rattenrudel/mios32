@@ -6,13 +6,15 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 ## Modifications
 
-1. Hardware Config
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Added: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/b33e896afac3e7300462678385642d790a279765)
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Updated: rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/commit/6928bb396463b6587c4067984cba9d36c8f43985)
+1. [Hardware Config - rio/MBSEQ_HW.V4](https://github.com/rio-rattenrudel/mios32/blob/master/apps/sequencers/midibox_seq_v4/hwcfg/rio/MBSEQ_HW.V4)
 
 * A new hardware-config file has been added: rio/MBSEQ_HW.V4, which contains a few own adjustments of my hardware.
+* Tap Tempo - Beat Controller Config
+* Clock Divider Config
+* Clock Divider Up/Down Buttons
+* Prev/Next Group Buttons
+* Prev/Next Track Buttons
+
   
 2. [Set Default Mixer Map CCs (Bank #32 on CC4)](https://github.com/rio-rattenrudel/mios32/commit/f819b62f34d96abf60fec227359852559109abd5)
 

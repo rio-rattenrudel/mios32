@@ -133,7 +133,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 ## Recompile sizes
 
 ```
-Recompiling 4.096:
+Recompiling 4.097:
 --------------------------------------------------------------------
 Application successfully built for:
 Processor: LPC1769

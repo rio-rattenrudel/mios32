@@ -70,6 +70,8 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 11. [Feature: Proteus 2000 Integration](https://github.com/rio-rattenrudel/mios32/commit/b444395fcd240f7cd091f3c7e82c5dac74b18755)
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[Updated Version]](https://github.com/rio-rattenrudel/mios32/commit/ebb8326ac450a5283028aa07efa46a3965ab6a7b)
+
 * It is possible to directly select the channel of the Proteus devices - even if you have a proteus device. The metronome and scrubbing function have been overridden for this.
 
 12. [Changed: Ignore Multi-Selection for tracks](https://github.com/rio-rattenrudel/mios32/commit/703445c0ea78d9cb6e468c1eadbb31fb4eb4b528)

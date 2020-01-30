@@ -61,6 +61,13 @@ typedef enum {
   PASTE_CLEAR_MODE_PAR_LAYER,
   PASTE_CLEAR_MODE_TRG_LAYER,
   PASTE_CLEAR_MODE_INS_LAYER,
+  //#################################################
+  //# RIO: Little Remote Assignments
+  //#################################################
+  PASTE_CLEAR_MODE_TRACK_ONLY,
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
 } paste_clear_mode_t;
 
 /////////////////////////////////////////////////////////////////////////////
@@ -142,7 +149,7 @@ s32 COPY_Ext_Track(u8 track, u8 begin, u8 end) {
 }
 
 s32 PASTE_Ext_Track(u8 track) {
-    return PASTE_Track(track, PASTE_CLEAR_MODE_TRACK);
+    return PASTE_Track(track, PASTE_CLEAR_MODE_TRACK_ONLY);
 }
 
 s32 MOVE_Ext_StoreStep(u8 track, u16 step, u8 buffer, u8 clr_triggers) {
@@ -683,6 +690,10 @@ static s32 PASTE_Track(u8 track, paste_clear_mode_t paste_clear_mode)
 
   // branch depending on paste/clear mode
   switch( paste_clear_mode ) {
+  //#################################################
+  //# RIO: Little Remote Assignments
+  //#################################################
+  case PASTE_CLEAR_MODE_TRACK_ONLY:
   case PASTE_CLEAR_MODE_TRACK: {
     //seq_event_mode_t prev_event_mode = SEQ_CC_Get(track, SEQ_CC_MIDI_EVENT_MODE);
 
@@ -695,7 +706,10 @@ static s32 PASTE_Track(u8 track, paste_clear_mode_t paste_clear_mode)
     }
 
     // copy CCs
-    if( seq_core_options.PASTE_CLR_ALL ) {
+    if( paste_clear_mode == PASTE_CLEAR_MODE_TRACK && seq_core_options.PASTE_CLR_ALL ) {
+  //#################################################
+  //# RIO: END MODIFICATION
+  //#################################################
       int i;
 
       for(i=0; i<128; ++i)
@@ -711,6 +725,7 @@ static s32 PASTE_Track(u8 track, paste_clear_mode_t paste_clear_mode)
 	SEQ_CC_Set(track, SEQ_CC_PAR_ASG_DRUM_LAYER_A+i, copypaste_cc[SEQ_CC_PAR_ASG_DRUM_LAYER_A+i]);
       }
     }
+
 
     // copy layers from buffer
     for(instrument=0; instrument<num_par_instruments && instrument < copypaste_num_instruments; ++instrument) {

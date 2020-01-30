@@ -1129,8 +1129,7 @@ static s32 SEQ_MIDI_IN_Receive_ExtCtrlCC(u8 cc, u8 value)
                       SEQ_UI_UTIL_UndoUpdate(visible_track);
 
                       // clear steps
-                      new_value = seq_core_options.PASTE_CLR_ALL ? 0 : 1;
-                      SEQ_LAYER_CopyPreset(visible_track, new_value, 0, 0);
+                      SEQ_LAYER_CopyPreset(visible_track, 0, 0, 0);
 
                       memset((u8 *)&seq_trg_layer_value[visible_track], 0, SEQ_TRG_MAX_BYTES);
                       seq_ui_button_state.SELECT_PRESSED = 0;

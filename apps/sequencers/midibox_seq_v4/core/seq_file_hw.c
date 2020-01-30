@@ -436,6 +436,16 @@ s32 SEQ_FILE_HW_Read(void)
 	    seq_hwcfg_button.follow = din_value;
 	  } else if( strcasecmp(parameter, "METRONOME") == 0 ) {
 	    seq_hwcfg_button.metronome = din_value;
+	  //####################################
+	  //# RIO: PROTEUS added
+	  //####################################
+	  } else if( strcasecmp(parameter, "PROTEUS") == 0 ) {
+	    seq_hwcfg_button.proteus = din_value;
+	  } else if( strcasecmp(parameter, "XLTurbo") == 0 ) {
+	    seq_hwcfg_button.xlturbo = din_value;
+	  //####################################
+	  //# RIO: END MODIFICATION
+	  //####################################
 	  } else if( strcasecmp(parameter, "RECORD") == 0 ) {
 	    seq_hwcfg_button.record = din_value;
 	  } else if( strcasecmp(parameter, "JAM_LIVE") == 0 ) {

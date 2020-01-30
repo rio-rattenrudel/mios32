@@ -21,11 +21,11 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 418044     952   62864  481860   75a44 project_build/project.elf
+ 418404     960   62872  482236   75bbc project_build/project.elf
 10000000 B __ram_start
-10007e90 B __ram_end
+10007e98 B __ram_end
 2007c000 D __ram_start_ahb
-20083ab8 B __ram_end_ahb
+20083ac0 B __ram_end_ahb
 
 -----------------------------------------------------------------
 Erklärung:
@@ -2251,31 +2251,11 @@ Makefile -->
 
 seq_ui.c -->
 
+..
 //####################################
-//# RIO: Replace with PROTEUS Handler
+//# RIO: PROTEUS / XLTurbo Handler
 //####################################
-
-/*static s32 SEQ_UI_Button_Scrub(s32 depressed)
-{
-  // double function: -> Loop if menu button pressed
-  if( seq_ui_button_state.MENU_PRESSED )
-    return SEQ_UI_Button_Loop(depressed);
-
-  if( seq_hwcfg_button_beh.scrub ) {
-    // toggle mode
-    if( depressed ) return -1; // ignore when button depressed
-    seq_ui_button_state.SCRUB ^= 1;
-  } else {
-    // set mode
-    seq_ui_button_state.SCRUB = depressed ? 0 : 1;
-  }
-
-  SEQ_UI_Msg(SEQ_UI_MSG_USER, 1000, "Scrub Mode", seq_ui_button_state.SCRUB ? "    on" : "   off");
-
-  return 0; // no error
-}*/
-
-static s32 SEQ_UI_Button_Scrub(s32 depressed)
+static s32 SEQ_UI_Button_Proteus(s32 depressed)
 {
   if( depressed ) return -1; // ignore when button depressed
 
@@ -2285,48 +2265,7 @@ static s32 SEQ_UI_Button_Scrub(s32 depressed)
   return 0; // no error
 }
 
-//####################################
-//# RIO: END MODIFICATION
-//####################################
-
-..
-
-//####################################
-//# RIO: Replace with XLTURBO Handler
-//####################################
-
-/*static s32 SEQ_UI_Button_Metronome(s32 depressed)
-{
-  // double function: -> ExtRestart if menu button pressed
-  if( seq_ui_button_state.MENU_PRESSED )
-    return SEQ_UI_Button_ExtRestart(depressed);
-
-  if( seq_hwcfg_button_beh.metronome ) {
-    // toggle mode
-    if( depressed ) return -1; // ignore when button depressed
-    // should be atomic
-    portENTER_CRITICAL();
-    seq_core_state.METRONOME ^= 1;
-  } else {
-    // should be atomic
-    portENTER_CRITICAL();
-    // set mode
-    seq_core_state.METRONOME = depressed ? 0 : 1;
-  }
-  portEXIT_CRITICAL();
-
-  SEQ_UI_Msg(SEQ_UI_MSG_USER, 1000, "Metronome", seq_core_state.METRONOME ? "    on" : "   off");
-
-#if 0
-  // metronome button can be used to trigger pattern file fixes
-  if( !depressed )
-    SEQ_PATTERN_FixAll();
-#endif
-
-  return 0; // no error
-}*/
-
-static s32 SEQ_UI_Button_Metronome(s32 depressed)
+static s32 SEQ_UI_Button_XLTurbo(s32 depressed)
 {
   if( depressed ) return -1; // ignore when button depressed
 
@@ -2335,10 +2274,27 @@ static s32 SEQ_UI_Button_Metronome(s32 depressed)
 
   return 0; // no error
 }
-
 //####################################
 //# RIO: END MODIFICATION
 //####################################
+
+..
+s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
+{
+  ..
+  if( pin == seq_hwcfg_button.metronome )
+    return SEQ_UI_Button_Metronome(pin_value);
+
+  //####################################
+  //# RIO: PROTEUS added
+  //####################################
+  if( pin == seq_hwcfg_button.proteus )
+    return SEQ_UI_Button_Proteus(pin_value);
+  if( pin == seq_hwcfg_button.xlturbo )
+    return SEQ_UI_Button_XLTurbo(pin_value);
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
 
   
 seq_ui_pages.c -->
@@ -2416,6 +2372,69 @@ static const seq_ui_page_entry_t ui_menu_pages[SEQ_UI_PAGES] = {
 //####################################
 //# RIO: END MODIFICATION
 //####################################
+
+
+seq_file_hw.c --> 
+
+s32 SEQ_FILE_HW_Read(void)
+{
+  ..
+	  } else if( strcasecmp(parameter, "METRONOME") == 0 ) {
+	    seq_hwcfg_button.metronome = din_value;
+	  //####################################
+	  //# RIO: PROTEUS added
+	  //####################################
+	  } else if( strcasecmp(parameter, "PROTEUS") == 0 ) {
+	    seq_hwcfg_button.proteus = din_value;
+	  } else if( strcasecmp(parameter, "XLTurbo") == 0 ) {
+	    seq_hwcfg_button.xlturbo = din_value;
+	  //####################################
+	  //# RIO: END MODIFICATION
+	  //####################################
+
+
+seq_hwcfg.c -->
+
+seq_hwcfg_button_t seq_hwcfg_button = {
+..
+  .jam_step  = ((( 0   -1)<<3)+    0),
+
+  //####################################
+  //# RIO: PROTEUS added
+  //####################################
+  .proteus   = ((( 1   -1)<<3)+    0),
+  .xlturbo   = ((( 1   -1)<<3)+    0),
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+
+
+seq_hwcfg.h -->
+..
+  u16 live;
+
+  //####################################
+  //# RIO: PROTEUS added
+  //####################################
+  u16 proteus;
+  u16 xlturbo;
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+
+
+MBSEQ_HW.V4 -->
+
+#######################################
+# RIO: PROTEUS / XLTURBO
+#######################################
+
+BUTTON_PROTEUS    0   0
+BUTTON_XLTURBO    0   0
+
+#######################################
+# RIO: END MODIFICATION
+#######################################
 
 
 seq_ui_pages.h -->
@@ -4921,12 +4940,12 @@ seq_hwcfg.c -->
   //#######################################
   //# RIO: NEXT/PREV GROUP / CLOCK SHIFTER
   //#######################################
-  .prev_grp     = (((13   -1)<<3)+    0),
-  .next_grp     = (((13   -1)<<3)+    0),
-  .prev_trk     = (((13   -1)<<3)+    0),
-  .next_trk     = (((13   -1)<<3)+    0),
-  .clk_shift_dn = (((13   -1)<<3)+    0),
-  .clk_shift_up = (((13   -1)<<3)+    0),
+  .prev_grp     = ((( 0   -1)<<3)+    0),
+  .next_grp     = ((( 0   -1)<<3)+    0),
+  .prev_trk     = ((( 0   -1)<<3)+    0),
+  .next_trk     = ((( 0   -1)<<3)+    0),
+  .clk_shift_dn = ((( 0   -1)<<3)+    0),
+  .clk_shift_up = ((( 0   -1)<<3)+    0),
   //#######################################
   //# RIO: END MODIFICATION
   //#######################################

@@ -56,6 +56,15 @@ typedef struct {
   u16 jam_step;
   u16 live;
 
+  //####################################
+  //# RIO: PROTEUS added
+  //####################################
+  u16 proteus;
+  u16 xlturbo;
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
+
   u16 stop;
   u16 pause;
   u16 play;

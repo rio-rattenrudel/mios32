@@ -1203,9 +1203,22 @@ s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
 
       u8 gate = SEQ_TRG_GateGet(visible_track, visible_step, ui_selected_instrument);
 
+		//####################################
+		//# RIO: FLASHING GATE CURSOR
+		//####################################
+		if( visible_step == ui_selected_step && ui_cursor_flash ) {
+			SEQ_LCD_PrintSpaces(5);
+		} else {
+
       // muted step? if previous gatelength <= 96, print spaces
       if( (!gate || !layer_event.midi_package.velocity) && previous_length < 96 ) {
-	SEQ_LCD_PrintSpaces(5);
+      	if( visible_step == ui_selected_step) {
+    SEQ_LCD_PrintChar('_');
+    SEQ_LCD_PrintChar('_');
+    SEQ_LCD_PrintChar('_');
+    SEQ_LCD_PrintChar('_');
+    SEQ_LCD_PrintChar(' ');
+      	} else SEQ_LCD_PrintSpaces(5);
       } else {
 	if( layer_event.len >= 96 )
 	  SEQ_LCD_PrintHBar(15); // glide or stretched event
@@ -1214,6 +1227,10 @@ s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
 	  SEQ_LCD_PrintHBar(((layer_event.len-1)*16)/110); // so that we see a difference if note not stretched
 	}
       }
+		}
+		//####################################
+		//# RIO: END MODIFICATION
+		//####################################
       previous_length = ((gate && layer_event.midi_package.velocity) || (previous_length >= 96 && layer_event.len >= 96)) ? layer_event.len : 0;
     }
 

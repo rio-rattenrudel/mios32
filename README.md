@@ -12,6 +12,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
   * Tap Tempo - Beat Controller Config
   * Clock Divider Config
   * Clock Divider Up/Down Buttons
+  * Proteus / XLTurbo Buttons
   * Prev/Next Group Buttons
   * Prev/Next Track Buttons
 

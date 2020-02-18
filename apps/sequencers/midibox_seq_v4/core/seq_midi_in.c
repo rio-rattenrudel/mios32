@@ -157,6 +157,18 @@ u8 seq_midi_in_sect_note[4];
 // Local variables
 /////////////////////////////////////////////////////////////////////////////
 
+//########################
+//# RIO: Little Remote
+//########################
+
+static u16 lastnew_step;
+static u8 lastplayednote;
+static u8 lastplayedtransposed;
+
+//########################
+//# RIO: END MODIFICATION
+//########################
+
 // we have three notestacks per bus: one for transposer, two other for arpeggiator
 static notestack_t bus_notestack[SEQ_MIDI_IN_NUM_BUSSES][BUS_NOTESTACK_NUM];
 static notestack_item_t bus_notestack_items[SEQ_MIDI_IN_NUM_BUSSES][BUS_NOTESTACK_NUM][SEQ_MIDI_IN_NOTESTACK_SIZE];
@@ -181,17 +193,6 @@ static u8 remote_active;
 // for automatic note-stack reset
 static u8 last_bus_received_from_loopback;
 
-//########################
-//# RIO: Little Remote
-//########################
-
-static u16 lastnew_step;
-static u8 lastplayednote;
-static u8 lastplayedtransposed;
-
-//########################
-//# RIO: END MODIFICATION
-//########################
 
 /////////////////////////////////////////////////////////////////////////////
 // Initialisation
@@ -265,9 +266,6 @@ s32 SEQ_MIDI_IN_Init(u32 mode)
   //# RIO: END MODIFICATION
   //#################################################
 
-  remote_active = 0;
-  last_bus_received_from_loopback = 0x00;
-
   //########################
   //# RIO: Little Remote
   //########################
@@ -279,6 +277,9 @@ s32 SEQ_MIDI_IN_Init(u32 mode)
   //########################
   //# RIO: END MODIFICATION
   //########################
+
+  remote_active = 0;
+  last_bus_received_from_loopback = 0x00;
 
   return 0; // no error
 }

@@ -1100,21 +1100,27 @@ s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
   } break;
 
   default:
-    if( layer_event.midi_package.event == CC ) {
-      mios32_midi_port_t port = SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT);
-      u8 loopback = (port & 0xf0) == 0xf0;
+  //####################################
+  //# RIO: POLYPHONIC PRESSURE
+  //####################################
+  if( layer_event.midi_package.event == CC || layer_event.midi_package.event == PolyPressure) {
+    mios32_midi_port_t port = SEQ_CC_Get(visible_track, SEQ_CC_MIDI_PORT);
+    u8 loopback = (port & 0xf0) == 0xf0;
 
-      if( loopback )
-        SEQ_LCD_PrintString((char *)SEQ_CC_LABELS_Get(port, layer_event.midi_package.cc_number, 1));
-      else {
-        if( layer_event.midi_package.cc_number >= 0x80 ) {
-          SEQ_LCD_PrintFormattedString("  CC#off");
-        } else {
-          SEQ_LCD_PrintFormattedString("  CC#%3d", layer_event.midi_package.cc_number);
-        }
+    if( loopback )
+      SEQ_LCD_PrintString((char *)SEQ_CC_LABELS_Get(port, layer_event.midi_package.cc_number, 1));
+    else {
+      if( layer_event.midi_package.cc_number >= 0x80 ) {
+	SEQ_LCD_PrintFormattedString("  %s#off", (layer_event.midi_package.event == CC) ? "CC" : "PP");
+      } else {
+	SEQ_LCD_PrintFormattedString("  %s#%3d", (layer_event.midi_package.event == CC) ? "CC" : "PP", layer_event.midi_package.cc_number);
       }
-      SEQ_LCD_PrintFormattedString(" %3d ", layer_event.midi_package.value);
-      SEQ_LCD_PrintVBar(layer_event.midi_package.value >> 4);
+    }
+    SEQ_LCD_PrintFormattedString(" %3d ", layer_event.midi_package.value);
+    SEQ_LCD_PrintVBar(layer_event.midi_package.value >> 4);
+  //####################################
+  //# RIO: END MODIFICATION
+  //####################################
     } else {
       SEQ_LCD_PrintSpaces(2);
 
@@ -1225,9 +1231,22 @@ s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
 
       u8 gate = SEQ_TRG_GateGet(visible_track, visible_step, ui_selected_instrument);
 
+		//####################################
+		//# RIO: FLASHING GATE CURSOR
+		//####################################
+		if( visible_step == ui_selected_step && ui_cursor_flash ) {
+			SEQ_LCD_PrintSpaces(5);
+		} else {
+
       // muted step? if previous gatelength <= 96, print spaces
       if( (!gate || !layer_event.midi_package.velocity) && previous_length < 96 ) {
-	SEQ_LCD_PrintSpaces(5);
+      	if( visible_step == ui_selected_step) {
+    SEQ_LCD_PrintChar('_');
+    SEQ_LCD_PrintChar('_');
+    SEQ_LCD_PrintChar('_');
+    SEQ_LCD_PrintChar('_');
+    SEQ_LCD_PrintChar(' ');
+      	} else SEQ_LCD_PrintSpaces(5);
       } else {
 	if( layer_event.len >= 96 )
 	  SEQ_LCD_PrintHBar(15); // glide or stretched event
@@ -1236,6 +1255,10 @@ s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
 	  SEQ_LCD_PrintHBar(((layer_event.len-1)*16)/110); // so that we see a difference if note not stretched
 	}
       }
+		}
+		//####################################
+		//# RIO: END MODIFICATION
+		//####################################
       previous_length = ((gate && layer_event.midi_package.velocity) || (previous_length >= 96 && layer_event.len >= 96)) ? layer_event.len : 0;
     }
 
@@ -1508,14 +1531,20 @@ static s32 ChangeSingleEncValue(u8 track, u16 par_step, u16 trg_step, s32 increm
   if( !dont_change_gate ) {
     u8 event_mode = SEQ_CC_Get(track, SEQ_CC_MIDI_EVENT_MODE);
 
+    //####################################
+    //# RIO: POLYPHONIC PRESSURE
+    //####################################
     // we do this always regardless if value has been changed or not (e.g. increment if value already 127)
-    if( event_mode == SEQ_EVENT_MODE_CC && layer_type == SEQ_PAR_Type_CC ) {
+    if( event_mode == SEQ_EVENT_MODE_CC && (layer_type == SEQ_PAR_Type_CC || layer_type == SEQ_PAR_Type_PolyPressure) ) {
       // in this mode gates are used to disable CC
       // if a CC value has been changed, set gate
       if( !seq_ui_options.PRINT_AND_MODIFY_WITHOUT_GATES ) {
 	SEQ_TRG_GateSet(track, trg_step, ui_selected_instrument, 1);
       }
     }
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
   }
 
   // take over if changed

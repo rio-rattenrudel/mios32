@@ -37,7 +37,7 @@ typedef struct {
 } seq_lfo_t;
 
 // globals
-u8  delayed;        // RIO: added delayflag
+u8  delay;          // RIO: added delay
 u8  fadeoffset;     // RIO: added fadeoffset
 u8  lasttrkccval;   // RIO: added lasttrkccval
 
@@ -90,8 +90,7 @@ s32 SEQ_LFO_ResetTrk(u8 track)
   lasttrkccval = 0;     // RIO: added lasttrkccval
 
   seq_cc_trk_t *tcc = &seq_cc_trk[track];
-  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200)    delayed = 1;   // RIO: added delayed
-  else                                                  delayed = 0;
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) delay = (tcc->lfo_phase-100) << 1;
 
   return 0; // no error
 }
@@ -109,23 +108,17 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
   // could get out-of-sync if temporary disabled/enabled
 
   // increment step counter on each step
-  if( (bpm_tick % 96) == 0 && lfo->step_ctr != 65535) // @384 ppqn (reference bpm_tick resolution)
-    ++lfo->step_ctr;
+  if( (bpm_tick % 96) == 0 && lfo->step_ctr != 65535) {// @384 ppqn (reference bpm_tick resolution)
 
-  // RIO: delay
-  u8 delvalue = 0;
-  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) {
-    delvalue = tcc->lfo_phase-100;
-    if (delayed) {
-      if( lfo->step_ctr >= delvalue ) {
-          delayed = 0;
-          lfo->step_ctr = 0;
-      }
-    }
+    // RIO: added delay
+    if (delay) delay--; else ++lfo->step_ctr;
   }
 
+  // RIO: added delay
+  if (delay) return 0;
+
   // increment waveform position
-  if( lfo->step_ctr > tcc->lfo_steps_rst - delvalue) {                              // RIO: added delvalue to reset
+  if( lfo->step_ctr > tcc->lfo_steps_rst) {
     if( tcc->lfo_enable_flags.ONE_SHOT ) {
       // oneshot mode: halt LFO counter
       lfo->step_ctr = 65535;
@@ -145,11 +138,8 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
       else                       lfo->pos = 0;
 
     }
-    if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) delayed = 1;            // RIO: set again delay
 
   } else {
-
-    if (delayed) return 0;                                                     // RIO: no LFO increment
 
     // increment waveform pointer
     u32 lfo_ticks = (u32)(tcc->lfo_steps+1) * 96; // @384 ppqn (reference bpm_tick resolution)

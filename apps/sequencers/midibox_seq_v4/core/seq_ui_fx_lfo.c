@@ -588,7 +588,7 @@ static s32 LCD_Handler(u8 high_prio)
 
     u8 tmp = SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE);   // RIO: added Delay and FadeOut
     if      (tmp > 200) SEQ_LCD_PrintFormattedString("%3d   ", tmp-200);
-    else if (tmp > 100) SEQ_LCD_PrintFormattedString("%3d   ", tmp-100);
+    else if (tmp > 100) SEQ_LCD_PrintFormattedString("%3d   ", (tmp-100) << 1);
     else                SEQ_LCD_PrintFormattedString("%3d%%  ", tmp);
   }
 

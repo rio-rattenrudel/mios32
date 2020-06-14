@@ -11,9 +11,9 @@ original size:
 ------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 408468     936   62536  471940   73384 project_build/project.elf
+ 409412     936   62544  472892   7373c project_build/project.elf
 10000000 B __ram_start
-10007d48 B __ram_end
+10007d50 B __ram_end
 2007c000 D __ram_start_ahb
 20083aa8 B __ram_end_ahb
 
@@ -21,16 +21,16 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 419172     960   62872  483004   75ebc project_build/project.elf
+ 420084     960   62888  483932   7625c project_build/project.elf
 10000000 B __ram_start
-10007e98 B __ram_end
+10007ea8 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 
 -----------------------------------------------------------------
 Erklärung:
 ----------
-Probleme treten auf wenn __ram_end sich stark vom original vergrößert. Also z.B. im oder nach Bereich 10007d00 oder 10007e00 !!! Wo genau die Grenze ist, kann man nicht sagen, aber der Arbeitspeicher liegt genau zwischen __ram_end und __ram_start_ahb. 
+Probleme treten auf wenn __ram_end sich stark vom original vergrößert. Also z.B. im oder nach Bereich 10007d00 oder 10007e00 !!! Wo genau die Grenze ist, ist etwas unklar, aber der Arbeitspeicher liegt genau zwischen __ram_end und __ram_start_ahb. Laut docs, ist ab 10007fff für den fixen App-Ram Schluss.
 
 Im Bereich 10007cxx (oder auch noch 10007dxx (MAX PASSED: 10007ebx)) sollte alles sauber funktionieren...., darum am besten in dem Bereich bleiben. Zum Beispiel, weist die damals Jahre stabil eingesetzte und recompilierte version 0.80 folgende Werte auf (__ram_end = 10007d20):
 
@@ -2053,7 +2053,7 @@ typedef struct {
 } seq_lfo_t;
 
 // globals
-u8  delayed;        // RIO: added delayflag
+u8  delay;          // RIO: added delay
 u8  fadeoffset;     // RIO: added fadeoffset
 
 //###########################################################################
@@ -2080,8 +2080,7 @@ s32 SEQ_LFO_ResetTrk(u8 track)
   fadeoffset = 0;       // RIO: added fadeoffset
 
   seq_cc_trk_t *tcc = &seq_cc_trk[track];
-  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200)    delayed = 1;   // RIO: added delayed
-  else                                                  delayed = 0;
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) delay = (tcc->lfo_phase-100) << 1;
 
   return 0; // no error
 }
@@ -2099,23 +2098,17 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
   // could get out-of-sync if temporary disabled/enabled
 
   // increment step counter on each step
-  if( (bpm_tick % 96) == 0 && lfo->step_ctr != 65535) // @384 ppqn (reference bpm_tick resolution)
-    ++lfo->step_ctr;
+  if( (bpm_tick % 96) == 0 && lfo->step_ctr != 65535) {// @384 ppqn (reference bpm_tick resolution)
 
-  // RIO: delay
-  u8 delvalue = 0;
-  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) {
-    delvalue = tcc->lfo_phase-100;
-    if (delayed) {
-      if( lfo->step_ctr >= delvalue ) {
-          delayed = 0;
-          lfo->step_ctr = 0;
-      }
-    }
+    // RIO: added delay
+    if (delay) delay--; else ++lfo->step_ctr;
   }
 
+  // RIO: added delay
+  if (delay) return 0;
+
   // increment waveform position
-  if( lfo->step_ctr > tcc->lfo_steps_rst - delvalue) {                              // RIO: added delvalue to reset
+  if( lfo->step_ctr > tcc->lfo_steps_rst) {
     if( tcc->lfo_enable_flags.ONE_SHOT ) {
       // oneshot mode: halt LFO counter
       lfo->step_ctr = 65535;
@@ -2135,11 +2128,8 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
       else                       lfo->pos = 0;
 
     }
-    if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) delayed = 1;            // RIO: set again delay
 
   } else {
-
-    if (delayed) return 0;                                                     // RIO: no LFO increment
 
     // increment waveform pointer
     u32 lfo_ticks = (u32)(tcc->lfo_steps+1) * 96; // @384 ppqn (reference bpm_tick resolution)
@@ -2203,7 +2193,7 @@ static s32 LCD_Handler(u8 high_prio):
 
     u8 tmp = SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE);   // RIO: added Delay and FadeOut
     if      (tmp > 200) SEQ_LCD_PrintFormattedString("%3d   ", tmp-200);
-    else if (tmp > 100) SEQ_LCD_PrintFormattedString("%3d   ", tmp-100);
+    else if (tmp > 100) SEQ_LCD_PrintFormattedString("%3d   ", (tmp-100) << 1);
     else                SEQ_LCD_PrintFormattedString("%3d%%  ", tmp);
   }
 

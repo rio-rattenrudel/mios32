@@ -21,7 +21,7 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 420084     960   62888  483932   7625c project_build/project.elf
+ 420100     960   62888  483948   7626c project_build/project.elf
 10000000 B __ram_start
 10007ea8 B __ram_end
 2007c000 D __ram_start_ahb
@@ -5395,7 +5395,43 @@ s32 SEQ_UI_EDIT_LCD_Handler(u8 high_prio, seq_ui_edit_mode_t edit_mode)
 
 -----------------------------------------------------------------
 
-27. Upload via MIOS_STUDIO (mindestens 2.4.5)
+27. Auto Fast Mode 2 (always on)
+
+seq_ui.c -->
+s32 SEQ_UI_InitEncSpeed(u32 auto_config)
+{
+  ..
+
+      default:
+      //####################################
+      //# RIO: AUTO FAST MODE 2
+      //####################################
+      	seq_ui_button_state.FAST_ENCODERS = seq_hwcfg_enc.auto_fast == 2 ? 1 : 0;
+      //####################################
+      //# RIO: END MODIFICATION
+      //####################################
+    }
+
+seq_file_hw.c -->
+s32 SEQ_FILE_HW_Read(void)
+{
+  ..
+
+	  if( strcasecmp(parameter, "AUTO_FAST") == 0 ) {
+	    seq_hwcfg_enc.auto_fast = sr;
+	    //####################################
+	    //# RIO: AUTO FAST MODE 2
+	    //####################################
+	    if (sr == 2) SEQ_UI_InitEncSpeed(1);
+	    //####################################
+	    //# RIO: END MODIFICATION
+	    //####################################
+	    continue;
+	  }
+
+-----------------------------------------------------------------
+
+28. Upload via MIOS_STUDIO (mindestens 2.4.5)
 
 Säubern im verzeichnis in cmd: make clean
 Kompilieren im verzeichnis in cmd: make

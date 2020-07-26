@@ -296,7 +296,13 @@ s32 SEQ_UI_InitEncSpeed(u32 auto_config)
       	break;
 
       default:
-      	seq_ui_button_state.FAST_ENCODERS = 0;
+      //####################################
+      //# RIO: AUTO FAST MODE 2
+      //####################################
+      	seq_ui_button_state.FAST_ENCODERS = seq_hwcfg_enc.auto_fast == 2 ? 1 : 0;
+      //####################################
+      //# RIO: END MODIFICATION
+      //####################################
     }
   }
 

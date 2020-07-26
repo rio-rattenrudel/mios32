@@ -866,6 +866,13 @@ s32 SEQ_FILE_HW_Read(void)
 	  }
 	  if( strcasecmp(parameter, "AUTO_FAST") == 0 ) {
 	    seq_hwcfg_enc.auto_fast = sr;
+	    //####################################
+	    //# RIO: AUTO FAST MODE 2
+	    //####################################
+	    if (sr == 2) SEQ_UI_InitEncSpeed(1);
+	    //####################################
+	    //# RIO: END MODIFICATION
+	    //####################################
 	    continue;
 	  }
 

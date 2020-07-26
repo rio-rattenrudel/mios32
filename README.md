@@ -137,6 +137,11 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 * With the feature, the step cursor for the GATE flashes in Edit-View.
 
+22. [Feature: Auto Fast Mode 2](https://github.com/rio-rattenrudel/mios32/commit/afe1d2fefd1be49681b4ee5f6ab3899f36ad64f9)
+
+* Now this hw config param (ENC_AUTO_FAST 2) activates the fast mode for all encoder/pages/par initially, what the encoder doesn't wear out so quickly.
+
+
 ## Recompile sizes
 
 ```
@@ -163,9 +168,9 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 419172     960   62872  483004   75ebc project_build/project.elf
+ 420100     960   62888  483948   7626c project_build/project.elf
 10000000 B __ram_start
-10007e98 B __ram_end
+10007ea8 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 -----------------------------------------------------------------

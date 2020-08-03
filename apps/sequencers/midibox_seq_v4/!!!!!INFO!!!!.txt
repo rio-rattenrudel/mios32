@@ -1367,12 +1367,14 @@ static s32 LCD_Handler(u8 high_prio):
               mios32_midi_package_t p;
 
               if( SEQ_LFO_FastCC_Event(visible_track, 0, &p, 1) >= 1 ) {
-                char buffer[20];
-                sprintf(buffer, "V: %d", p.value);
+                char buffer[7];
+                sprintf(buffer, "V: %3d", p.value);
                 SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 1000, buffer, 0);
               }
           }
       }
+
+      return 0;
   }
   // return 0; // there are no high-priority updates //RIO: changed
 

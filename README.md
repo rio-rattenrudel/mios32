@@ -168,9 +168,9 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 420148     960   62888  483996   7629c project_build/project.elf
+ 420116     960   62952  484028   762bc project_build/project.elf
 10000000 B __ram_start
-10007ea8 B __ram_end
+10007ee8 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 -----------------------------------------------------------------

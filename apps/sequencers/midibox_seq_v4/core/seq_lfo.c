@@ -34,12 +34,13 @@ typedef struct {
   u16 step_ctr;
   u16 pos;
   u16 rstcount;     // RIO: added rstcount
+  u8  delay;        // RIO: added delay
+  u8  fadeoffset;   // RIO: added fadeoffset
+  u8  lasttrkccval; // RIO: added lasttrkccval
 } seq_lfo_t;
 
 // globals
-u8  delay;          // RIO: added delay
-u8  fadeoffset;     // RIO: added fadeoffset
-u8  lasttrkccval;   // RIO: added lasttrkccval
+
 
 //###########################################################################
 //# RIO: END MODIFICATION
@@ -84,13 +85,13 @@ s32 SEQ_LFO_ResetTrk(u8 track)
 
   lfo->step_ctr = 0;
   lfo->pos = 0;
-  lfo->rstcount = 0;    // RIO: added rstcount
-
-  fadeoffset = 0;       // RIO: added fadeoffset
-  lasttrkccval = 0;     // RIO: added lasttrkccval
+  lfo->rstcount = 0;      // RIO: added rstcount
+  lfo->delay = 0;         // RIO: added delay
+  lfo->fadeoffset = 0;    // RIO: added fadeoffset
+  lfo->lasttrkccval = 0;  // RIO: added lasttrkccval
 
   seq_cc_trk_t *tcc = &seq_cc_trk[track];
-  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) delay = (tcc->lfo_phase-100) << 1;
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) lfo->delay = tcc->lfo_phase-100;
 
   return 0; // no error
 }
@@ -111,11 +112,11 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
   if( (bpm_tick % 96) == 0 && lfo->step_ctr != 65535) {// @384 ppqn (reference bpm_tick resolution)
 
     // RIO: added delay
-    if (delay) delay--; else ++lfo->step_ctr;
+    if (lfo->delay) lfo->delay--; else ++lfo->step_ctr;
   }
 
   // RIO: added delay
-  if (delay) return 0;
+  if (lfo->delay) return 0;
 
   // increment waveform position
   if( lfo->step_ctr > tcc->lfo_steps_rst) {
@@ -205,8 +206,8 @@ s32 SEQ_LFO_Event(u8 track, seq_layer_evnt_t *e)
       //# RIO: Use only the activated CC values ​​of the tracks for the LFO
       //##################################################################
       u8 mvalue = e->midi_package.value;
-      if (mvalue < 128) lasttrkccval = mvalue;
-      else mvalue = lasttrkccval;
+      if (mvalue < 128) lfo->lasttrkccval = mvalue;
+      else mvalue = lfo->lasttrkccval;
       s16 value = mvalue + lfo_value;
       //##################################################################
       //# RIO: END MODIFICATION
@@ -625,19 +626,19 @@ static s32 SEQ_LFO_ValueGet(seq_cc_trk_t *tcc, seq_lfo_t *lfo)
     if( lfo->step_ctr > fadestart) {
 
         // store last lfo before fade out
-        if (!fadeoffset) fadeoffset = lfo_value;
+        if (!lfo->fadeoffset) lfo->fadeoffset = lfo_value;
 
         float m = (lfo->step_ctr - fadestart) / (float)fadevalue;
-        if (tcc->lfo_enable_flags.FADEUP)   lfo_value = fadeoffset + (int)((127-tcc->lfo_cc_offset-fadeoffset) * m);
-        else                                lfo_value = fadeoffset - (int)(fadeoffset * m);
+        if (tcc->lfo_enable_flags.FADEUP)   lfo_value = lfo->fadeoffset + (int)((127-tcc->lfo_cc_offset-lfo->fadeoffset) * m);
+        else                                lfo_value = lfo->fadeoffset - (int)(lfo->fadeoffset * m);
 
         if      (lfo_value < 0)     lfo_value = 0;
         else if (lfo_value > 127)   lfo_value = 127;
 
-        //DEBUG_MSG("step: %d rst: %d off: %d start: %d value: %d lfo: %d stp-start+1: %d m: %d.%03d\n", lfo->step_ctr,tcc->lfo_steps_rst,fadeoffset,fadestart,fadevalue,lfo_value,lfo->step_ctr-fadestart+1,(int)m,(int)(m*1000.0)%1000);
+        //DEBUG_MSG("step: %d rst: %d off: %d start: %d value: %d lfo: %d stp-start+1: %d m: %d.%03d\n", lfo->step_ctr,tcc->lfo_steps_rst,lfo->fadeoffset,fadestart,fadevalue,lfo_value,lfo->step_ctr-fadestart+1,(int)m,(int)(m*1000.0)%1000);
         return lfo_value;
 
-    } else fadeoffset = 0;
+    } else lfo->fadeoffset = 0;
   }
 
 //#################################################

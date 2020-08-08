@@ -21,9 +21,9 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 420148     960   62888  483996   7629c project_build/project.elf
+ 420116     960   62952  484028   762bc project_build/project.elf
 10000000 B __ram_start
-10007ea8 B __ram_end
+10007ee8 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 
@@ -2076,11 +2076,9 @@ typedef struct {
   u16 step_ctr;
   u16 pos;
   u16 rstcount;     // RIO: added rstcount
+  u8  delay;        // RIO: added delay
+  u8  fadeoffset;   // RIO: added fadeoffset
 } seq_lfo_t;
-
-// globals
-u8  delay;          // RIO: added delay
-u8  fadeoffset;     // RIO: added fadeoffset
 
 //###########################################################################
 //# RIO: END MODIFICATION
@@ -2101,12 +2099,12 @@ s32 SEQ_LFO_ResetTrk(u8 track)
 
   lfo->step_ctr = 0;
   lfo->pos = 0;
-  lfo->rstcount = 0;    // RIO: added rstcount
-
-  fadeoffset = 0;       // RIO: added fadeoffset
+  lfo->rstcount = 0;      // RIO: added rstcount
+  lfo->delay = 0;         // RIO: added delay
+  lfo->fadeoffset = 0;    // RIO: added fadeoffset
 
   seq_cc_trk_t *tcc = &seq_cc_trk[track];
-  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) delay = (tcc->lfo_phase-100) << 1;
+  if (tcc->lfo_phase > 100 && tcc->lfo_phase <= 200) lfo->delay = tcc->lfo_phase-100;
 
   return 0; // no error
 }
@@ -2127,11 +2125,11 @@ s32 SEQ_LFO_HandleTrk(u8 track, u32 bpm_tick)
   if( (bpm_tick % 96) == 0 && lfo->step_ctr != 65535) {// @384 ppqn (reference bpm_tick resolution)
 
     // RIO: added delay
-    if (delay) delay--; else ++lfo->step_ctr;
+    if (lfo->delay) lfo->delay--; else ++lfo->step_ctr;
   }
 
   // RIO: added delay
-  if (delay) return 0;
+  if (lfo->delay) return 0;
 
   // increment waveform position
   if( lfo->step_ctr > tcc->lfo_steps_rst) {
@@ -2219,7 +2217,7 @@ static s32 LCD_Handler(u8 high_prio):
 
     u8 tmp = SEQ_CC_Get(visible_track, SEQ_CC_LFO_PHASE);   // RIO: added Delay and FadeOut
     if      (tmp > 200) SEQ_LCD_PrintFormattedString("%3d   ", tmp-200);
-    else if (tmp > 100) SEQ_LCD_PrintFormattedString("%3d   ", (tmp-100) << 1);
+    else if (tmp > 100) SEQ_LCD_PrintFormattedString("%3d   ", tmp-100);
     else                SEQ_LCD_PrintFormattedString("%3d%%  ", tmp);
   }
 
@@ -5330,12 +5328,10 @@ typedef struct {
   u16 step_ctr;
   u16 pos;
   u16 rstcount;     // RIO: added rstcount
+  u8  delay;        // RIO: added delay
+  u8  fadeoffset;   // RIO: added fadeoffset
+  u8  lasttrkccval; // RIO: added lasttrkccval
 } seq_lfo_t;
-
-// globals
-u8  delayed;        // RIO: added delayflag
-u8  fadeoffset;     // RIO: added fadeoffset
-u8  lasttrkccval;   // RIO: added lasttrkccval
 
 //###########################################################################
 //# RIO: END MODIFICATION
@@ -5348,10 +5344,10 @@ s32 SEQ_LFO_ResetTrk(u8 track)
 
   lfo->step_ctr = 0;
   lfo->pos = 0;
-  lfo->rstcount = 0;    // RIO: added rstcount
-
-  fadeoffset = 0;       // RIO: added fadeoffset
-  lasttrkccval = 0;     // RIO: added lasttrkccval
+  lfo->rstcount = 0;      // RIO: added rstcount
+  lfo->delay = 0;         // RIO: added delay
+  lfo->fadeoffset = 0;    // RIO: added fadeoffset
+  lfo->lasttrkccval = 0;  // RIO: added lasttrkccval
 
 
 s32 SEQ_LFO_Event(u8 track, seq_layer_evnt_t *e)
@@ -5364,8 +5360,8 @@ s32 SEQ_LFO_Event(u8 track, seq_layer_evnt_t *e)
       //# RIO: Use only the activated CC values ​​of the tracks for the LFO
       //##################################################################
       u8 mvalue = e->midi_package.value;
-      if (mvalue < 128) lasttrkccval = mvalue;
-      else mvalue = lasttrkccval;
+      if (mvalue < 128) lfo->lasttrkccval = mvalue;
+      else mvalue = lfo->lasttrkccval;
       s16 value = mvalue + lfo_value;
       //##################################################################
       //# RIO: END MODIFICATION

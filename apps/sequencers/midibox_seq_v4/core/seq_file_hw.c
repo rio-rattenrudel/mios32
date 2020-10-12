@@ -1015,7 +1015,7 @@ s32 SEQ_FILE_HW_Read(void)
 #endif
 	  }
 
-
+#if !defined(MIOS32_DONT_USE_BLM)
 	////////////////////////////////////////////////////////////////////////////////////////////
 	// BLM_
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -1081,12 +1081,12 @@ s32 SEQ_FILE_HW_Read(void)
 	    blm_config_t config = BLM_ConfigGet();
 	    config.din_r_sr = value;
 	    BLM_ConfigSet(config);
-
 	  } else {
 #if DEBUG_VERBOSE_LEVEL >= 1
 	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown BLM_* name '%s'!", parameter);
 #endif
 	  }
+#endif
 
 #if !defined(SEQ_DONT_USE_BLM8X8)
 	////////////////////////////////////////////////////////////////////////////////////////////

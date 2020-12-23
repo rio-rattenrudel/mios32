@@ -21,9 +21,9 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 420388     960   62952  484300   763cc project_build/project.elf
+ 420380     960   62944  484284   763bc project_build/project.elf
 10000000 B __ram_start
-10007ee8 B __ram_end
+10007ee0 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 
@@ -2315,19 +2315,12 @@ seq_ui.c -->
 static s32 SEQ_UI_Button_Proteus(s32 depressed)
 {
   if( depressed ) return -1; // ignore when button depressed
+  seq_ui_button_state.PROTEUS ^= 1;
 
   // change to utility page
-  SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
-
-  return 0; // no error
-}
-
-static s32 SEQ_UI_Button_XLTurbo(s32 depressed)
-{
-  if( depressed ) return -1; // ignore when button depressed
-
-  // change to utility page
-  SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
+  if (seq_ui_button_state.PROTEUS)
+    SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
+  else SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
 
   return 0; // no error
 }
@@ -2347,8 +2340,6 @@ s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
   //####################################
   if( pin == seq_hwcfg_button.proteus )
     return SEQ_UI_Button_Proteus(pin_value);
-  if( pin == seq_hwcfg_button.xlturbo )
-    return SEQ_UI_Button_XLTurbo(pin_value);
   //####################################
   //# RIO: END MODIFICATION
   //####################################
@@ -2443,8 +2434,6 @@ s32 SEQ_FILE_HW_Read(void)
 	  //####################################
 	  } else if( strcasecmp(parameter, "PROTEUS") == 0 ) {
 	    seq_hwcfg_button.proteus = din_value;
-	  } else if( strcasecmp(parameter, "XLTurbo") == 0 ) {
-	    seq_hwcfg_button.xlturbo = din_value;
 	  //####################################
 	  //# RIO: END MODIFICATION
 	  //####################################
@@ -2460,7 +2449,6 @@ seq_hwcfg_button_t seq_hwcfg_button = {
   //# RIO: PROTEUS added
   //####################################
   .proteus   = ((( 1   -1)<<3)+    0),
-  .xlturbo   = ((( 1   -1)<<3)+    0),
   //####################################
   //# RIO: END MODIFICATION
   //####################################
@@ -2474,7 +2462,6 @@ seq_hwcfg.h -->
   //# RIO: PROTEUS added
   //####################################
   u16 proteus;
-  u16 xlturbo;
   //####################################
   //# RIO: END MODIFICATION
   //####################################
@@ -2487,7 +2474,6 @@ MBSEQ_HW.V4 -->
 #######################################
 
 BUTTON_PROTEUS    0   0
-BUTTON_XLTURBO    0   0
 
 #######################################
 # RIO: END MODIFICATION
@@ -2573,6 +2559,33 @@ typedef enum {
 
 seq_ui.h -->
 
+/////////////////////////////////////////////////////////////////////////////
+// Global Types
+/////////////////////////////////////////////////////////////////////////////
+
+typedef union {
+  struct {
+    u32 ALL;
+  };
+  struct {
+    u8 PAGE_CHANGE_BUTTON_FLAGS:7;
+  };
+  struct {
+    // these button functions will change a page (special "radio button" handling required)
+    u32 MENU_PRESSED:1;
+    ..
+
+    //####################################
+    //# RIO: PROTEUS added
+    //####################################
+    u32 PROTEUS:1;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+  };
+} seq_ui_button_state_t;
+
+
 extern s32 SEQ_UI_TRKEUCLID_Init(u32 mode);
 
 //####################################
@@ -2585,6 +2598,7 @@ extern s32 SEQ_UI_XLTURBO_Init(u32 mode);   // RIO: added Proteus
 //####################################
 //# RIO: END MODIFICATION
 //####################################
+
 
 
 seq_ui_proteus.c -->

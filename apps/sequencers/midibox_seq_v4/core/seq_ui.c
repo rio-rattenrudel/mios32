@@ -846,19 +846,12 @@ static s32 SEQ_UI_Button_Scrub(s32 depressed)
 static s32 SEQ_UI_Button_Proteus(s32 depressed)
 {
   if( depressed ) return -1; // ignore when button depressed
+  seq_ui_button_state.PROTEUS ^= 1;
 
   // change to utility page
-  SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
-
-  return 0; // no error
-}
-
-static s32 SEQ_UI_Button_XLTurbo(s32 depressed)
-{
-  if( depressed ) return -1; // ignore when button depressed
-
-  // change to utility page
-  SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
+  if (seq_ui_button_state.PROTEUS)
+    SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
+  else SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
 
   return 0; // no error
 }
@@ -2598,8 +2591,6 @@ s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
   //####################################
   if( pin == seq_hwcfg_button.proteus )
     return SEQ_UI_Button_Proteus(pin_value);
-  if( pin == seq_hwcfg_button.xlturbo )
-    return SEQ_UI_Button_XLTurbo(pin_value);
   //####################################
   //# RIO: END MODIFICATION
   //####################################

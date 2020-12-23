@@ -7,10 +7,10 @@
 # RIO: Tap Tempo - Beat Converter
 ##################################################
 
-TAP_TEMPO_PORT      0
-TAP_TEMPO_CC        0
-TAP_TEMPO_VALUE     0
-TAP_TEMPO_RETRIES   0
+TAP_TEMPO_PORT		0x22
+TAP_TEMPO_CC		20
+TAP_TEMPO_VALUE		1
+TAP_TEMPO_RETRIES	5
 
 ##################################################
 # RIO: Clock Shifter (Off: 0..95 [48:1/2 72:3/4])
@@ -417,7 +417,7 @@ BUTTON_JAM_STEP   0   0
 # RIO: PROTEUS / XLTURBO
 #######################################
 
-BUTTON_PROTEUS    1   2
+BUTTON_PROTEUS    1   3
 
 #######################################
 # RIO: END MODIFICATION
@@ -427,16 +427,16 @@ BUTTON_PROTEUS    1   2
 BUTTON_STOP    1   4
 BUTTON_PAUSE   1   5
 BUTTON_PLAY    1   6
-BUTTON_REW     1   7
-BUTTON_FWD     2   0
+BUTTON_REW     0   0
+BUTTON_FWD     0   0
 BUTTON_LOOP    0   0
 BUTTON_FOLLOW  0   0
 
 #              SR  Pin
-BUTTON_MENU     2   5
+BUTTON_MENU     2   2
 BUTTON_BOOKMARK 0   0
-BUTTON_SELECT   2   6
-BUTTON_EXIT     2   7
+BUTTON_SELECT   2   5
+BUTTON_EXIT     1   2
 
 #              SR  Pin
 BUTTON_TRACK1   3   0
@@ -459,7 +459,7 @@ BUTTON_PHRASE    0   0
 #            SR  Pin
 BUTTON_SOLO   4   4
 BUTTON_FAST   4   5
-BUTTON_FAST2 13   2
+BUTTON_FAST2  0   0
 BUTTON_ALL    4   6
 
 #            SR  Pin
@@ -481,10 +481,10 @@ BUTTON_GP15  10   6
 BUTTON_GP16  10   7
 
 #              SR  Pin
-BUTTON_GROUP1	0   0
-BUTTON_GROUP2	0   0
-BUTTON_GROUP3	0   0
-BUTTON_GROUP4	0   0
+BUTTON_GROUP1	13   0
+BUTTON_GROUP2	13   0
+BUTTON_GROUP3	13   0
+BUTTON_GROUP4	13   0
 
 #######################################
 # RIO: NEXT/PREV GROUP / CLOCK SHIFTER
@@ -537,7 +537,7 @@ BUTTON_TRG_LAYER_C	0   6
 
 #                   SR  Pin
 BUTTON_UTILITY       2   1
-BUTTON_STEP_VIEW     2   2
+BUTTON_STEP_VIEW     0   0
 BUTTON_TRG_LAYER_SEL 2   3
 BUTTON_TRACK_SEL     2   4
 
@@ -553,8 +553,8 @@ BUTTON_TEMPO_PRESET  0   0
 BUTTON_EXT_RESTART   0   0
 
 #               SR  Pin
-BUTTON_COPY      0   0
-BUTTON_PASTE     0   0
+BUTTON_COPY      1   7
+BUTTON_PASTE     2   0
 BUTTON_CLEAR     0   0
 BUTTON_UNDO      0   0
 BUTTON_MOVE      0   0
@@ -565,7 +565,7 @@ BUTTON_SCROLL    0   0
 BUTTON_MIXER      0   0
 
 #                SR  Pin
-BUTTON_SAVE       0   0
+BUTTON_SAVE      13   2
 BUTTON_SAVE_ALL   0   0
 
 #                 SR  Pin
@@ -652,13 +652,13 @@ BUTTON_BEH_METRONOME    1
 BUTTON_BEH_LOOP         1
 BUTTON_BEH_FOLLOW       1
 BUTTON_BEH_SCRUB        0
-BUTTON_BEH_MENU         0
+BUTTON_BEH_MENU         1
 BUTTON_BEH_MUTE         1
 BUTTON_BEH_BOOKMARK     1
-BUTTON_BEH_STEP_VIEW    0
-BUTTON_BEH_TRG_LAYER    0
+BUTTON_BEH_STEP_VIEW    1
+BUTTON_BEH_TRG_LAYER    1
 BUTTON_BEH_PAR_LAYER    0
-BUTTON_BEH_TRACK_SEL    0
+BUTTON_BEH_TRACK_SEL    1
 BUTTON_BEH_TEMPO_PRESET 0
 
 
@@ -706,7 +706,7 @@ ENC_GP_FAST_SPEED 3
 
 # Auto FAST mode: if a layer is assigned to velocity or CC, the fast button will be automatically
 # enabled - in other cases (e.g. Note or Length), the fast button will be automatically disabled
-ENC_AUTO_FAST        1
+ENC_AUTO_FAST        2
 
 # optional BPM encoder
 #              SR  Pin  Type

@@ -81,6 +81,13 @@ typedef union {
     u32 DOWN:1;
     u32 ENC_BTN_FWD_PRESSED:1;
     u32 TAKE_OVER_SEL_VIEW:1;
+    //####################################
+    //# RIO: PROTEUS added
+    //####################################
+    u32 PROTEUS:1;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
   };
 } seq_ui_button_state_t;
 

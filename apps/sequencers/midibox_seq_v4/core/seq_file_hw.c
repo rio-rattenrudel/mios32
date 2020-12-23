@@ -441,8 +441,6 @@ s32 SEQ_FILE_HW_Read(void)
 	  //####################################
 	  } else if( strcasecmp(parameter, "PROTEUS") == 0 ) {
 	    seq_hwcfg_button.proteus = din_value;
-	  } else if( strcasecmp(parameter, "XLTurbo") == 0 ) {
-	    seq_hwcfg_button.xlturbo = din_value;
 	  //####################################
 	  //# RIO: END MODIFICATION
 	  //####################################

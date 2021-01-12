@@ -57,9 +57,11 @@ typedef struct {
   u16 live;
 
   //####################################
-  //# RIO: PROTEUS added
+  //# RIO: DATAWHEEL ASSG.
   //####################################
-  u16 proteus;
+  u16 finetune_encoder;
+  u16 datawheel_action;
+  u16 secondary_action;
   //####################################
   //# RIO: END MODIFICATION
   //####################################

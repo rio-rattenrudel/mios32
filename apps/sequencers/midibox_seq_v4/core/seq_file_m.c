@@ -63,12 +63,21 @@ typedef struct {
   u16  map_size;      // reserved size for each map
 } seq_file_m_header_t;  // 24 bytes
 
+//##########################
+//# RIO: DATAWHEEL ASSG.
+//##########################
 typedef struct {
-  char name[20];      // map name consists of 20 characters, no zero termination, patted with spaces
+  char name[16];      // map name consists of 16 characters, no zero termination, patted with spaces
+  u8   datawheel_chn;	// mixer channel for datawheel assignment (16 - BPM, 0..15)
+  u8   datawheel_pa1;	// mixer param 1 for datawheel assignment (3..11)
+  u8   datawheel_pa2;	// mixer param 2 for datawheel assignment (3..11)
+  u8   datawheel_mod; // mixer param mod matrix (01 - pa1 reverse, 02 - pa2 reverse)
   u8   num_chn;       // number of channels in map (usually 16)
   u8   num_par;       // number of parameters per channel (usually 16)
 } seq_file_m_map_header_t; // 22 bytes
-
+//##########################
+//# RIO: END MODIFICATION
+//##########################
 
 
 // bank informations stored in RAM
@@ -347,8 +356,22 @@ s32 SEQ_FILE_M_MapRead(u8 map)
     return SEQ_FILE_M_ERR_READ;
   }
 
-  status |= FILE_ReadBuffer((u8 *)seq_mixer_map_name, 20);
-  seq_mixer_map_name[20] = 0;
+  //##########################
+  //# RIO: DATAWHEEL ASSG.
+  //##########################
+  status |= FILE_ReadBuffer((u8 *)seq_mixer_map_name, 16);
+  seq_mixer_map_name[16] = 0;
+
+  status |= FILE_ReadByte(&seq_mixer_datawheel_chn);
+  status |= FILE_ReadByte(&seq_mixer_datawheel_pa1);
+  status |= FILE_ReadByte(&seq_mixer_datawheel_pa2);
+  status |= FILE_ReadByte(&seq_mixer_datawheel_mod);
+
+  // reject legacy initial whitechar value
+  if (seq_mixer_datawheel_chn == 0x20) seq_mixer_datawheel_chn = 16;  // default BPM
+  if (seq_mixer_datawheel_pa1 == 0x20) seq_mixer_datawheel_pa1 = 8;   // default CC1
+  if (seq_mixer_datawheel_pa2 == 0x20) seq_mixer_datawheel_pa2 = 9;   // default CC2
+  if (seq_mixer_datawheel_mod == 0x20) seq_mixer_datawheel_mod = 0;   // default MOD
 
   u8 num_chn;
   status |= FILE_ReadByte(&num_chn);
@@ -359,6 +382,11 @@ s32 SEQ_FILE_M_MapRead(u8 map)
 #if DEBUG_VERBOSE_LEVEL >= 1
   DEBUG_MSG("[SEQ_FILE_M] read map M%d '%s', %d channels, %d parameters\n", map, seq_mixer_map_name, num_chn, num_par);
 #endif
+
+  //##########################
+  //# RIO: END MODIFICATION
+  //##########################
+
 
   // reduce number of channels if required
   if( num_chn > SEQ_MIXER_NUM_CHANNELS )
@@ -448,26 +476,58 @@ s32 SEQ_FILE_M_MapWrite(char *session, u8 map, u8 rename_if_empty_name)
     return status;
   }
 
+  //##########################
+  //# RIO: DATAWHEEL ASSG.
+  //##########################
   // rename map if name is empty
   if( rename_if_empty_name ) {
     int i;
     u8 found_char = 0;
-    for(i=0; i<20; ++i)
+    for(i=0; i<16; ++i)
       if( seq_mixer_map_name[i] != ' ' ) {
 	found_char = 1;
 	break;
       }
 
     if( !found_char )
-      memcpy(seq_mixer_map_name, "Unnamed             ", 20);
+      memcpy(seq_mixer_map_name, "Unnamed         ", 16);
   }
 
   // write map name w/o zero terminator
-  status |= FILE_WriteBuffer((u8 *)seq_mixer_map_name, 20);
+  status |= FILE_WriteBuffer((u8 *)seq_mixer_map_name, 16);
 
 #if DEBUG_VERBOSE_LEVEL >= 2
   DEBUG_MSG("[SEQ_FILE_M] writing map #%d '%s'...\n", map, seq_mixer_map_name);
 #endif
+
+  u8 datawheel_chn = seq_mixer_datawheel_chn;
+  u8 datawheel_pa1 = seq_mixer_datawheel_pa1;
+  u8 datawheel_pa2 = seq_mixer_datawheel_pa2;
+  u8 datawheel_mod = seq_mixer_datawheel_mod;
+
+  // set legacy initial whitechar value
+  if (datawheel_chn > 15) {
+  	datawheel_chn = 0x20;
+  	datawheel_pa1 = 0x20;
+  	datawheel_pa2 = 0x20;
+    datawheel_mod = 0x20;
+  }
+
+  // write mixer channel for datawheel assignment (16 - BPM, 0..15)
+  status |= FILE_WriteByte(datawheel_chn);
+
+  // write mixer param 1 for datawheel assignment (3..11)
+  status |= FILE_WriteByte(datawheel_pa1);
+
+  // write mixer param 2 for datawheel assignment (3..11)
+  status |= FILE_WriteByte(datawheel_pa2);
+
+  // write mixer param mod matrix (01 - pa1 reverse, 02 - pa2 reverse)
+  status |= FILE_WriteByte(datawheel_mod);
+  //##########################
+  //# RIO: END MODIFICATION
+  //##########################
+
 
   // write number of channels
   status |= FILE_WriteByte(num_chn);

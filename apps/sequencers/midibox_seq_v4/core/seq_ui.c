@@ -311,6 +311,15 @@ s32 SEQ_UI_InitEncSpeed(u32 auto_config)
   for(enc=0; enc<SEQ_HWCFG_NUM_ENCODERS; ++enc) {
     enc_config = MIOS32_ENC_ConfigGet(enc);
     enc_config.cfg.speed = (seq_ui_button_state.FAST_ENCODERS || seq_ui_button_state.FAST2_ENCODERS) ? FAST : NORMAL;
+
+    //####################################
+    //# RIO: DATAWHEEL ASSG.
+    //####################################
+    if (seq_ui_button_state.FINETUNE_ENCODER) enc_config.cfg.speed = SLOW;
+    //####################################
+    //# RIO: END MODIFICATION
+    //####################################
+
     enc_config.cfg.speed_par = 
         (enc == 0)  ? seq_hwcfg_enc.datawheel_fast_speed
       : (enc == 17) ? seq_hwcfg_enc.bpm_fast_speed
@@ -841,17 +850,92 @@ static s32 SEQ_UI_Button_Scrub(s32 depressed)
 }
 
 //####################################
-//# RIO: PROTEUS / XLTurbo Handler
+//# RIO: DATAWHEEL ASSG. / SECONDARY
 //####################################
-static s32 SEQ_UI_Button_Proteus(s32 depressed)
+static s32 SEQ_UI_Button_FinetuneEncoder(s32 depressed)
+{
+  if (ui_page == SEQ_UI_PAGE_MUTE || ui_page == SEQ_UI_PAGE_PATTERN) {
+    seq_ui_button_state.FINETUNE_ENCODER = depressed ? 0 : 1;
+    SEQ_UI_InitEncSpeed(0);
+  }
+
+  return 0; // no error
+}
+
+static s32 SEQ_UI_Button_DatawheelAction(s32 depressed)
+{
+  if (ui_page == SEQ_UI_PAGE_MUTE || ui_page == SEQ_UI_PAGE_PATTERN) {
+
+    if( depressed ) return -1; // ignore when button depressed
+
+    // parameter mode
+    if( seq_mixer_datawheel_chn < 16) {
+
+      if (!seq_ui_button_state.DATAWHEEL_TOGGLE) {
+        seq_ui_button_state.DATAWHEEL_ACTION++;
+
+        if (seq_ui_button_state.DATAWHEEL_ACTION > 2) 
+            seq_ui_button_state.DATAWHEEL_ACTION = 0;
+      }
+
+      seq_ui_button_state.DATAWHEEL_TOGGLE = 0;
+
+    } else {
+      // half bpm
+      u16 value = (u16)(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num]*10) >> 1;
+      seq_core_bpm_preset_tempo[seq_core_bpm_preset_num] = (float)value/10.0;
+      SEQ_CORE_BPM_Update(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num], seq_core_bpm_preset_ramp[seq_core_bpm_preset_num]);
+    }
+
+    SEQ_UI_Encoder_Handler(0, 0);
+
+  } else if (ui_page == SEQ_UI_PAGE_EDIT)
+      seq_ui_button_state.STEPVIEW_ACTION = depressed ? 0 : 1;
+
+  return 0; // no error
+}
+
+static s32 SEQ_UI_Button_SecondaryAction(s32 depressed)
 {
   if( depressed ) return -1; // ignore when button depressed
-  seq_ui_button_state.PROTEUS ^= 1;
 
-  // change to utility page
-  if (seq_ui_button_state.PROTEUS)
-    SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
-  else SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
+  if (ui_page == SEQ_UI_PAGE_MUTE || ui_page == SEQ_UI_PAGE_PATTERN) {
+
+      // parameter mode
+      if( seq_mixer_datawheel_chn < 16) {
+
+        if (seq_ui_button_state.DATAWHEEL_TOGGLE) {
+          seq_ui_button_state.DATAWHEEL_ACTION++;
+
+          if (seq_ui_button_state.DATAWHEEL_ACTION > 2) 
+              seq_ui_button_state.DATAWHEEL_ACTION = 0;
+        }
+
+        seq_ui_button_state.DATAWHEEL_TOGGLE = 1;
+
+      } else {
+          // double bpm
+          u16 value = (u16)(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num]*10) << 1;
+          seq_core_bpm_preset_tempo[seq_core_bpm_preset_num] = (float)value/10.0;
+          SEQ_CORE_BPM_Update(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num], seq_core_bpm_preset_ramp[seq_core_bpm_preset_num]);
+      }
+
+      SEQ_UI_Encoder_Handler(0, 0);
+
+  } else {
+
+      seq_ui_button_state.PROTEUS_ACTION++;
+
+      // change to utility page
+      if (seq_ui_button_state.PROTEUS_ACTION > 2)
+          seq_ui_button_state.PROTEUS_ACTION = 0;
+
+      if (seq_ui_button_state.PROTEUS_ACTION == 1)
+        SEQ_UI_PageSet(SEQ_UI_PAGE_PROTEUS);
+      else if (seq_ui_button_state.PROTEUS_ACTION == 2)
+        SEQ_UI_PageSet(SEQ_UI_PAGE_XLTURBO);
+      else SEQ_UI_PageSet(SEQ_UI_PAGE_EDIT);
+  }
 
   return 0; // no error
 }
@@ -1438,8 +1522,47 @@ static s32 SEQ_UI_Button_Select(s32 depressed)
   return 0; // no error
 }
 
+//####################################
+//# RIO: DATAWHEEL ASSG. / SECONDARY
+//####################################
+static s32 SEQ_UI_Button_Fast(s32 depressed)
+{
+  if( seq_hwcfg_button_beh.fast ) {
+    // toggle mode
+    if( depressed ) return -1; // ignore when button depressed
+    seq_ui_button_state.FAST_ENCODERS ^= 1;
+  } else {
+    // set mode
+    seq_ui_button_state.FAST_ENCODERS = depressed ? 0 : 1;
+  }
+
+  SEQ_UI_InitEncSpeed(0); // no auto config
+
+  return 0; // no error
+}
+
+static s32 SEQ_UI_Button_Fast2(s32 depressed)
+{
+  if( seq_hwcfg_button_beh.fast2 ) {
+    // toggle mode
+    if( depressed ) return -1; // ignore when button depressed
+    seq_ui_button_state.FAST2_ENCODERS ^= 1;
+  } else {
+    // set mode
+    seq_ui_button_state.FAST2_ENCODERS = depressed ? 0 : 1;
+  }
+
+  SEQ_UI_InitEncSpeed(0); // no auto config
+
+  return 0; // no error
+}
+
 static s32 SEQ_UI_Button_Exit(s32 depressed)
 {
+  // toggle fast/normal in mute or pattern
+  if (ui_page == SEQ_UI_PAGE_MUTE || ui_page == SEQ_UI_PAGE_PATTERN)
+    return SEQ_UI_Button_Fast(depressed);
+
   // double function: -> Follow if menu button pressed
   if( seq_ui_button_state.MENU_PRESSED )
     return SEQ_UI_Button_Follow(depressed);
@@ -1465,6 +1588,10 @@ static s32 SEQ_UI_Button_Exit(s32 depressed)
 
   return 0; // no error
 }
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
 
 static s32 SEQ_UI_Button_Edit(s32 depressed)
 {
@@ -1614,38 +1741,6 @@ static s32 SEQ_UI_Button_Solo(s32 depressed)
     seq_core_trk_soloed = 0;
 
   SEQ_UI_Msg(SEQ_UI_MSG_USER, 1000, "Solo", seq_ui_button_state.SOLO ? " on " : " off");
-
-  return 0; // no error
-}
-
-static s32 SEQ_UI_Button_Fast(s32 depressed)
-{
-  if( seq_hwcfg_button_beh.fast ) {
-    // toggle mode
-    if( depressed ) return -1; // ignore when button depressed
-    seq_ui_button_state.FAST_ENCODERS ^= 1;
-  } else {
-    // set mode
-    seq_ui_button_state.FAST_ENCODERS = depressed ? 0 : 1;
-  }
-
-  SEQ_UI_InitEncSpeed(0); // no auto config
-
-  return 0; // no error
-}
-
-static s32 SEQ_UI_Button_Fast2(s32 depressed)
-{
-  if( seq_hwcfg_button_beh.fast2 ) {
-    // toggle mode
-    if( depressed ) return -1; // ignore when button depressed
-    seq_ui_button_state.FAST2_ENCODERS ^= 1;
-  } else {
-    // set mode
-    seq_ui_button_state.FAST2_ENCODERS = depressed ? 0 : 1;
-  }
-
-  SEQ_UI_InitEncSpeed(0); // no auto config
 
   return 0; // no error
 }
@@ -2587,10 +2682,14 @@ s32 SEQ_UI_Button_Handler(u32 pin, u32 pin_value)
     return SEQ_UI_Button_Metronome(pin_value);
 
   //####################################
-  //# RIO: PROTEUS added
+  //# RIO: DATAWHEEL ASSG. / SECONDARY
   //####################################
-  if( pin == seq_hwcfg_button.proteus )
-    return SEQ_UI_Button_Proteus(pin_value);
+  if( pin == seq_hwcfg_button.finetune_encoder )
+    return SEQ_UI_Button_FinetuneEncoder(pin_value);
+  if( pin == seq_hwcfg_button.datawheel_action )
+    return SEQ_UI_Button_DatawheelAction(pin_value);
+  if( pin == seq_hwcfg_button.secondary_action )
+    return SEQ_UI_Button_SecondaryAction(pin_value);
   //####################################
   //# RIO: END MODIFICATION
   //####################################
@@ -2815,27 +2914,121 @@ s32 SEQ_UI_Encoder_Handler(u32 encoder, s32 incrementer)
   //#########################################################
   //# RIO: Using the BPM DataWheel in MUTE and PATTERN SCREEN
   //#########################################################
+  //##########################
+  //# RIO: DATAWHEEL ASSG.
+  //##########################
 
   // Original:
   // encoder 17 increments BPM
   // if( encoder == 17 ) {
 
   if( (encoder == 17) || ((encoder == 0) && ((ui_page == SEQ_UI_PAGE_MUTE) || (ui_page == SEQ_UI_PAGE_PATTERN)) ) ) { //RIO: changed to BPM in MUTE and PATTERN PAGE
+
+    if (encoder == 0) {
+      if (seq_mixer_datawheel_chn < 16) {
+
+        //DEBUG_MSG("chn: %d pa1: %d pa2: %d mod: %d", seq_mixer_datawheel_chn, seq_mixer_datawheel_pa1, seq_mixer_datawheel_pa2, seq_mixer_datawheel_mod);
+
+        u8 chn  = seq_mixer_datawheel_chn;
+        u8 par1 = seq_ui_button_state.DATAWHEEL_TOGGLE ? seq_mixer_datawheel_pa2 : seq_mixer_datawheel_pa1;
+        u8 val1 = SEQ_MIXER_Get(chn, par1);
+        u8 val2 = 0;
+
+        u8 rev1  = seq_ui_button_state.DATAWHEEL_TOGGLE ? seq_mixer_datawheel_mod & 0x02 : seq_mixer_datawheel_mod & 0x01;
+        u8 rev2  = seq_ui_button_state.DATAWHEEL_TOGGLE ? seq_mixer_datawheel_mod & 0x01 : seq_mixer_datawheel_mod & 0x02;
+
+        if( SEQ_UI_Var8_Inc(&val1, 0, 127, rev1 ? -incrementer : incrementer) >= 0 ) {
+          SEQ_MIXER_Set(chn, par1, val1);
+
+          MUTEX_MIDIOUT_TAKE;
+          SEQ_MIXER_Send(chn, par1);
+          MUTEX_MIDIOUT_GIVE;
+
+          seq_ui_display_update_req = 1;
+        }
+
+        if (seq_ui_button_state.DATAWHEEL_ACTION) {
+          u8 par2 = seq_ui_button_state.DATAWHEEL_TOGGLE ? seq_mixer_datawheel_pa1 : seq_mixer_datawheel_pa2;
+          val2    = SEQ_MIXER_Get(chn, par2);
+
+          if (seq_ui_button_state.DATAWHEEL_ACTION == 2) incrementer = -incrementer;
+
+          if( SEQ_UI_Var8_Inc(&val2, 0, 127, rev2 ? -incrementer : incrementer) >= 0 ) {
+            SEQ_MIXER_Set(chn, par2, val2);
+
+            MUTEX_MIDIOUT_TAKE;
+            SEQ_MIXER_Send(chn, par2);
+            MUTEX_MIDIOUT_GIVE;
+
+            seq_ui_display_update_req = 1;
+          }
+        }
+
+        // RIO: print PA1/PA2 on LCD
+        if (seq_ui_display_update_req) {
+
+          char str[9];
+          if (seq_ui_button_state.DATAWHEEL_ACTION) {
+            sprintf(str, "%3d  %3d", val1, val2);
+          } else {
+            sprintf(str, "%3d  ", val1);
+          }
+
+          if (seq_ui_button_state.DATAWHEEL_TOGGLE) {
+            if      (seq_ui_button_state.DATAWHEEL_ACTION == 2) SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 500, "PA2 - PA1", str);
+            else if (seq_ui_button_state.DATAWHEEL_ACTION == 1) SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 500, "PA2 + PA1", str);
+            else                                                SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 500, "PA2", str);      
+          } else {
+            if      (seq_ui_button_state.DATAWHEEL_ACTION == 2) SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 500, "PA1 - PA2", str);
+            else if (seq_ui_button_state.DATAWHEEL_ACTION == 1) SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 500, "PA1 + PA2", str);
+            else                                                SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 500, "PA1", str);                      
+          }
+        }
+
+        return 0;
+      }
+    }
+
     u16 value = (u16)(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num]*10);
     if( SEQ_UI_Var16_Inc(&value, 25, 3000, incrementer) ) { // at 384ppqn, the minimum BPM rate is ca. 2.5
+      
       // set new BPM
       seq_core_bpm_preset_tempo[seq_core_bpm_preset_num] = (float)value/10.0;
       SEQ_CORE_BPM_Update(seq_core_bpm_preset_tempo[seq_core_bpm_preset_num], seq_core_bpm_preset_ramp[seq_core_bpm_preset_num]);
       //store_file_required = 1;
-
-      // RIO: print BPM on LCD
-      float bpm = seq_core_bpm_preset_tempo[seq_core_bpm_preset_num];
-      char str[6];
-      sprintf(str, "%3d.%d", (int)bpm, (int)(10*bpm)%10);
-      SEQ_UI_Msg(SEQ_UI_MSG_USER, 500, "BPM", str);
-
-      seq_ui_display_update_req = 1;    
     }
+
+    // RIO: print BPM on LCD
+    float bpm = seq_core_bpm_preset_tempo[seq_core_bpm_preset_num];
+    char str[6];
+    sprintf(str, "%3d.%d", (int)bpm, (int)(10*bpm)%10);
+    SEQ_UI_Msg(SEQ_UI_MSG_USER_R, 500, "BPM", str);
+
+    seq_ui_display_update_req = 1;    
+
+    return 0;
+  }
+
+  if( seq_ui_button_state.STEPVIEW_ACTION && encoder == 0 ) {
+
+    int num_steps = SEQ_TRG_NumStepsGet(SEQ_UI_VisibleTrackGet());
+    u16 x;
+
+    if (incrementer > 0) {
+
+      // next stepview
+      x = ui_selected_step_view + 1;
+      if( (16*x) < num_steps ) ui_selected_step_view = x;
+
+    } else {
+
+      // prev stepview
+      x = ui_selected_step_view - 1;
+      if( x >= 0 ) ui_selected_step_view = x;
+    }
+
+    ui_selected_step = (ui_selected_step_view << 4) | (ui_selected_step & 0xf);
+
     return 0;
   }
 

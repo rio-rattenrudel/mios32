@@ -82,9 +82,13 @@ typedef union {
     u32 ENC_BTN_FWD_PRESSED:1;
     u32 TAKE_OVER_SEL_VIEW:1;
     //####################################
-    //# RIO: PROTEUS added
+    //# RIO: DATAWHEEL ASSG. / SECONDARY
     //####################################
-    u32 PROTEUS:1;
+    u32 FINETUNE_ENCODER:1;
+    u32 DATAWHEEL_ACTION:2;
+    u32 DATAWHEEL_TOGGLE:1;
+    u32 PROTEUS_ACTION:2;
+    u32 STEPVIEW_ACTION:1;
     //####################################
     //# RIO: END MODIFICATION
     //####################################

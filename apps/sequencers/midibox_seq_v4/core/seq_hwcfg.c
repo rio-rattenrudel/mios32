@@ -47,9 +47,11 @@ seq_hwcfg_button_t seq_hwcfg_button = {
   .jam_step  = ((( 0   -1)<<3)+    0),
 
   //####################################
-  //# RIO: PROTEUS added
+  //# RIO: DATAWHEEL ASSG. / SECONDARY
   //####################################
-  .proteus   = ((( 0   -1)<<3)+    0),
+  .finetune_encoder   = ((( 0   -1)<<3)+    0),
+  .datawheel_action   = ((( 0   -1)<<3)+    0),
+  .secondary_action   = ((( 0   -1)<<3)+    0),
   //####################################
   //# RIO: END MODIFICATION
   //####################################

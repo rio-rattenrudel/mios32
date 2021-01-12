@@ -36,10 +36,20 @@
 #define AHB_SECTION
 #endif
 u8 AHB_SECTION seq_mixer_value[SEQ_MIXER_NUM_CHANNELS][SEQ_MIXER_NUM_PARAMETERS];
-char seq_mixer_map_name[21];
+//##########################
+//# RIO: DATAWHEEL ASSG.
+//##########################
+char seq_mixer_map_name[17];
 
 // flags for CC1..CC4: if cleared, CC will be sent after PC, if set CC will be sent before PC
 u8 seq_mixer_cc1234_before_pc;
+u8 seq_mixer_datawheel_chn;
+u8 seq_mixer_datawheel_pa1;
+u8 seq_mixer_datawheel_pa2;
+u8 seq_mixer_datawheel_mod;
+//##########################
+//# RIO: END MODIFICATION
+//##########################
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -60,6 +70,17 @@ s32 SEQ_MIXER_Init(u32 mode)
   // CCs after PC
   seq_mixer_cc1234_before_pc = 0;
 
+  //##########################
+  //# RIO: DATAWHEEL ASSG.
+  //##########################
+  seq_mixer_datawheel_chn = 16; // default BPM
+  seq_mixer_datawheel_pa1 = 8;  // default CC1
+  seq_mixer_datawheel_pa2 = 9;  // default CC2
+  seq_mixer_datawheel_mod = 0;  // default MOD
+  //##########################
+  //# RIO: END MODIFICATION
+  //##########################
+
   // clear mixer page
   SEQ_MIXER_Clear();
 
@@ -68,7 +89,7 @@ s32 SEQ_MIXER_Init(u32 mode)
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Returns the name of the mixer map (20 characters)
+// Returns the name of the mixer map (16 characters)
 /////////////////////////////////////////////////////////////////////////////
 char *SEQ_MIXER_MapNameGet(void)
 {
@@ -312,9 +333,15 @@ s32 SEQ_MIXER_Clear(void)
 {
   // init name
   int i;
-  for(i=0; i<20; ++i)
+  //##########################
+  //# RIO: DATAWHEEL ASSG.
+  //##########################
+  for(i=0; i<16; ++i)
     seq_mixer_map_name[i] = ' ';
   seq_mixer_map_name[i] = 0;
+  //##########################
+  //# RIO: END MODIFICATION
+  //##########################
 
   u8 chn, par;
   // init mixer values

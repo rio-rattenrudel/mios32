@@ -79,8 +79,13 @@ static u8 undo_buffer_filled = 0;
 static u8 undo_buffer[SEQ_MIXER_NUM_CHANNELS][SEQ_MIXER_NUM_PARAMETERS];
 static u8 undo_map;
 
-static char edit_mixer_map_name[20];
-
+//##########################
+//# RIO: DATAWHEEL ASSG.
+//##########################
+static char edit_mixer_map_name[16];
+//##########################
+//# RIO: END MODIFICATION
+//##########################
 
 /////////////////////////////////////////////////////////////////////////////
 // Local Prototypes
@@ -229,8 +234,10 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
 	  mixer_par = SEQ_MIXER_PAR_CC1_NUM + (encoder-8);
 	  return 1; // always changed
 
-        case SEQ_UI_ENCODER_GP13: // change MIXER_LIVE_SEND
-        case SEQ_UI_ENCODER_GP14: {
+    //##########################
+    //# RIO: DATAWHEEL ASSG.
+    //##########################
+        case SEQ_UI_ENCODER_GP13: { // change MIXER_LIVE_SEND
 	  u8 value = seq_core_options.MIXER_LIVE_SEND;
 	  if( !incrementer )
 	    incrementer = seq_core_options.MIXER_LIVE_SEND ? -1 : 1;
@@ -242,19 +249,43 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
 	  return 0;
 	} break;
 
-        case SEQ_UI_ENCODER_GP16: // Mixermap name
+        case SEQ_UI_ENCODER_GP14:
+          if( seq_mixer_datawheel_chn < 16) {
+            if (incrementer) {
+              if ( SEQ_UI_Var8_Inc(&seq_mixer_datawheel_pa1, 3, 11, incrementer) )
+                return 1;
+            } else seq_mixer_datawheel_mod ^= 0x01;
+          }
+          return 0;
+
+        case SEQ_UI_ENCODER_GP15: 
+          if( seq_mixer_datawheel_chn < 16) {
+            if (incrementer) {
+              if ( SEQ_UI_Var8_Inc(&seq_mixer_datawheel_pa2, 3, 11, incrementer) )
+                return 1;
+            } else seq_mixer_datawheel_mod ^= 0x02;
+          }
+          return 0;
+
+        case SEQ_UI_ENCODER_GP16: 
+          if (incrementer) {
+            if( SEQ_UI_Var8_Inc(&seq_mixer_datawheel_chn, 0, 16, incrementer) )
+              return 1;
+            return 0;
+          }
+    // Mixermap name
 	  // Unnamed -> empty string
-	  if( strncmp(seq_mixer_map_name, "Unnamed             ", 20) == 0 ) {
+	  if( strncmp(seq_mixer_map_name, "Unnamed         ", 16) == 0 ) {
 	    int i;
-	    for(i=0; i<20; ++i) {
+	    for(i=0; i<16; ++i) {
 	      edit_mixer_map_name[i] = ' ';
 	    }
 	  } else {
 	    int i;
-	    for(i=0; i<20 && seq_mixer_map_name[i] != 0; ++i) {
+	    for(i=0; i<16 && seq_mixer_map_name[i] != 0; ++i) {
 	      edit_mixer_map_name[i] = seq_mixer_map_name[i];
 	    }
-	    for(; i<20; ++i) {
+	    for(; i<16; ++i) {
 	      edit_mixer_map_name[i] = ' ';
 	    }
 	  }
@@ -263,7 +294,7 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
 	  SEQ_UI_KeyPad_Init();
 
 	  // set cursor to last char
-	  ui_edit_name_cursor = 20;
+	  ui_edit_name_cursor = 16;
 	  while( ui_edit_name_cursor && edit_mixer_map_name[ui_edit_name_cursor-1] == ' ' ) {
 	    --ui_edit_name_cursor;
 	  }
@@ -279,20 +310,24 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
 	case SEQ_UI_ENCODER_GP15:
 	  return -1; // no function
 	case SEQ_UI_ENCODER_GP16: // back to options page
+    if (incrementer) return 0;
 	  // take over new name
-	  strncpy(seq_mixer_map_name, edit_mixer_map_name, 20);
+	  strncpy(seq_mixer_map_name, edit_mixer_map_name, 16);
 
 	  // back to options name
 	  show_mixer_util_page = MIXER_UTIL_PAGE_OPTIONS;
 	  return 1;
 	}
 
-	return SEQ_UI_KeyPad_Handler(encoder, incrementer, (char *)&edit_mixer_map_name, 20);
+	return SEQ_UI_KeyPad_Handler(encoder, incrementer, (char *)&edit_mixer_map_name, 16);
       } break;
       }
 
       return -1;
     }
+    //##########################
+    //# RIO: END MODIFICATION
+    //##########################
 
     ui_selected_item = encoder;
 
@@ -511,7 +546,8 @@ static s32 LCD_Handler(u8 high_prio)
     SEQ_LCD_CursorSet(0, 0);
     SEQ_LCD_PrintFormattedString("Mixer Map #%3d", SEQ_MIXER_NumGet()+1);
     SEQ_LCD_PrintSpaces(6);
-    SEQ_LCD_PrintString(SEQ_MIXER_MapNameGet()); // 20 characters
+    SEQ_LCD_PrintString(SEQ_MIXER_MapNameGet()); // 16 characters
+    SEQ_LCD_PrintSpaces(4);
 
     SEQ_LCD_PrintFormattedString("Page%2d  ", mixer_par+1);
 
@@ -598,16 +634,24 @@ static s32 LCD_Handler(u8 high_prio)
     //####################################
     //# RIO: POLYPHONIC PRESSURE MIXER
     //####################################
-    SEQ_LCD_PrintString("CC/PP Assignments   LiveSend       Edit ");
+    //##########################
+    //# RIO: DATAWHEEL ASSG.
+    //##########################
+    SEQ_LCD_PrintString("CC/PP Assignments   Live  PA1");
+    SEQ_LCD_PrintString(seq_mixer_datawheel_mod & 0x01 ? "R " : "  ");
+    SEQ_LCD_PrintString(seq_mixer_datawheel_mod & 0x02 ? "PA2R" : "PA2 ");
+    SEQ_LCD_PrintString(" Name");  
+    SEQ_LCD_CursorSet(0, 1);
+
+    SEQ_LCD_PrintFormattedString("%3d  Copy Paste Clr      Load Save Dump ", SEQ_MIXER_NumGet()+1);
+    SEQ_LCD_PrintString(" CC1  CC2  CC3  CC4 ");
+    SEQ_LCD_PrintString(seq_core_options.MIXER_LIVE_SEND ? " on  " : " off ");
+    SEQ_LCD_PrintFormattedString(seq_mixer_datawheel_chn < 16 ? " %3d " : " BPM ", seq_mixer_datawheel_pa1+1);
+    SEQ_LCD_PrintFormattedString(seq_mixer_datawheel_chn < 16 ? " %3d " : " --- ", seq_mixer_datawheel_pa2+1);
+    SEQ_LCD_PrintFormattedString(seq_mixer_datawheel_chn < 16 ? " CH%2d" : " Assg", seq_mixer_datawheel_chn+1);
     //####################################
     //# RIO: END MODIFICATION
     //####################################
-
-    SEQ_LCD_CursorSet(0, 1);
-    SEQ_LCD_PrintFormattedString("%3d  Copy Paste Clr      Load Save Dump ", SEQ_MIXER_NumGet()+1);
-    SEQ_LCD_PrintString(" CC1  CC2  CC3  CC4   ");
-    SEQ_LCD_PrintString(seq_core_options.MIXER_LIVE_SEND ? " on" : "off");
-    SEQ_LCD_PrintString("          Name ");
   } break;
 
   case MIXER_UTIL_PAGE_NAME: {
@@ -621,12 +665,18 @@ static s32 LCD_Handler(u8 high_prio)
     SEQ_LCD_CursorSet(0, 0);
     SEQ_LCD_PrintFormattedString("Please enter name for Mixer Map #%3d    ", SEQ_MIXER_NumGet()+1);
 
+    //##########################
+    //# RIO: DATAWHEEL ASSG.
+    //##########################
     SEQ_LCD_PrintChar('<');
     int i;
-    for(i=0; i<20; ++i)
+    for(i=0; i<16; ++i)
       SEQ_LCD_PrintChar(edit_mixer_map_name[i]);
     SEQ_LCD_PrintChar('>');
-    SEQ_LCD_PrintSpaces(18);
+    SEQ_LCD_PrintSpaces(22);
+    //##########################
+    //# RIO: END MODIFICATION
+    //##########################
 
     // insert flashing cursor
     if( ui_cursor_flash ) {

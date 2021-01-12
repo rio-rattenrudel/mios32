@@ -437,10 +437,14 @@ s32 SEQ_FILE_HW_Read(void)
 	  } else if( strcasecmp(parameter, "METRONOME") == 0 ) {
 	    seq_hwcfg_button.metronome = din_value;
 	  //####################################
-	  //# RIO: PROTEUS added
+	  //# RIO: DATAWHEEL ASSG. / SECONDARY
 	  //####################################
-	  } else if( strcasecmp(parameter, "PROTEUS") == 0 ) {
-	    seq_hwcfg_button.proteus = din_value;
+	  } else if( strcasecmp(parameter, "FINETUNE_ENCODER") == 0 ) {
+	    seq_hwcfg_button.finetune_encoder = din_value;
+	  } else if( strcasecmp(parameter, "DATAWHEEL_ACTION") == 0 ) {
+	    seq_hwcfg_button.datawheel_action = din_value;
+	  } else if( strcasecmp(parameter, "SECONDARY_ACTION") == 0 ) {
+	    seq_hwcfg_button.secondary_action = din_value;
 	  //####################################
 	  //# RIO: END MODIFICATION
 	  //####################################

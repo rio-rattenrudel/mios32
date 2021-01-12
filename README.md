@@ -141,6 +141,15 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 * Now this hw config param (ENC_AUTO_FAST 2) activates the fast mode for all encoder/pages/par initially, what the encoder doesn't wear out so quickly.
 
+23. [Datawheel Assignment / Secondary Button-Function (special behaviour)](https://github.com/rio-rattenrudel/mios32/commit/8507d87c8a25839ed837384db333334b7ac75c10)
+
+* The mixer name is limited to 16 characters in order to store a specific 1 mixer channel, 2 parameters and 1 mod value in addition to the Mixer Map. These 4 additional pieces of information are relevant for the data wheel assignment. In the standard case, the BPM value is changed in the mute and parttern page by the datawheel. Otherwise the defined parameters of the mixer channel are used. The mod value signals whether parameters should be used reverse (127..0 instead of 0..127), which can be selected using the buttons below the Par1 and Par2 info.
+
+The parameters can be selected during runtime in the mute or pattern page using DATAWHEEL ACTION and SECONDARY ACTION. There are also several modes behind it:
+- BPM can be halfed or doubled
+- PAR1 and PAR2 can be used single or combined with (+/-) operation
+
+The BUTTON_EXIT (normaly bound to options page) is used here for toggling between fast / normal behavior. There is now also a BUTTON_FINETUNE_ENCODER config option to set the encoder behavior to slow while it is pressed. In the edit page, the stepviews for the held DATAWHEEL ACTION Button can be selected with the datawheel. The SECONDARY ACTION button toggles between the Proteus Pages (P2000, XLTurbo).
 
 ## Recompile sizes
 
@@ -168,9 +177,9 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 420388     960   62952  484300   763cc project_build/project.elf
+ 422068     960   62944  485972   76a54 project_build/project.elf
 10000000 B __ram_start
-10007ee8 B __ram_end
+10007ee0 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 -----------------------------------------------------------------

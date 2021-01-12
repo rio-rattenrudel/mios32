@@ -143,7 +143,7 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 23. [Datawheel Assignment / Secondary Button-Function (special behaviour)](https://github.com/rio-rattenrudel/mios32/commit/8507d87c8a25839ed837384db333334b7ac75c10)
 
-* The mixer name is limited to 16 characters in order to store a specific 1 mixer channel, 2 parameters and 1 mod value in addition to the Mixer Map. These 4 additional pieces of information are relevant for the data wheel assignment. In the standard case, the BPM value is changed in the mute and parttern page by the datawheel. Otherwise the defined parameters of the mixer channel are used. The mod value signals whether parameters should be used reverse (127..0 instead of 0..127), which can be selected using the buttons below the Par1 and Par2 info.
+* The mixer name is limited to 16 characters in order to store addition values for 1 mixer channel, 2 parameters and 1 mod to the Mixer Map. These 4 additional pieces of information are relevant for the data wheel assignment. In the standard case, the BPM value is changed in the mute and parttern page by the datawheel. Otherwise the defined parameters of the mixer channel are used. The mod value signals whether parameters should be used reverse (127..0 instead of 0..127), which can be selected using the buttons below the Par1 and Par2 info.
 
 * The parameters can be selected during runtime in the mute or pattern page using DATAWHEEL ACTION and SECONDARY ACTION. There are also several modes behind it:
 

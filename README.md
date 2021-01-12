@@ -153,6 +153,8 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 * The BUTTON_EXIT (normaly bound to options page) is used here (mute and pattern page) for toggling between fast / normal behavior. There is now also a BUTTON_FINETUNE_ENCODER config option to set the encoder movement to slow while it is pressed. In the edit page, the stepviews for the held DATAWHEEL ACTION Button can be selected with the datawheel. The SECONDARY ACTION button toggles between the Proteus Pages (P2000, XLTurbo).
 
+* _Note: affects data storage_
+
 ## Recompile sizes
 
 ```

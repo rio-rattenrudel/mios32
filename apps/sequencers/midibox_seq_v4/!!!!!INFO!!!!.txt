@@ -21,9 +21,9 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 422068     960   62944  485972   76a54 project_build/project.elf
+ 422684     960   62952  486596   76cc4 project_build/project.elf
 10000000 B __ram_start
-10007ee0 B __ram_end
+10007ee8 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 
@@ -87,6 +87,7 @@ seq_hwcfg.h
 seq_file_hw.c
 seq_file_m.c
 seq_midi_router.c
+mios32\modules\sequencer\seq_midi_out.c
 Makefile
 
 -----------------------------------------------------------------
@@ -6252,7 +6253,306 @@ BUTTON_SECONDARY_ACTION     1   3   #TOGGLE DATAWHEEL PAR2 MODE /#BPM DOUB /#PRO
 
 -----------------------------------------------------------------
 
-29. Upload via MIOS_STUDIO (mindestens 2.4.5)
+29. Peavey Spectrum Analog Filter CC To SysEx Converter
+
+seq_file_hw.c-->
+s32 SEQ_FILE_HW_Read(void)
+{
+  ..
+
+#if DEBUG_VERBOSE_LEVEL >= 1
+      DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown STEP_TPM_* name '%s'!", parameter);
+#endif
+    }   
+
+  //#################################################
+  //# RIO: TAP TEMPO / CLOCK SHIFTER / PEAVEY FILTER
+  //#################################################
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // PEAVEY_FILTER_
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  } else if( strncasecmp(parameter, "PEAVEY_FILTER_", 14) == 0 ) {
+    parameter += 14;
+
+    char *word = strtok_r(NULL, separators, &brkt);
+    s32 value = get_dec(word);
+    if( value < 0 ) {
+#if DEBUG_VERBOSE_LEVEL >= 1
+      DEBUG_MSG("[SEQ_FILE_HW] ERROR in PEAVEY_FILTER_%s definition: invalid value '%s'!", parameter, word);
+#endif
+      continue;
+    }
+
+#if DEBUG_VERBOSE_LEVEL >= 3
+    DEBUG_MSG("[SEQ_FILE_HW] PEAVEY_FILTER_%s: %d", parameter, value);
+#endif
+
+    if( strcasecmp(parameter, "PORT") == 0 ) {
+      seq_hwcfg_peavey_filter.port = value;
+    } else if( strcasecmp(parameter, "CHN") == 0 ) {
+      seq_hwcfg_peavey_filter.chn = value;
+    } else if( strcasecmp(parameter, "CC_OFFSET") == 0 ) {
+      seq_hwcfg_peavey_filter.cc_offset = value;
+    } else if( strcasecmp(parameter, "VELO_VOL") == 0 ) {
+      seq_hwcfg_peavey_filter.velo_vol = value;
+    } else {
+#if DEBUG_VERBOSE_LEVEL >= 1
+      DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown PEAVEY_FILTER_* name '%s'!", parameter);
+#endif
+    }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // TAP_TEMPO_
+  ////////////////////////////////////////////////////////////////////////////////////////////
+
+
+seq_hwcfg.c-->
+
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+seq_hwcfg_peavey_filter_t seq_hwcfg_peavey_filter = {
+  .port = 0,
+  .chn = 0,
+  .cc_offset = 0,
+  .velo_vol = 0,
+};
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+
+
+seq_hwcfg.h-->
+
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+typedef struct {
+  u8 port;
+  u8 chn;
+  u8 cc_offset;
+  u8 velo_vol;
+} seq_hwcfg_peavey_filter_t;
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+
+..
+
+extern seq_hwcfg_tpd_t seq_hwcfg_tpd;
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+seq_hwcfg_peavey_filter_t seq_hwcfg_peavey_filter;
+//##################################
+//# RIO: TAP TEMPO - BEAT CONVERTER
+//##################################
+
+
+seq_midi_sysex.c-->
+
+//###########################################################################
+//# RIO: Peavey Spectrum Analog Filter CCToSysex
+//###########################################################################
+
+/////////////////////////////////////////////////////////////////////////////
+// RIO: This function is called to send Peavey Spectrum Analog Filter Editdata
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(mios32_midi_port_t port, u8 basic_channel, u8 offset, u8 value)
+{
+  u8 sysex_buffer[13];
+  u8 *sysex_buffer_ptr = &sysex_buffer[0];
+
+  // max 127 to 63
+  value >>= 1;
+
+  // send peavey spectrum analog filter sysex
+  *sysex_buffer_ptr++ = 0xf0;               // sysex message
+  *sysex_buffer_ptr++ = 0x00;               // Peavey System Exclusive
+  *sysex_buffer_ptr++ = 0x00;               // Peavey System Exclusive
+  *sysex_buffer_ptr++ = 0x1b;               // Peavey System Exclusive
+  *sysex_buffer_ptr++ = 0x02;               // Keyboard Family ID
+  *sysex_buffer_ptr++ = 0x0C;               // Spectrum Analog Filter ID
+  *sysex_buffer_ptr++ = basic_channel;      // Midi Receive Channel
+  *sysex_buffer_ptr++ = 0x03;               // Midi Command
+  *sysex_buffer_ptr++ = offset >> 4;    // Parameter offset MSB
+  *sysex_buffer_ptr++ = offset & 0x0F;      // Parameter offset LSB
+  *sysex_buffer_ptr++ = value >> 4;     // Parameter value MSB
+  *sysex_buffer_ptr++ = value & 0x0F;       // Parameter value LSB
+  *sysex_buffer_ptr++ = 0xf7;
+
+  // finally send SysEx stream
+  MUTEX_MIDIOUT_TAKE;
+  s32 status = MIOS32_MIDI_SendSysEx(port, (u8 *)sysex_buffer, (u32)sysex_buffer_ptr - ((u32)&sysex_buffer[0]));
+  MUTEX_MIDIOUT_GIVE;
+  return status;
+}
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
+
+
+seq_midi_sysex.h-->
+
+//###########################################################################
+//# RIO: Peavey Spectrum Analog Filter CCToSysex
+//###########################################################################
+
+extern s32 SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(mios32_midi_port_t port, u8 basic_channel, u8 offset, u8 value);
+
+//###########################################################################
+//# RIO: END MODIFICATION
+//###########################################################################
+
+
+seq_mixer.c-->
+
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+#include "seq_midi_sysex.h"
+#include "seq_hwcfg.h"
+//##################################################
+//# RIO: END MODIFICATION
+//##################################################
+
+..
+
+/////////////////////////////////////////////////////////////////////////////
+// Sends a CC value, considers Bus target
+/////////////////////////////////////////////////////////////////////////////
+static s32 SEQ_MIXER_SendCC(mios32_midi_port_t midi_port, mios32_midi_chn_t midi_chn, u8 cc, u8 value)
+{
+  mios32_midi_package_t midi_package;
+
+  midi_package.type  = 0xb;
+  midi_package.evnt0 = 0xb0 | midi_chn;
+  midi_package.evnt1 = cc;
+  midi_package.evnt2 = value;
+
+  if( (midi_port & 0xf0) == 0xf0 ) { // send to bus?
+    // forward to router
+    SEQ_MIDI_ROUTER_Receive(midi_port, midi_package);
+
+    // forward to transposer/arpeggiator/CC parser/etc...
+    SEQ_MIDI_IN_Receive(midi_port, midi_package);
+
+    return 0; // no error
+  }
+
+  //##################################################
+  //# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+  //###################################################
+  if (midi_port == seq_hwcfg_peavey_filter.port &&
+      midi_chn  == seq_hwcfg_peavey_filter.chn &&
+      cc        >= seq_hwcfg_peavey_filter.cc_offset &&
+      cc        <= seq_hwcfg_peavey_filter.cc_offset+16) {
+
+    SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(
+      midi_port, 
+      midi_chn, 
+      cc - seq_hwcfg_peavey_filter.cc_offset,
+      value
+    );
+
+    return 0; // no error
+  }
+  //##################################################
+  //# RIO: END MODIFICATION
+  //##################################################
+
+  return MIOS32_MIDI_SendPackage(midi_port, midi_package);
+}
+
+
+MBSEQ_HW.V4-->
+
+##################################################
+# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+##################################################
+
+PEAVEY_FILTER_PORT      0
+PEAVEY_FILTER_CHN       0
+PEAVEY_FILTER_CC_OFFSET 0x64  #[0..16]
+PEAVEY_FILTER_VELO_VOL  1
+
+##################################################
+# RIO: Tap Tempo - Beat Converter
+##################################################
+
+
+mios32\modules\sequencer\seq_midi_out.c-->
+
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+#include "seq_midi_sysex.h"
+#include "seq_hwcfg.h"
+//##################################################
+//# RIO: END MODIFICATION
+//##################################################
+
+..
+
+s32 SEQ_MIDI_OUT_Handler(void)
+{
+  ..
+
+    // if tempo event: change BPM stored in midi_package.ALL
+    if( item->event_type == SEQ_MIDI_OUT_TempoEvent ) {
+      callback_bpm_set(item->package.ALL);
+    } else {
+
+      //##################################################
+      //# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+      //###################################################
+      if (item->port        == seq_hwcfg_peavey_filter.port &&
+          item->package.chn == seq_hwcfg_peavey_filter.chn) {
+
+        if (item->package.type          == CC && 
+            item->package.event         == CC && 
+            item->package.cc_number     >= seq_hwcfg_peavey_filter.cc_offset &&
+            item->package.cc_number     <= seq_hwcfg_peavey_filter.cc_offset+16) {
+
+          SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(
+            item->port, 
+            item->package.chn, 
+            item->package.cc_number - seq_hwcfg_peavey_filter.cc_offset,
+            item->package.value
+          );
+
+        } else {
+
+          // ADDITIONAL VELOCITY FOR VOLUME 1,2,3 SYSEX
+          if (seq_hwcfg_peavey_filter.velo_vol >= 1 &&
+              seq_hwcfg_peavey_filter.velo_vol <= 3 &&
+              item->package.type  == NoteOn && 
+              item->package.event == NoteOn &&
+              item->package.velocity) {
+
+            SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(
+              item->port, 
+              item->package.chn, 
+              seq_hwcfg_peavey_filter.velo_vol - 1,
+              item->package.velocity
+            );
+          }
+
+          callback_midi_send_package(item->port, item->package);
+        }
+
+      } else // else sending queued event by standard routine!
+      //##################################################
+      //# RIO: END MODIFICATION
+      //##################################################
+
+      callback_midi_send_package(item->port, item->package);
+
+
+-----------------------------------------------------------------
+
+30. Upload via MIOS_STUDIO (mindestens 2.4.5)
 
 Säubern im verzeichnis in cmd: make clean
 Kompilieren im verzeichnis in cmd: make

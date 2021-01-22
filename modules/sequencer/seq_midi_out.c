@@ -21,12 +21,19 @@
 
 #include "seq_midi_out.h"
 #include "seq_bpm.h"
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+#include "seq_midi_sysex.h"
+#include "seq_hwcfg.h"
+//##################################################
+//# RIO: END MODIFICATION
+//##################################################
 
 #if SEQ_MIDI_OUT_MALLOC_METHOD != 5
 // FreeRTOS based malloc required
 #include <FreeRTOS.h>
 #endif
-
 
 /////////////////////////////////////////////////////////////////////////////
 // for optional debugging messages via MIDI
@@ -169,7 +176,7 @@ s32 SEQ_MIDI_OUT_Init(u32 mode)
 //! \code
 //!   s32 callback_midi_send_package(mios32_midi_port_t port, mios32_midi_package_t midi_package)
 //!   {
-//!     // ...
+//!     // ...<
 //!     // do something with port and midi_package
 //!     // ...
 //!
@@ -626,6 +633,50 @@ s32 SEQ_MIDI_OUT_Handler(void)
     if( item->event_type == SEQ_MIDI_OUT_TempoEvent ) {
       callback_bpm_set(item->package.ALL);
     } else {
+
+      //##################################################
+      //# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+      //###################################################
+      if (item->port        == seq_hwcfg_peavey_filter.port &&
+          item->package.chn == seq_hwcfg_peavey_filter.chn) {
+
+        if (item->package.type          == CC && 
+            item->package.event         == CC && 
+            item->package.cc_number     >= seq_hwcfg_peavey_filter.cc_offset &&
+            item->package.cc_number     <= seq_hwcfg_peavey_filter.cc_offset+16) {
+
+          SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(
+            item->port, 
+            item->package.chn, 
+            item->package.cc_number - seq_hwcfg_peavey_filter.cc_offset,
+            item->package.value
+          );
+
+        } else {
+
+          // ADDITIONAL VELOCITY FOR VOLUME 1,2,3 SYSEX
+          if (seq_hwcfg_peavey_filter.velo_vol >= 1 &&
+              seq_hwcfg_peavey_filter.velo_vol <= 3 &&
+              item->package.type  == NoteOn && 
+              item->package.event == NoteOn &&
+              item->package.velocity) {
+
+            SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(
+              item->port, 
+              item->package.chn, 
+              seq_hwcfg_peavey_filter.velo_vol - 1,
+              item->package.velocity
+            );
+          }
+
+          callback_midi_send_package(item->port, item->package);
+        }
+
+      } else // else sending queued event by standard routine!
+      //##################################################
+      //# RIO: END MODIFICATION
+      //##################################################
+
       callback_midi_send_package(item->port, item->package);
     }
 

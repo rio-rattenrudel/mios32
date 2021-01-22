@@ -24,7 +24,14 @@
 #include "seq_midi_router.h"
 #include "seq_file.h"
 #include "seq_file_m.h"
-
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+#include "seq_midi_sysex.h"
+#include "seq_hwcfg.h"
+//##################################################
+//# RIO: END MODIFICATION
+//##################################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -193,6 +200,27 @@ static s32 SEQ_MIXER_SendCC(mios32_midi_port_t midi_port, mios32_midi_chn_t midi
 
     return 0; // no error
   }
+
+  //##################################################
+  //# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+  //###################################################
+  if (midi_port == seq_hwcfg_peavey_filter.port &&
+      midi_chn  == seq_hwcfg_peavey_filter.chn &&
+      cc        >= seq_hwcfg_peavey_filter.cc_offset &&
+      cc        <= seq_hwcfg_peavey_filter.cc_offset+16) {
+
+    SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(
+      midi_port, 
+      midi_chn, 
+      cc - seq_hwcfg_peavey_filter.cc_offset,
+      value
+    );
+
+    return 0; // no error
+  }
+  //##################################################
+  //# RIO: END MODIFICATION
+  //##################################################
 
   return MIOS32_MIDI_SendPackage(midi_port, midi_package);
 }

@@ -1292,9 +1292,42 @@ s32 SEQ_FILE_HW_Read(void)
 #endif
 	  }	  
 
-	//##################################
-	//# RIO: TAP TEMPO / CLOCK SHIFTER
-	//##################################
+	//#################################################
+	//# RIO: TAP TEMPO / CLOCK SHIFTER / PEAVEY FILTER
+	//#################################################
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// PEAVEY_FILTER_
+	////////////////////////////////////////////////////////////////////////////////////////////
+	} else if( strncasecmp(parameter, "PEAVEY_FILTER_", 14) == 0 ) {
+	  parameter += 14;
+
+	  char *word = strtok_r(NULL, separators, &brkt);
+	  s32 value = get_dec(word);
+	  if( value < 0 ) {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR in PEAVEY_FILTER_%s definition: invalid value '%s'!", parameter, word);
+#endif
+	    continue;
+	  }
+
+#if DEBUG_VERBOSE_LEVEL >= 3
+	  DEBUG_MSG("[SEQ_FILE_HW] PEAVEY_FILTER_%s: %d", parameter, value);
+#endif
+
+	  if( strcasecmp(parameter, "PORT") == 0 ) {
+	    seq_hwcfg_peavey_filter.port = value;
+	  } else if( strcasecmp(parameter, "CHN") == 0 ) {
+	    seq_hwcfg_peavey_filter.chn = value;
+	  } else if( strcasecmp(parameter, "CC_OFFSET") == 0 ) {
+	    seq_hwcfg_peavey_filter.cc_offset = value;
+	  } else if( strcasecmp(parameter, "VELO_VOL") == 0 ) {
+	    seq_hwcfg_peavey_filter.velo_vol = value;
+	  } else {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown PEAVEY_FILTER_* name '%s'!", parameter);
+#endif
+	  }
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	// TAP_TEMPO_
 	////////////////////////////////////////////////////////////////////////////////////////////

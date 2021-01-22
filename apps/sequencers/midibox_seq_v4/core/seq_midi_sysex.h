@@ -60,6 +60,12 @@ extern s32 SEQ_MIDI_SYSEX_REMOTE_Server_SendLED(u8 first_sr, u8 *led_sr, u8 num_
 extern s32 SEQ_MIDI_SYSEX_PROTEUS_SendChannel(mios32_midi_port_t port, u8 proteus_id, u8 basic_channel);
 
 //###########################################################################
+//# RIO: Peavey Spectrum Analog Filter CCToSysex
+//###########################################################################
+
+extern s32 SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(mios32_midi_port_t port, u8 basic_channel, u8 offset, u8 value);
+
+//###########################################################################
 //# RIO: END MODIFICATION
 //###########################################################################
 

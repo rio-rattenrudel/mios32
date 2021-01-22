@@ -806,5 +806,42 @@ s32 SEQ_MIDI_SYSEX_PROTEUS_SendChannel(mios32_midi_port_t port, u8 sysex_device_
 }
 
 //###########################################################################
+//# RIO: Peavey Spectrum Analog Filter CCToSysex
+//###########################################################################
+
+/////////////////////////////////////////////////////////////////////////////
+// RIO: This function is called to send Peavey Spectrum Analog Filter Editdata
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_MIDI_SYSEX_PEAVEY_FILTER_SendData(mios32_midi_port_t port, u8 basic_channel, u8 offset, u8 value)
+{
+  u8 sysex_buffer[13];
+  u8 *sysex_buffer_ptr = &sysex_buffer[0];
+
+  // max 127 to 63
+  value >>= 1;
+
+  // send peavey spectrum analog filter sysex
+  *sysex_buffer_ptr++ = 0xf0;               // sysex message
+  *sysex_buffer_ptr++ = 0x00;               // Peavey System Exclusive
+  *sysex_buffer_ptr++ = 0x00;               // Peavey System Exclusive
+  *sysex_buffer_ptr++ = 0x1b;               // Peavey System Exclusive
+  *sysex_buffer_ptr++ = 0x02;               // Keyboard Family ID
+  *sysex_buffer_ptr++ = 0x0C;               // Spectrum Analog Filter ID
+  *sysex_buffer_ptr++ = basic_channel;      // Midi Receive Channel
+  *sysex_buffer_ptr++ = 0x03;               // Midi Command
+  *sysex_buffer_ptr++ = offset >> 4;		// Parameter offset MSB
+  *sysex_buffer_ptr++ = offset & 0x0F;      // Parameter offset LSB
+  *sysex_buffer_ptr++ = value >> 4;			// Parameter value MSB
+  *sysex_buffer_ptr++ = value & 0x0F;       // Parameter value LSB
+  *sysex_buffer_ptr++ = 0xf7;
+
+  // finally send SysEx stream
+  MUTEX_MIDIOUT_TAKE;
+  s32 status = MIOS32_MIDI_SendSysEx(port, (u8 *)sysex_buffer, (u32)sysex_buffer_ptr - ((u32)&sysex_buffer[0]));
+  MUTEX_MIDIOUT_GIVE;
+  return status;
+}
+
+//###########################################################################
 //# RIO: END MODIFICATION
 //###########################################################################

@@ -523,7 +523,15 @@ seq_hwcfg_tpd_t seq_hwcfg_tpd = {
   .rows_sr_red = {0, 0},
 };
 
-
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+seq_hwcfg_peavey_filter_t seq_hwcfg_peavey_filter = {
+  .port = 0,
+  .chn = 0,
+  .cc_offset = 0,
+  .velo_vol = 0,
+};
 //##################################
 //# RIO: TAP TEMPO - BEAT CONVERTER
 //##################################

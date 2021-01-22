@@ -324,6 +324,15 @@ typedef struct {
   u8 rows_sr_red[2];
 } seq_hwcfg_tpd_t;
 
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+typedef struct {
+  u8 port;
+  u8 chn;
+  u8 cc_offset;
+  u8 velo_vol;
+} seq_hwcfg_peavey_filter_t;
 //##################################
 //# RIO: TAP TEMPO - BEAT CONVERTER
 //##################################
@@ -356,6 +365,10 @@ extern seq_hwcfg_enc_t seq_hwcfg_enc;
 extern seq_hwcfg_bpm_digits_t seq_hwcfg_bpm_digits;
 extern seq_hwcfg_step_digits_t seq_hwcfg_step_digits;
 extern seq_hwcfg_tpd_t seq_hwcfg_tpd;
+//##################################################
+//# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
+//##################################################
+seq_hwcfg_peavey_filter_t seq_hwcfg_peavey_filter;
 //##################################
 //# RIO: TAP TEMPO - BEAT CONVERTER
 //##################################

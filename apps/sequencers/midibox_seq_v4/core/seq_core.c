@@ -954,7 +954,18 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
       // if "synch to measure" flag set: reset track if master has reached the selected number of steps
       // MEMO: we could also provide the option to synch to another track
       if( synch_to_measure_req && (tcc->clkdiv.SYNCH_TO_MEASURE || t->state.SYNC_MEASURE) ) {
-        SEQ_CORE_ResetTrkPos(track, t, tcc);
+
+        //###################################################
+        //# RIO: TRIGGER STEPVIEW
+        //###################################################
+        if (t->state.SYNC_VISIBLE) {
+          t->state.SYNC_VISIBLE = 0;
+          t->state.SYNC_MEASURE = 0;
+          SEQ_CORE_SetTrkPos(track, 16 * ui_selected_step_view, 0);
+        } else SEQ_CORE_ResetTrkPos(track, t, tcc);
+        //###################################################
+        //# RIO: END MODIFICATION
+        //###################################################
 	++t->bar;
       }
 
@@ -2318,20 +2329,34 @@ s32 SEQ_CORE_ManualTrigger(u8 step)
 /////////////////////////////////////////////////////////////////////////////
 // Manually requests synch to measure for given tracks
 /////////////////////////////////////////////////////////////////////////////
-s32 SEQ_CORE_ManualSynchToMeasure(u16 tracks)
+//###################################################
+//# RIO: TRIGGER STEPVIEW
+//###################################################
+s32 SEQ_CORE_ManualSynchToMeasureEx(u16 tracks, u8 syncVisible)
 {
   MIOS32_IRQ_Disable();
 
   u8 track;
   seq_core_trk_t *t = &seq_core_trk[0];
   for(track=0; track<SEQ_CORE_NUM_TRACKS; ++track, ++t)
-    if( tracks & (1 << track) )
+    if( tracks & (1 << track) ) {
       t->state.SYNC_MEASURE = 1;
+      if (syncVisible) t->state.SYNC_VISIBLE = 1;
+    }
 
   MIOS32_IRQ_Enable();
 
   return 0; // no error
 }
+
+s32 SEQ_CORE_ManualSynchToMeasure(u16 tracks)
+{
+  return SEQ_CORE_ManualSynchToMeasureEx(tracks, 0);
+}
+//###################################################
+//# RIO: END MODIFICATION
+//###################################################
+
 
 /////////////////////////////////////////////////////////////////////////////
 // Used by the transposer to request the next step in "step trigger" mode

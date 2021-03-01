@@ -1292,9 +1292,9 @@ s32 SEQ_FILE_HW_Read(void)
 #endif
 	  }	  
 
-	//#################################################
-	//# RIO: TAP TEMPO / CLOCK SHIFTER / PEAVEY FILTER
-	//#################################################
+	//####################################################################
+	//# RIO: TAP TEMPO / CLOCK SHIFTER / PEAVEY FILTER / TRIGGER STEPVIEW
+	//####################################################################
 	////////////////////////////////////////////////////////////////////////////////////////////
 	// PEAVEY_FILTER_
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -1389,9 +1389,36 @@ s32 SEQ_FILE_HW_Read(void)
 	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown CLOCK_SHIFT_* name '%s'!", parameter);
 #endif
 	  }
-	//##################################
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// TRIGGER_STEPVIEW_
+	////////////////////////////////////////////////////////////////////////////////////////////
+	} else if( strncasecmp(parameter, "TRIGGER_STEPVIEW_", 17) == 0 ) {
+	  parameter += 17;
+
+	  char *word = strtok_r(NULL, separators, &brkt);
+	  s32 value = get_dec(word);
+	  if( value < 0 ) {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR in TRIGGER_STEPVIEW_%s definition: invalid value '%s'!", parameter, word);
+#endif
+	    continue;
+	  }
+
+#if DEBUG_VERBOSE_LEVEL >= 3
+	  DEBUG_MSG("[SEQ_FILE_HW] TRIGGER_STEPVIEW_%s: %d", parameter, value);
+#endif
+
+	  if( strcasecmp(parameter, "MODE") == 0 ) {
+	    seq_hwcfg_trigger_stepview.mode = value;
+	  } else {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown TRIGGER_STEPVIEW_* name '%s'!", parameter);
+#endif
+	  }
+	//####################################################################
 	//# RIO: END MODIFICATION
-	//##################################
+	//####################################################################
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	// misc

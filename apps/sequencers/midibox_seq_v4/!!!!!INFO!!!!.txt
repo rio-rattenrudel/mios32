@@ -18,12 +18,12 @@ arm-none-eabi-size project_build/project.elf
 20083aa8 B __ram_end_ahb
 
 modified size (with IIC Hack):
------------------------------
+-------------------------------------------------------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 422684     960   62952  486596   76cc4 project_build/project.elf
+ 423060     960   62944  486964   76e34 project_build/project.elf
 10000000 B __ram_start
-10007ee8 B __ram_end
+10007ee0 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 
@@ -6549,10 +6549,234 @@ s32 SEQ_MIDI_OUT_Handler(void)
 
       callback_midi_send_package(item->port, item->package);
 
+-----------------------------------------------------------------
+
+30. Trigger Stepview (instead Pause Button)
+
+seq_core.h-->
+
+typedef union {
+  u16 ALL;
+  struct {
+    ..
+    u16 TRIGGER_NEXT_STEP_REQ:1; // to continue with next step in STEP_TRG mode; flag is set by transposer
+    //###################################################
+    //# RIO: TRIGGER STEPVIEW
+    //###################################################
+    u16 SYNC_VISIBLE:1;
+    //###################################################
+    //# RIO: END MODIFICATION
+    //###################################################
+
+..
+
+extern s32 SEQ_CORE_ManualTrigger(u8 step);
+//###################################################
+//# RIO: TRIGGER STEPVIEW
+//###################################################
+extern s32 SEQ_CORE_ManualSynchToMeasureEx(u16 tracks, u8 syncVisible);
+//###################################################
+//# RIO: END MODIFICATION
+//###################################################
+
+
+seq_core.c-->
+
+s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
+{
+  ..
+      // if "synch to measure" flag set: reset track if master has reached the selected number of steps
+      // MEMO: we could also provide the option to synch to another track
+      if( synch_to_measure_req && (tcc->clkdiv.SYNCH_TO_MEASURE || t->state.SYNC_MEASURE) ) {
+
+        //###################################################
+        //# RIO: TRIGGER STEPVIEW
+        //###################################################
+        if (t->state.SYNC_VISIBLE) {
+          t->state.SYNC_VISIBLE = 0;
+          t->state.SYNC_MEASURE = 0;
+          SEQ_CORE_SetTrkPos(track, 16 * ui_selected_step_view, 0);
+        } else SEQ_CORE_ResetTrkPos(track, t, tcc);
+        //###################################################
+        //# RIO: END MODIFICATION
+        //###################################################
+	++t->bar;
+      }
+..
+
+//###################################################
+//# RIO: TRIGGER STEPVIEW
+//###################################################
+s32 SEQ_CORE_ManualSynchToMeasureEx(u16 tracks, u8 syncVisible)
+{
+  MIOS32_IRQ_Disable();
+
+  u8 track;
+  seq_core_trk_t *t = &seq_core_trk[0];
+  for(track=0; track<SEQ_CORE_NUM_TRACKS; ++track, ++t)
+    if( tracks & (1 << track) ) {
+      t->state.SYNC_MEASURE = 1;
+      if (syncVisible) t->state.SYNC_VISIBLE = 1;
+    }
+
+  MIOS32_IRQ_Enable();
+
+  return 0; // no error
+}
+
+s32 SEQ_CORE_ManualSynchToMeasure(u16 tracks)
+{
+  return SEQ_CORE_ManualSynchToMeasureEx(tracks, 0);
+}
+//###################################################
+//# RIO: END MODIFICATION
+//###################################################
+
+
+seq_hwcfg.c-->
+
+//##################################
+//# RIO: TRIGGER STEPVIEW
+//##################################
+seq_hwcfg_trigger_stepview_t seq_hwcfg_trigger_stepview = {
+  .mode = 0,
+};
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+
+seq_hwcfg.h-->
+
+//##################################
+//# RIO: TRIGGER STEPVIEW
+//##################################
+typedef struct {
+  u8 mode;
+} seq_hwcfg_trigger_stepview_t;
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+..
+
+extern seq_hwcfg_tap_tempo_t seq_hwcfg_tap_tempo;
+//##################################
+//# RIO: TRIGGER STEPVIEW
+//##################################
+extern seq_hwcfg_trigger_stepview_t seq_hwcfg_trigger_stepview;
+//##################################
+//# RIO: END MODIFICATION
+//##################################
+
+
+seq_ui.c-->
+
+static s32 SEQ_UI_Button_Pause(s32 depressed)
+{
+  if( depressed ) return -1; // ignore when button depressed
+
+  //###################################################
+  //# RIO: TRIGGER STEPVIEW
+  //###################################################
+
+  if (seq_hwcfg_trigger_stepview.mode) {
+
+    u8 visible_track = SEQ_UI_VisibleTrackGet();
+    SEQ_CORE_ManualSynchToMeasureEx(1 << visible_track, 1);
+
+  } else {
+
+    // if in auto mode and BPM generator is not clocked in slave mode:
+    // change to master mode
+    SEQ_BPM_CheckAutoMaster();
+
+    // toggle pause
+    ui_seq_pause ^= 1;
+
+    // execute stop/continue depending on new mode
+    MIOS32_IRQ_Disable();
+    if( ui_seq_pause ) {
+      if( !SEQ_BPM_IsMaster() ) {
+        seq_core_slaveclk_mute = SEQ_CORE_SLAVECLK_MUTE_Enabled;
+      } else {
+        SEQ_BPM_Stop();
+      }
+    } else {
+      if( !SEQ_BPM_IsMaster() ) {
+        seq_core_slaveclk_mute = SEQ_CORE_SLAVECLK_MUTE_Off;
+      }
+
+      if( !SEQ_BPM_IsRunning() )
+        SEQ_BPM_Cont();
+    }
+    MIOS32_IRQ_Enable();
+  }
+
+  //###################################################
+  //# RIO: END MODIFICATION
+  //###################################################
+
+  return 0; // no error
+}
+
+
+seq_file_hw.c-->
+
+s32 SEQ_FILE_HW_Read(void)
+{
+	..
+
+	//####################################################################
+	//# RIO: TAP TEMPO / CLOCK SHIFTER / PEAVEY FILTER / TRIGGER STEPVIEW
+	//####################################################################
+	..
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// TRIGGER_STEPVIEW_
+	////////////////////////////////////////////////////////////////////////////////////////////
+	} else if( strncasecmp(parameter, "TRIGGER_STEPVIEW_", 17) == 0 ) {
+	  parameter += 17;
+
+	  char *word = strtok_r(NULL, separators, &brkt);
+	  s32 value = get_dec(word);
+	  if( value < 0 ) {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR in TRIGGER_STEPVIEW_%s definition: invalid value '%s'!", parameter, word);
+#endif
+	    continue;
+	  }
+
+#if DEBUG_VERBOSE_LEVEL >= 3
+	  DEBUG_MSG("[SEQ_FILE_HW] TRIGGER_STEPVIEW_%s: %d", parameter, value);
+#endif
+
+	  if( strcasecmp(parameter, "MODE") == 0 ) {
+	    seq_hwcfg_trigger_stepview.mode = value;
+	  } else {
+#if DEBUG_VERBOSE_LEVEL >= 1
+	    DEBUG_MSG("[SEQ_FILE_HW] ERROR: unknown TRIGGER_STEPVIEW_* name '%s'!", parameter);
+#endif
+	  }
+	//####################################################################
+	//# RIO: END MODIFICATION
+	//####################################################################
+
+
+MBSEQ_HW.V4-->
+
+###################################################
+# RIO: TRIGGER STEPVIEW
+###################################################
+
+TRIGGER_STEPVIEW_MODE	1
+
+##################################################
+# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO 
+##################################################
 
 -----------------------------------------------------------------
 
-30. Upload via MIOS_STUDIO (mindestens 2.4.5)
+31. Upload via MIOS_STUDIO (mindestens 2.4.5)
 
 Säubern im verzeichnis in cmd: make clean
 Kompilieren im verzeichnis in cmd: make

@@ -670,30 +670,46 @@ static s32 SEQ_UI_Button_Pause(s32 depressed)
 {
   if( depressed ) return -1; // ignore when button depressed
 
-  // if in auto mode and BPM generator is not clocked in slave mode:
-  // change to master mode
-  SEQ_BPM_CheckAutoMaster();
+  //###################################################
+  //# RIO: TRIGGER STEPVIEW
+  //###################################################
 
-  // toggle pause
-  ui_seq_pause ^= 1;
+  if (seq_hwcfg_trigger_stepview.mode) {
 
-  // execute stop/continue depending on new mode
-  MIOS32_IRQ_Disable();
-  if( ui_seq_pause ) {
-    if( !SEQ_BPM_IsMaster() ) {
-      seq_core_slaveclk_mute = SEQ_CORE_SLAVECLK_MUTE_Enabled;
-    } else {
-      SEQ_BPM_Stop();
-    }
+    u8 visible_track = SEQ_UI_VisibleTrackGet();
+    SEQ_CORE_ManualSynchToMeasureEx(1 << visible_track, 1);
+
   } else {
-    if( !SEQ_BPM_IsMaster() ) {
-      seq_core_slaveclk_mute = SEQ_CORE_SLAVECLK_MUTE_Off;
-    }
 
-    if( !SEQ_BPM_IsRunning() )
-      SEQ_BPM_Cont();
+    // if in auto mode and BPM generator is not clocked in slave mode:
+    // change to master mode
+    SEQ_BPM_CheckAutoMaster();
+
+    // toggle pause
+    ui_seq_pause ^= 1;
+
+    // execute stop/continue depending on new mode
+    MIOS32_IRQ_Disable();
+    if( ui_seq_pause ) {
+      if( !SEQ_BPM_IsMaster() ) {
+        seq_core_slaveclk_mute = SEQ_CORE_SLAVECLK_MUTE_Enabled;
+      } else {
+        SEQ_BPM_Stop();
+      }
+    } else {
+      if( !SEQ_BPM_IsMaster() ) {
+        seq_core_slaveclk_mute = SEQ_CORE_SLAVECLK_MUTE_Off;
+      }
+
+      if( !SEQ_BPM_IsRunning() )
+        SEQ_BPM_Cont();
+    }
+    MIOS32_IRQ_Enable();
   }
-  MIOS32_IRQ_Enable();
+
+  //###################################################
+  //# RIO: END MODIFICATION
+  //###################################################
 
   return 0; // no error
 }

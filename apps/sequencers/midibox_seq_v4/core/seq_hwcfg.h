@@ -343,6 +343,12 @@ typedef struct {
   u8 retries;
 } seq_hwcfg_tap_tempo_t;
 //##################################
+//# RIO: TRIGGER STEPVIEW
+//##################################
+typedef struct {
+  u8 mode;
+} seq_hwcfg_trigger_stepview_t;
+//##################################
 //# RIO: END MODIFICATION
 //##################################
 
@@ -368,11 +374,15 @@ extern seq_hwcfg_tpd_t seq_hwcfg_tpd;
 //##################################################
 //# RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO SYSEX
 //##################################################
-seq_hwcfg_peavey_filter_t seq_hwcfg_peavey_filter;
+extern seq_hwcfg_peavey_filter_t seq_hwcfg_peavey_filter;
 //##################################
 //# RIO: TAP TEMPO - BEAT CONVERTER
 //##################################
 extern seq_hwcfg_tap_tempo_t seq_hwcfg_tap_tempo;
+//##################################
+//# RIO: TRIGGER STEPVIEW
+//##################################
+extern seq_hwcfg_trigger_stepview_t seq_hwcfg_trigger_stepview;
 //##################################
 //# RIO: END MODIFICATION
 //##################################

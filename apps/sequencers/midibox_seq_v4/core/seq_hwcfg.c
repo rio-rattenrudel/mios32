@@ -542,6 +542,12 @@ seq_hwcfg_tap_tempo_t seq_hwcfg_tap_tempo = {
   .retries = 0,
 };
 //##################################
+//# RIO: TRIGGER STEPVIEW
+//##################################
+seq_hwcfg_trigger_stepview_t seq_hwcfg_trigger_stepview = {
+  .mode = 0,
+};
+//##################################
 //# RIO: END MODIFICATION
 //##################################
 

@@ -82,6 +82,13 @@ typedef union {
     u16 MANUAL_STEP_REQ:1; // manual_step should be copied to step
     u16 CANCEL_SUSTAIN_REQ:1; // cancel ongoing sustain
     u16 TRIGGER_NEXT_STEP_REQ:1; // to continue with next step in STEP_TRG mode; flag is set by transposer
+    //###################################################
+    //# RIO: TRIGGER STEPVIEW
+    //###################################################
+    u16 SYNC_VISIBLE:1;
+    //###################################################
+    //# RIO: END MODIFICATION
+    //###################################################
   };
 } seq_core_trk_state_t;
 
@@ -250,6 +257,13 @@ extern s32 SEQ_CORE_ResetTrkPosAll(void);
 extern s32 SEQ_CORE_SetTrkPos(u8 track, u8 value, u8 scale_value);
 
 extern s32 SEQ_CORE_ManualTrigger(u8 step);
+//###################################################
+//# RIO: TRIGGER STEPVIEW
+//###################################################
+extern s32 SEQ_CORE_ManualSynchToMeasureEx(u16 tracks, u8 syncVisible);
+//###################################################
+//# RIO: END MODIFICATION
+//###################################################
 extern s32 SEQ_CORE_ManualSynchToMeasure(u16 tracks);
 
 extern s32 SEQ_CORE_StepTriggerReq(u8 bus);

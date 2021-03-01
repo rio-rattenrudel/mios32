@@ -161,6 +161,10 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 * _Note: affects data storage_
 
+25. [Trigger Stepview (instead pause button)](https://github.com/rio-rattenrudel/mios32/commit/82481f7fe9e3d4658851b3e73ac7b84427000da0)
+
+* Alternatively, you can use the pause button to move the cursor to the visible stepview within the next synchronized measure event. It can be activated through the config file.
+
 ## Recompile sizes
 
 ```
@@ -187,9 +191,9 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 422684     960   62952  486596   76cc4 project_build/project.elf
+ 423060     960   62944  486964   76e34 project_build/project.elf
 10000000 B __ram_start
-10007ee8 B __ram_end
+10007ee0 B __ram_end
 2007c000 D __ram_start_ahb
 20083ac0 B __ram_end_ahb
 -----------------------------------------------------------------

@@ -161,9 +161,15 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 * _Note: affects data storage_
 
-25. [Trigger Stepview (instead pause button)](https://github.com/rio-rattenrudel/mios32/commit/82481f7fe9e3d4658851b3e73ac7b84427000da0)
+25. [Trigger Stepview Playback (instead pause button)](https://github.com/rio-rattenrudel/mios32/commit/82481f7fe9e3d4658851b3e73ac7b84427000da0)
 
-* Alternatively, you can use the pause button to move the cursor to the visible stepview within the next synchronized measure event. It can be activated through the config file.
+* Alternatively, you can use the pause button to move the playing cursor to the visible stepview within the next synchronized measure event. It can be activated through the config file.
+
+26. [Track FX: "Access Virus" / Mixer: FX Send](https://github.com/rio-rattenrudel/mios32/commit/a71b3d3c39eeaf02eab2c75e6af8e8bb97e7f2c1)
+
+* This feature allows the configuration of the Access Virus Fx parameters in the Track FX section and is then sent to the selected Ch / Port. This is necessary in order to be able to individually control the Multi-FX parameters in the Virus’s Multi Single mode. The "Fx Send" can then be individually defined in the mixer map. Alternatively you can use the "FX Send 113" and "Expression 11" as standard parameters in the mixer map (via SEQ_MIXER_USE_ALTERNATIVE_PARAM Flag).
+
+* _Note: affects data storage_
 
 ## Recompile sizes
 

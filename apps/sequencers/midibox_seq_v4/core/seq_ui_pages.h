@@ -69,7 +69,13 @@ typedef enum {
   SEQ_UI_PAGE_MANUAL,
   SEQ_UI_PAGE_FX_ECHO,
   SEQ_UI_PAGE_FX_HUMANIZE,
-  SEQ_UI_PAGE_FX_ROBOTIZE,
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  SEQ_UI_PAGE_FX_VIRUSFX,
+//####################################
+//# RIO: END MODIFICATION
+//####################################
   SEQ_UI_PAGE_FX_LIMIT,
   SEQ_UI_PAGE_FX_LFO,
   SEQ_UI_PAGE_FX_DUPL,

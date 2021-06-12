@@ -342,8 +342,19 @@ static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
       case SEQ_MIXER_PAR_PRG:
       case SEQ_MIXER_PAR_VOLUME:
       case SEQ_MIXER_PAR_PANORAMA:
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#if SEQ_MIXER_USE_ALTERNATIVE_PARAM == 0
       case SEQ_MIXER_PAR_REVERB:
       case SEQ_MIXER_PAR_CHORUS:
+#else
+      case SEQ_MIXER_PAR_EXPRESSION:
+      case SEQ_MIXER_PAR_FXSEND:
+#endif
+//####################################
+//# RIO: END MODIFICATION
+//####################################
       case SEQ_MIXER_PAR_MODWHEEL:
       case SEQ_MIXER_PAR_CC1:
       case SEQ_MIXER_PAR_CC2:
@@ -553,19 +564,31 @@ static s32 LCD_Handler(u8 high_prio)
 
     if( mixer_par < SEQ_MIXER_PAR_CC1_NUM ) {
       if( mixer_par < SEQ_MIXER_PAR_CC1 ) {
-//####################################
-//# RIO: POLYPHONIC PRESSURE MIXER
-//####################################
 	const char page_name[8][13] = {
 	  "MIDI Port   ",
 	  "MIDI Channel",
 	  "Prog.Change ",
 	  "Volume      ",
 	  "Panorama    ",
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#if SEQ_MIXER_USE_ALTERNATIVE_PARAM == 0
 	  "Reverb      ",
 	  "Chorus      ",
 	  "ModWheel    ",
+#else
+	  "Expression  ",
+	  "FX Send     ",
+	  "Modulation  ",
+#endif
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 	};
+//####################################
+//# RIO: POLYPHONIC PRESSURE MIXER
+//####################################
 	SEQ_LCD_PrintString((char *)page_name[mixer_par]);
       } else {
     s32 value = SEQ_MIXER_Get(ui_selected_item, mixer_par-SEQ_MIXER_PAR_CC1+SEQ_MIXER_PAR_CC1_NUM);

@@ -17,6 +17,13 @@
 #include "seq_trg.h"
 #include "seq_layer.h"
 #include "seq_lfo.h"
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#include "seq_virusfx.h"
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 #include "seq_groove.h"
 #include "seq_core.h"
 
@@ -162,30 +169,21 @@
 
 // free: 0x7c..0x7f
 
-
-// For future V4 Plus (currently not stored in bank files on SD Card)
-#define SEQ_CC_ROBOTIZE_MASK1					0x80
-#define SEQ_CC_ROBOTIZE_MASK2					0x81
-
-#define SEQ_CC_ROBOTIZE_ACTIVE					0x82
-#define SEQ_CC_ROBOTIZE_PROBABILITY	        	0x83
-
-#define SEQ_CC_ROBOTIZE_SKIP_PROBABILITY		0x84
-#define SEQ_CC_ROBOTIZE_NOTE	                0x85
-#define SEQ_CC_ROBOTIZE_NOTE_PROBABILITY		0x86
-#define SEQ_CC_ROBOTIZE_VEL	                	0x87
-#define SEQ_CC_ROBOTIZE_VEL_PROBABILITY			0x88
-#define SEQ_CC_ROBOTIZE_LEN	               		0x89
-#define SEQ_CC_ROBOTIZE_LEN_PROBABILITY			0x8a
-#define SEQ_CC_ROBOTIZE_OCT	                	0x8b
-#define SEQ_CC_ROBOTIZE_OCT_PROBABILITY			0x8c
-#define SEQ_CC_ROBOTIZE_SUSTAIN_PROBABILITY		0x8d
-#define SEQ_CC_ROBOTIZE_NOFX_PROBABILITY		0x8e
-#define SEQ_CC_ROBOTIZE_ECHO_PROBABILITY		0x8f
-#define SEQ_CC_ROBOTIZE_DUPLICATE_PROBABILITY	0x90
-
-//reserve a few spots here for future additions to Robotize, plz.
-
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#define SEQ_CC_VIRUSFX_ACTIVE                 0x5f
+#define SEQ_CC_VIRUSFX_MODE                   0x77  // EXTERNAL CC 0x70 112
+#define SEQ_CC_VIRUSFX_SHAPE_DAMPING          0x69  // EXTERNAL CC 0x76 118
+#define SEQ_CC_VIRUSFX_CLOCK                  0x6a  // EXTERNAL PP 0x14 20
+#define SEQ_CC_VIRUSFX_COLOR                  0x6b  // EXTERNAL CC 0x77 119
+#define SEQ_CC_VIRUSFX_FEEDBACK               0x6c  // EXTERNAL CC 0x73 115
+#define SEQ_CC_VIRUSFX_DEPTH_TYPE             0x6d  // EXTERNAL CC 0x75 117
+#define SEQ_CC_VIRUSFX_RATE_DECTIME           0x6e  // EXTERNAL CC 0x74 116
+#define SEQ_CC_VIRUSFX_TIME_PREDLY            0x6f  // EXTERNAL CC 0x72 114
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Global Types
@@ -252,26 +250,24 @@ typedef struct {
   u8       limit_lower;       // for note value limits
   u8       limit_upper;       // for note value limits
 
-  u8       robotize_note:4;    // robotize note range
-  u8       robotize_oct:3;    // robotize octave range
-  u8       robotize_vel;    // robotize velocity range
-  u8       robotize_len;    // robotize length range
-  u8       robotize_probability:5;    // overal robotize probability
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  u8  virusfx_mode;
+  u8  virusfx_shape_damping;
+  u8  virusfx_clock;
+  u8  virusfx_color;
+  u8  virusfx_feedback;
+  u8  virusfx_depth_type;
+  u8  virusfx_rate_dectime;
+  u8  virusfx_time_predly;
+  u8  virusfx_active; // Is virusfx activated?
 
-  u8       robotize_skip_probability:5;    // robotize note probability
-  u8       robotize_note_probability:5;    // robotize note probability
-  u8       robotize_oct_probability:5;    // robotize octave probability
-  u8       robotize_vel_probability:5;    // robotize velocity probability
-  u8       robotize_len_probability:5;    // robotize length probability
-  u8       robotize_sustain_probability:5;    // robotize length probability
-  u8       robotize_nofx_probability:5;    // robotize length probability
-  u8       robotize_echo_probability:5;    // robotize length probability
-  u8       robotize_duplicate_probability:5;    // robotize length probability
+  seq_virusfx_last_values_t virusfx_last_values;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
-  u8		robotize_active; // Is robotize activated?
-  u8		robotize_mask1; // robotize step mask...  Applies robotize on selected steps of a measure.  16 bits representing 16 steps, divided into two variables.
-  u8		robotize_mask2; // robotize step mask...  Applies robotize on selected steps of a measure.  16 bits representing 16 steps, divided into two variables.
-  
   // temporary variables which will be updated on CC writes
   s8 link_par_layer_note;        // parameter layer which stores the first note value (-1 if not assigned)
   s8 link_par_layer_chord;       // parameter layer which stores the first chord value (-1 if not assigned)

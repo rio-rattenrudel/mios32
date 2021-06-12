@@ -383,7 +383,13 @@ extern s32 SEQ_UI_MANUAL_Init(u32 mode);
 extern s32 SEQ_UI_GROOVE_Init(u32 mode);
 extern s32 SEQ_UI_FX_ECHO_Init(u32 mode);
 extern s32 SEQ_UI_FX_HUMANIZE_Init(u32 mode);
-extern s32 SEQ_UI_FX_ROBOTIZE_Init(u32 mode);
+//####################################
+//# RIO: VIRUSFX
+//####################################
+extern s32 SEQ_UI_FX_VIRUSFX_Init(u32 mode);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 extern s32 SEQ_UI_FX_LIMIT_Init(u32 mode);
 extern s32 SEQ_UI_FX_DUPL_Init(u32 mode);
 extern s32 SEQ_UI_FX_LFO_Init(u32 mode);

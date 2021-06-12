@@ -26,6 +26,14 @@
 #define SEQ_MIXER_NUM_CHANNELS   16
 #define SEQ_MIXER_NUM_PARAMETERS 16
 
+//####################################
+//# RIO: VIRUSFX
+//####################################
+// use alternative params (Expression 11, FX Send 113)
+#define SEQ_MIXER_USE_ALTERNATIVE_PARAM 1
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 /////////////////////////////////////////////////////////////////////////////
 // Global Types
@@ -37,8 +45,19 @@ typedef enum {
   SEQ_MIXER_PAR_PRG,
   SEQ_MIXER_PAR_VOLUME,   // CC#7
   SEQ_MIXER_PAR_PANORAMA, // CC#10
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#if SEQ_MIXER_USE_ALTERNATIVE_PARAM == 0
   SEQ_MIXER_PAR_REVERB,   // CC#91
   SEQ_MIXER_PAR_CHORUS,   // CC#93
+#else
+  SEQ_MIXER_PAR_EXPRESSION, // CC#11
+  SEQ_MIXER_PAR_FXSEND,     // CC#113
+#endif
+//####################################
+//# RIO: END MODIFICATION
+//####################################
   SEQ_MIXER_PAR_MODWHEEL, // CC#01
   SEQ_MIXER_PAR_CC1,
   SEQ_MIXER_PAR_CC2,

@@ -25,6 +25,7 @@
 #include "seq_par.h"
 #include "seq_layer.h"
 #include "seq_morph.h"
+#include "seq_virusfx.h"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -46,23 +47,14 @@ s32 SEQ_CC_Init(u32 mode)
     // clear all CCs
     memset((u8 *)tcc, 0, sizeof(seq_cc_trk_t));
 
-    // initialize robotize probabilities to full
-    tcc->robotize_skip_probability = 0;
-    tcc->robotize_note_probability = 31;
-    tcc->robotize_oct_probability = 31;
-    tcc->robotize_vel_probability = 31;
-    tcc->robotize_len_probability = 31;
-
-	// special robotize probabilities to zero
-    tcc->robotize_sustain_probability = 0;
-    tcc->robotize_nofx_probability = 0;
-    tcc->robotize_echo_probability = 0;
-    tcc->robotize_duplicate_probability = 0;
-    
-    // initialize robotize mask to all steps selected
-    tcc->robotize_mask1 = 0xFF;
-    tcc->robotize_mask2 = 0xFF;
-
+//####################################
+//# RIO: VIRUSFX
+//####################################
+    // init undefined
+    SEQ_VIRUSFX_Reset(track);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
 #ifndef MBSEQV4L
     // set parameters which are not changed by SEQ_LAYER_CopyPreset() function
@@ -216,27 +208,21 @@ s32 SEQ_CC_Set(u8 track, u8 cc, u8 value)
       case SEQ_CC_LFO_CC_OFFSET: tcc->lfo_cc_offset = value; break;
       case SEQ_CC_LFO_CC_PPQN: tcc->lfo_cc_ppqn = value; break;
 
-      case SEQ_CC_ROBOTIZE_PROBABILITY: tcc->robotize_probability = value; break;
-      case SEQ_CC_ROBOTIZE_NOTE: tcc->robotize_note = value; break;
-      case SEQ_CC_ROBOTIZE_OCT: tcc->robotize_oct = value; break;
-      case SEQ_CC_ROBOTIZE_LEN: tcc->robotize_len = value; break;
-      case SEQ_CC_ROBOTIZE_VEL: tcc->robotize_vel = value; break;
-
-      case SEQ_CC_ROBOTIZE_SKIP_PROBABILITY: tcc->robotize_skip_probability = value; break;
-      case SEQ_CC_ROBOTIZE_NOTE_PROBABILITY: tcc->robotize_note_probability = value; break;
-      case SEQ_CC_ROBOTIZE_OCT_PROBABILITY: tcc->robotize_oct_probability = value; break;
-      case SEQ_CC_ROBOTIZE_LEN_PROBABILITY: tcc->robotize_len_probability = value; break;
-      case SEQ_CC_ROBOTIZE_VEL_PROBABILITY: tcc->robotize_vel_probability = value; break;
-      case SEQ_CC_ROBOTIZE_SUSTAIN_PROBABILITY: tcc->robotize_sustain_probability = value; break;
-      case SEQ_CC_ROBOTIZE_NOFX_PROBABILITY: tcc->robotize_nofx_probability = value; break;
-      case SEQ_CC_ROBOTIZE_ECHO_PROBABILITY: tcc->robotize_echo_probability = value; break;
-      case SEQ_CC_ROBOTIZE_DUPLICATE_PROBABILITY: tcc->robotize_duplicate_probability = value; break;
-  
-
-      case SEQ_CC_ROBOTIZE_ACTIVE: tcc->robotize_active = value; break;
-      case SEQ_CC_ROBOTIZE_MASK1: tcc->robotize_mask1 = value; break;
-      case SEQ_CC_ROBOTIZE_MASK2: tcc->robotize_mask2 = value; break;
-
+//####################################
+//# RIO: VIRUSFX
+//####################################
+      case SEQ_CC_VIRUSFX_MODE: tcc->virusfx_mode = value; break;
+      case SEQ_CC_VIRUSFX_SHAPE_DAMPING: tcc->virusfx_shape_damping = value; break;
+      case SEQ_CC_VIRUSFX_CLOCK: tcc->virusfx_clock = value; break;
+      case SEQ_CC_VIRUSFX_COLOR: tcc->virusfx_color = value; break;
+      case SEQ_CC_VIRUSFX_FEEDBACK: tcc->virusfx_feedback = value; break;
+      case SEQ_CC_VIRUSFX_DEPTH_TYPE: tcc->virusfx_depth_type = value; break;
+      case SEQ_CC_VIRUSFX_RATE_DECTIME: tcc->virusfx_rate_dectime = value; break;
+      case SEQ_CC_VIRUSFX_TIME_PREDLY: tcc->virusfx_time_predly = value; break;
+      case SEQ_CC_VIRUSFX_ACTIVE: tcc->virusfx_active = value; break;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
       default:
 	portEXIT_CRITICAL();
         return -2; // invalid CC
@@ -411,25 +397,21 @@ s32 SEQ_CC_Get(u8 track, u8 cc)
     case SEQ_CC_LFO_CC_OFFSET: return tcc->lfo_cc_offset;
     case SEQ_CC_LFO_CC_PPQN: return tcc->lfo_cc_ppqn;
 
-    case SEQ_CC_ROBOTIZE_PROBABILITY: return tcc->robotize_probability;
-    case SEQ_CC_ROBOTIZE_NOTE: return tcc->robotize_note;
-    case SEQ_CC_ROBOTIZE_OCT: return tcc->robotize_oct;
-    case SEQ_CC_ROBOTIZE_VEL: return tcc->robotize_vel;
-    case SEQ_CC_ROBOTIZE_LEN: return tcc->robotize_len;
-
-    case SEQ_CC_ROBOTIZE_SKIP_PROBABILITY: return tcc->robotize_skip_probability;
-    case SEQ_CC_ROBOTIZE_NOTE_PROBABILITY: return tcc->robotize_note_probability;
-    case SEQ_CC_ROBOTIZE_OCT_PROBABILITY: return tcc->robotize_oct_probability;
-    case SEQ_CC_ROBOTIZE_VEL_PROBABILITY: return tcc->robotize_vel_probability;
-    case SEQ_CC_ROBOTIZE_LEN_PROBABILITY: return tcc->robotize_len_probability;
-    case SEQ_CC_ROBOTIZE_SUSTAIN_PROBABILITY: return tcc->robotize_sustain_probability;
-    case SEQ_CC_ROBOTIZE_NOFX_PROBABILITY: return tcc->robotize_nofx_probability;
-    case SEQ_CC_ROBOTIZE_ECHO_PROBABILITY: return tcc->robotize_echo_probability;
-    case SEQ_CC_ROBOTIZE_DUPLICATE_PROBABILITY: return tcc->robotize_duplicate_probability;
-
-    case SEQ_CC_ROBOTIZE_ACTIVE: return tcc->robotize_active;
-    case SEQ_CC_ROBOTIZE_MASK1: return tcc->robotize_mask1;
-    case SEQ_CC_ROBOTIZE_MASK2: return tcc->robotize_mask2;
+//####################################
+//# RIO: VIRUSFX
+//####################################
+    case SEQ_CC_VIRUSFX_MODE: return tcc->virusfx_mode;
+    case SEQ_CC_VIRUSFX_SHAPE_DAMPING: return tcc->virusfx_shape_damping;
+    case SEQ_CC_VIRUSFX_CLOCK: return tcc->virusfx_clock;
+    case SEQ_CC_VIRUSFX_COLOR: return tcc->virusfx_color;
+    case SEQ_CC_VIRUSFX_FEEDBACK: return tcc->virusfx_feedback;
+    case SEQ_CC_VIRUSFX_DEPTH_TYPE: return tcc->virusfx_depth_type;
+    case SEQ_CC_VIRUSFX_RATE_DECTIME: return tcc->virusfx_rate_dectime;
+    case SEQ_CC_VIRUSFX_TIME_PREDLY: return tcc->virusfx_time_predly;
+    case SEQ_CC_VIRUSFX_ACTIVE: return tcc->virusfx_active;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
   }
 
   return -2; // invalid CC

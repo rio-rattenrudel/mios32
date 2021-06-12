@@ -30,7 +30,13 @@
 #include "seq_scale.h"
 #include "seq_groove.h"
 #include "seq_humanize.h"
-#include "seq_robotize.h"
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#include "seq_virusfx.h"
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 #include "seq_morph.h"
 #include "seq_lfo.h"
 #include "seq_midi_port.h"
@@ -224,9 +230,14 @@ s32 SEQ_CORE_Init(u32 mode)
   // reset humanizer module
   SEQ_HUMANIZE_Init(0);
 
-
-  // reset robotizer module
-  SEQ_ROBOTIZE_Init(0);
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  // reset virusFX module
+  SEQ_VIRUSFX_Init(0);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
 
   // reset LFO module
   SEQ_LFO_Init(0);
@@ -292,15 +303,15 @@ s32 SEQ_CORE_Init(u32 mode)
 // This function schedules a MIDI event by considering the "normal" and "Fx"
 // MIDI port
 /////////////////////////////////////////////////////////////////////////////
-s32 SEQ_CORE_ScheduleEvent(u8 track, seq_core_trk_t *t, seq_cc_trk_t *tcc, mios32_midi_package_t midi_package, seq_midi_out_event_type_t event_type, u32 timestamp, u32 len, u8 is_echo, seq_robotize_flags_t robotize_flags)
+s32 SEQ_CORE_ScheduleEvent(u8 track, seq_core_trk_t *t, seq_cc_trk_t *tcc, mios32_midi_package_t midi_package, seq_midi_out_event_type_t event_type, u32 timestamp, u32 len, u8 is_echo)
 {
   s32 status = 0;
   mios32_midi_port_t fx_midi_port = tcc->fx_midi_port ? tcc->fx_midi_port : tcc->midi_port;
 
   u8 shadow_enabled = seq_core_shadow_out_chn && SEQ_UI_VisibleTrackGet() == track;
 
-  //check that there are more than 0 additional channels, that it's not just one channel and FX starting on current channel, check disable flag, check for robotizer
-  if( ! ( tcc->fx_midi_num_chn & 0x3f ) || ( ( tcc->fx_midi_num_chn & 0x3f ) == 1 && tcc->fx_midi_chn == midi_package.chn  ) || ( ( tcc->fx_midi_num_chn & 0x40 ) && !robotize_flags.DUPLICATE ) ) {
+  //check that there are more than 0 additional channels, that it's not just one channel and FX starting on current channel, check disable flag
+  if( ! ( tcc->fx_midi_num_chn & 0x3f ) || ( ( tcc->fx_midi_num_chn & 0x3f ) == 1 && tcc->fx_midi_chn == midi_package.chn  ) || ( ( tcc->fx_midi_num_chn & 0x40 ) ) ) {
     status |= SEQ_MIDI_OUT_Send(tcc->midi_port, midi_package, event_type, timestamp, len);
 
     if( event_type == SEQ_MIDI_OUT_OnEvent ) { // schedule off event at same port
@@ -904,9 +915,6 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
     int track;
     for(track=0; track<SEQ_CORE_NUM_TRACKS; ++t, ++tcc, ++track) {
 
-      seq_robotize_flags_t robotize_flags;
-      robotize_flags.ALL = 0;
-
       // round 0: loopback port Bus1-4, round 1: remaining ports
       u8 loopback_port = (tcc->midi_port & 0xf0) == 0xf0;
       if( (!round && !loopback_port) || (round && loopback_port) )
@@ -933,12 +941,12 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	  if( loopback_port )
 	    SEQ_MIDI_IN_BusReceive(tcc->midi_port & 0x0f, p, 1); // forward to MIDI IN handler immediately
 	  else
-	    SEQ_CORE_ScheduleEvent(track, t, tcc, p, SEQ_MIDI_OUT_CCEvent, bpm_tick, 0, 0, robotize_flags);
+	    SEQ_CORE_ScheduleEvent(track, t, tcc, p, SEQ_MIDI_OUT_CCEvent, bpm_tick, 0, 0);
 	}
       }
 
       // sustained note: play off event if sustain mode has been disabled and no stretched gatelength
-      if( t->state.SUSTAINED && (t->state.CANCEL_SUSTAIN_REQ || (!tcc->trkmode_flags.SUSTAIN && !t->state.ROBOSUSTAINED && !t->state.STRETCHED_GL)) ) {
+      if( t->state.SUSTAINED && (t->state.CANCEL_SUSTAIN_REQ || (!tcc->trkmode_flags.SUSTAIN && !t->state.STRETCHED_GL)) ) {
 	int i;
 
 	// important: play Note Off before new Note On to avoid that glide is triggered on the synth
@@ -1179,16 +1187,24 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	}
 
 //####################################
+//# RIO: VIRUSFX
+//####################################
+	if (!t->step) SEQ_VIRUSFX_Send(track);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+//####################################
 //# RIO: MUTES LAYER
 //####################################
-  // get mute steps
-  u8 layer_type = 0;
-  for (layer_type = SEQ_PAR_Type_Mute1; layer_type <= SEQ_PAR_Type_Mute16; layer_type++) {
-    u8 mute_value = SEQ_PAR_MuteValueGet(track, t->step, 0, layer_muted, layer_type);
-    u8 mute_track = layer_type - SEQ_PAR_Type_Mute1;
-    if      (mute_value == 1)  seq_core_trk_muted &= ~(1 << mute_track);  // ON
-    else if (mute_value == 2)  seq_core_trk_muted |= (1 << mute_track);   // OFF
-  }
+	// get mute steps
+	u8 layer_type = 0;
+	for (layer_type = SEQ_PAR_Type_Mute1; layer_type <= SEQ_PAR_Type_Mute16; layer_type++) {
+	  u8 mute_value = SEQ_PAR_MuteValueGet(track, t->step, 0, layer_muted, layer_type);
+	  u8 mute_track = layer_type - SEQ_PAR_Type_Mute1;
+	  if      (mute_value == 1)  seq_core_trk_muted &= ~(1 << mute_track);  // ON
+	  else if (mute_value == 2)  seq_core_trk_muted |= (1 << mute_track);   // OFF
+	}
 //####################################
 //# RIO: END MODIFICATION
 //####################################
@@ -1264,7 +1280,6 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	    }
 
 	    // get nofx flag
-	    robotize_flags = SEQ_ROBOTIZE_Event(track, t->step, e);
 	    u8 no_fx = SEQ_TRG_NoFxGet(track, t->step, instrument);
 
 	    // get nth trigger flag
@@ -1363,13 +1378,8 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	      // apply Pre-FX before force-to-scale
 	      if( !no_fx ) {
 		SEQ_HUMANIZE_Event(track, t->step, e);
-			
-		if( !robotize_flags.NOFX ) {
-		  SEQ_LFO_Event(track, e);
-		}
+		SEQ_LFO_Event(track, e);
 	      }
-
-	      t->state.ROBOSUSTAINED = ( robotize_flags.SUSTAIN ) ? 1 : 0 ;// set robosustain flag
 
 	      // force to scale
 	      if( tcc->trkmode_flags.FORCE_SCALE ) {
@@ -1395,7 +1405,7 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	      if( t->state.SUSTAINED )
 		gen_off_events = 1;
 
-	      if( tcc->trkmode_flags.SUSTAIN || t->state.ROBOSUSTAINED || e->len >= 96 )
+	      if( tcc->trkmode_flags.SUSTAIN || e->len >= 96 )
 		gen_sustained_events = 1;
 	      else {
 		// generate common On event with given length
@@ -1456,7 +1466,6 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	    // instrument layers only used for drum tracks
 	    u8 instrument = (tcc->event_mode == SEQ_EVENT_MODE_Drum) ? e->layer_tag : 0;
 
-	    robotize_flags = SEQ_ROBOTIZE_Event(track, t->step, e);
 	    u8 no_fx = SEQ_TRG_NoFxGet(track, t->step, instrument);
 
 	    // get nth trigger flag
@@ -1499,7 +1508,7 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 	      if( loopback_port )
 		SEQ_MIDI_IN_BusReceive(tcc->midi_port & 0x0f, *p, 1); // forward to MIDI IN handler immediately
 	      else
-		SEQ_CORE_ScheduleEvent(track, t, tcc, *p, SEQ_MIDI_OUT_CCEvent, bpm_tick + t->bpm_tick_delay, 0, 0, robotize_flags);
+		SEQ_CORE_ScheduleEvent(track, t, tcc, *p, SEQ_MIDI_OUT_CCEvent, bpm_tick + t->bpm_tick_delay, 0, 0);
 	      t->vu_meter = 0x7f; // for visualisation in mute menu
 	    } else {
 	      // skip in record mode if the same note is already played
@@ -1534,19 +1543,19 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 		    scheduled_tick += 1;
 
 		  // Note On (the Note Off will be prepared as well in SEQ_CORE_ScheduleEvent)
-		  SEQ_CORE_ScheduleEvent(track, t, tcc, *p, SEQ_MIDI_OUT_OnEvent, scheduled_tick, 0, 0, robotize_flags);
+		  SEQ_CORE_ScheduleEvent(track, t, tcc, *p, SEQ_MIDI_OUT_OnEvent, scheduled_tick, 0, 0);
 
 		  // apply Post-FX
-		  if( !no_fx && !robotize_flags.NOFX ) {
+		  if( !no_fx ) {
 		    u8 local_gatelength = 95; // echo only with reduced gatelength to avoid killed notes
 
-		    SEQ_CORE_Echo(track, instrument, t, tcc, *p, bpm_tick + t->bpm_tick_delay, local_gatelength, robotize_flags);
+		    SEQ_CORE_Echo(track, instrument, t, tcc, *p, bpm_tick + t->bpm_tick_delay, local_gatelength);
 		  }
 		}
 
 		// notify stretched gatelength if not in sustain mode
 		t->state.SUSTAINED = 1;
-		if( !tcc->trkmode_flags.SUSTAIN && !t->state.ROBOSUSTAINED ) {
+		if( !tcc->trkmode_flags.SUSTAIN ) {
 		  t->state.STRETCHED_GL = 1;
 		  // store glide note number in 128 bit array for later checks
 		  t->glide_notes[p->note / 32] |= (1 << (p->note % 32));
@@ -1602,7 +1611,7 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
       	      
 		      int i;
 		      for(i=triggers-1; i>=0; --i)
-			SEQ_CORE_ScheduleEvent(track, t, tcc, *p, SEQ_MIDI_OUT_OnOffEvent, bpm_tick + t->bpm_tick_delay + i*gatelength, half_gatelength, 0, robotize_flags);
+			SEQ_CORE_ScheduleEvent(track, t, tcc, *p, SEQ_MIDI_OUT_OnOffEvent, bpm_tick + t->bpm_tick_delay + i*gatelength, half_gatelength, 0);
 		    } else {
 		      // force gatelength depending on number of triggers
 		      if( triggers < 6 ) {
@@ -1627,14 +1636,14 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 		      if( roll_mode & 0x40 ) { // upwards
 			int i;
 			for(i=triggers-1; i>=0; --i) {
-			  SEQ_CORE_ScheduleEvent(track, t, tcc, p_multi, SEQ_MIDI_OUT_OnOffEvent, bpm_tick + t->bpm_tick_delay + i*gatelength, half_gatelength ,0, robotize_flags);
+			  SEQ_CORE_ScheduleEvent(track, t, tcc, p_multi, SEQ_MIDI_OUT_OnOffEvent, bpm_tick + t->bpm_tick_delay + i*gatelength, half_gatelength ,0);
 			  u16 velocity = roll_attenuation * p_multi.velocity;
 			  p_multi.velocity = velocity >> 8;
 			}
 		      } else { // downwards
 			int i;
 			for(i=0; i<triggers; ++i) {
-			  SEQ_CORE_ScheduleEvent(track, t, tcc, p_multi, SEQ_MIDI_OUT_OnOffEvent, bpm_tick + t->bpm_tick_delay + i*gatelength, half_gatelength, 0, robotize_flags);
+			  SEQ_CORE_ScheduleEvent(track, t, tcc, p_multi, SEQ_MIDI_OUT_OnOffEvent, bpm_tick + t->bpm_tick_delay + i*gatelength, half_gatelength, 0);
 			  if( roll_mode ) {
 			    u16 velocity = roll_attenuation * p_multi.velocity;
 			    p_multi.velocity = velocity >> 8;
@@ -1647,13 +1656,13 @@ s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
 		      gatelength = 1;
 		    else // scale length (0..95) over next clock counter to consider the selected clock divider
 		      gatelength = (gatelength * t->step_length) / 96;
-		    SEQ_CORE_ScheduleEvent(track, t, tcc, *p, SEQ_MIDI_OUT_OnOffEvent, bpm_tick + t->bpm_tick_delay, gatelength, 0, robotize_flags);
+		    SEQ_CORE_ScheduleEvent(track, t, tcc, *p, SEQ_MIDI_OUT_OnOffEvent, bpm_tick + t->bpm_tick_delay, gatelength, 0);
 		  }
 
 		  // apply Post-FX
-		  if( !no_fx && !robotize_flags.NOFX) {
-		    if( ( (tcc->echo_repeats & 0x3f) && ( !(tcc->echo_repeats & 0x40) || robotize_flags.ECHO ) && gatelength ) )
-		      SEQ_CORE_Echo(track, instrument, t, tcc, *p, bpm_tick + t->bpm_tick_delay, gatelength, robotize_flags);
+		  if( !no_fx ) {
+		    if( ( (tcc->echo_repeats & 0x3f) && ( !(tcc->echo_repeats & 0x40) ) && gatelength ) )
+		      SEQ_CORE_Echo(track, instrument, t, tcc, *p, bpm_tick + t->bpm_tick_delay, gatelength);
 		  }
 		}
 	      }
@@ -2203,7 +2212,7 @@ u8 SEQ_CORE_Echo_MapInternalToUser(u8 internal_value)
 /////////////////////////////////////////////////////////////////////////////
 // Echo Fx
 /////////////////////////////////////////////////////////////////////////////
-s32 SEQ_CORE_Echo(u8 track, u8 instrument, seq_core_trk_t *t, seq_cc_trk_t *tcc, mios32_midi_package_t p, u32 bpm_tick, u32 gatelength, seq_robotize_flags_t robotize_flags)
+s32 SEQ_CORE_Echo(u8 track, u8 instrument, seq_core_trk_t *t, seq_cc_trk_t *tcc, mios32_midi_package_t p, u32 bpm_tick, u32 gatelength)
 {
   // thanks to MIDI queuing mechanism, this is a no-brainer :)
 
@@ -2243,14 +2252,8 @@ s32 SEQ_CORE_Echo(u8 track, u8 instrument, seq_core_trk_t *t, seq_cc_trk_t *tcc,
 
   u32 echo_offset = fb_ticks;
   u8 echo_repeats = tcc->echo_repeats;
-
-  if( robotize_flags.ECHO ) {
-	// remove 0x40 flag indicating that echo is active (it's reversed, so 1 indicates echo is set to off)
-	// have to strip this flag out or the MSB flag makes a huge # of echo_repeats.
-	echo_repeats = echo_repeats & 0x0F;
-  }
 	
-  if( echo_repeats & 0x40 && !robotize_flags.ECHO) // disable flag
+  if( echo_repeats & 0x40 ) // disable flag
     echo_repeats = 0;
     
     
@@ -2293,7 +2296,7 @@ s32 SEQ_CORE_Echo(u8 track, u8 instrument, seq_core_trk_t *t, seq_cc_trk_t *tcc,
       SEQ_SCALE_Note(&p, scale, root);
     }
 
-    SEQ_CORE_ScheduleEvent(track, t, tcc, p, event_type, bpm_tick + echo_offset, gatelength, 1, robotize_flags);
+    SEQ_CORE_ScheduleEvent(track, t, tcc, p, event_type, bpm_tick + echo_offset, gatelength, 1);
   }
 
   return 0; // no error

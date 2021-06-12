@@ -276,10 +276,23 @@ s32 SEQ_MIXER_Send(u8 chn, seq_mixer_par_t par)
       return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 7, value-1);
     case SEQ_MIXER_PAR_PANORAMA: 
       return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 10, value-1);
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#if SEQ_MIXER_USE_ALTERNATIVE_PARAM == 0
     case SEQ_MIXER_PAR_REVERB:   
       return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 91, value-1);
     case SEQ_MIXER_PAR_CHORUS:
       return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 93, value-1);
+#else
+    case SEQ_MIXER_PAR_EXPRESSION:   
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 11, value-1);
+    case SEQ_MIXER_PAR_FXSEND:
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 113, value-1);
+#endif
+//####################################
+//# RIO: END MODIFICATION
+//####################################
     case SEQ_MIXER_PAR_MODWHEEL:
       return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 1, value-1);
 

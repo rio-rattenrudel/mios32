@@ -86,7 +86,13 @@ static const seq_ui_page_entry_t ui_menu_pages[SEQ_UI_PAGES] = {
   { "MANUAL",       "Man. ", "Manual Trigger    ", 33, (void *)&SEQ_UI_MANUAL_Init },
   { "FX_ECHO",      "Echo ", "Track Fx: Echo    ", 34, (void *)&SEQ_UI_FX_ECHO_Init },
   { "FX_HUMANIZER", "Hum. ", "Track Fx: Humanize", 35, (void *)&SEQ_UI_FX_HUMANIZE_Init },
-  { "FX_ROBOTIZER", "Rob. ", "Track Fx: Robotize", 57, (void *)&SEQ_UI_FX_ROBOTIZE_Init },
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  { "FX_VIRUSFX",   "VirFX", "Track Fx: Virus FX", 61, (void *)&SEQ_UI_FX_VIRUSFX_Init },
+//####################################
+//# RIO: END MODIFICATION
+//####################################
   { "FX_LIMIT",     "Limit", "Track Fx: Limit   ", 36, (void *)&SEQ_UI_FX_LIMIT_Init },
   { "FX_LFO",       "LFO  ", "Track Fx: LFO     ", 37, (void *)&SEQ_UI_FX_LFO_Init },
   { "FX_DUPLICATE", "Dupl.", "Track Fx: Duplict.", 56, (void *)&SEQ_UI_FX_DUPL_Init },

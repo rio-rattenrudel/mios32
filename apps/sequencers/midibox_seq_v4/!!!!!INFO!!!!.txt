@@ -21,7 +21,7 @@ modified size (with IIC Hack):
 -------------------------------------------------------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 423060     960   62944  486964   76e34 project_build/project.elf
+ 422996     960   62944  486900   76df4 project_build/project.elf
 10000000 B __ram_start
 10007ee0 B __ram_end
 2007c000 D __ram_start_ahb
@@ -30,7 +30,7 @@ arm-none-eabi-size project_build/project.elf
 -----------------------------------------------------------------
 Erklärung:
 ----------
-Probleme treten auf wenn __ram_end sich stark vom original vergrößert. Also z.B. im oder nach Bereich 10007d00 oder 10007e00 !!! Wo genau die Grenze ist, ist etwas unklar, aber der Arbeitspeicher liegt genau zwischen __ram_end und __ram_start_ahb. Laut docs, ist ab 10007fff für den fixen App-Ram Schluss.
+Probleme treten auf wenn __ram_end sich stark vom original vergrößert. Also z.B. im oder nach Bereich 10007d00 oder 10007e00 !!! Wo genau die Grenze ist, ist etwas unklar, aber der Arbeitspeicher liegt genau zwischen __ram_end und __ram_start_ahb. Laut docs, ist ab 10007fff für den fixen App-Ram Schluss, jedoch ist bereits ab 10007f60 die USB Section überschrieben, wo dann nur via linker der LPC neu geflashed werden konnte.
 
 Im Bereich 10007cxx (oder auch noch 10007dxx (MAX PASSED: 10007ebx)) sollte alles sauber funktionieren...., darum am besten in dem Bereich bleiben. Zum Beispiel, weist die damals Jahre stabil eingesetzte und recompilierte version 0.80 folgende Werte auf (__ram_end = 10007d20):
 
@@ -87,6 +87,9 @@ seq_hwcfg.h
 seq_file_hw.c
 seq_file_m.c
 seq_midi_router.c
+seq_virusfx.c
+seq_virusfx.h
+seq_ui_fx_virus.c
 mios32\modules\sequencer\seq_midi_out.c
 Makefile
 
@@ -6774,9 +6777,1046 @@ TRIGGER_STEPVIEW_MODE	1
 # RIO: PEAVEY SPECTRUM ANALOG FILTER CC TO 
 ##################################################
 
+
 -----------------------------------------------------------------
 
-31. Upload via MIOS_STUDIO (mindestens 2.4.5)
+31. Virus FX
+
+- !!! Remove all "robotize" stuff first !!! 
+- (without deleting seq_robotize.c/.h, seq_ui_fx_robotize.c)
+
+
+seq_cc.c-->
+
+s32 SEQ_CC_Init(u32 mode)
+{
+  // initialize all CC parameters
+  int track;
+  for(track=0; track<SEQ_CORE_NUM_TRACKS; ++track) {
+    seq_cc_trk_t *tcc = &seq_cc_trk[track];
+
+    // clear all CCs
+    memset((u8 *)tcc, 0, sizeof(seq_cc_trk_t));
+
+//####################################
+//# RIO: VIRUSFX
+//####################################
+    // init undefined
+    SEQ_VIRUSFX_Reset(track);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+
+s32 SEQ_CC_Set(u8 track, u8 cc, u8 value)
+{
+  ..
+      case SEQ_CC_LFO_CC_PPQN: tcc->lfo_cc_ppqn = value; break;
+
+//####################################
+//# RIO: VIRUSFX
+//####################################
+      case SEQ_CC_VIRUSFX_MODE: tcc->virusfx_mode = value; break;
+      case SEQ_CC_VIRUSFX_SHAPE_DAMPING: tcc->virusfx_shape_damping = value; break;
+      case SEQ_CC_VIRUSFX_CLOCK: tcc->virusfx_clock = value; break;
+      case SEQ_CC_VIRUSFX_COLOR: tcc->virusfx_color = value; break;
+      case SEQ_CC_VIRUSFX_FEEDBACK: tcc->virusfx_feedback = value; break;
+      case SEQ_CC_VIRUSFX_DEPTH_TYPE: tcc->virusfx_depth_type = value; break;
+      case SEQ_CC_VIRUSFX_RATE_DECTIME: tcc->virusfx_rate_dectime = value; break;
+      case SEQ_CC_VIRUSFX_TIME_PREDLY: tcc->virusfx_time_predly = value; break;
+      case SEQ_CC_VIRUSFX_ACTIVE: tcc->virusfx_active = value; break;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+
+s32 SEQ_CC_Get(u8 track, u8 cc)
+{
+  ..
+    case SEQ_CC_LFO_CC_PPQN: return tcc->lfo_cc_ppqn;
+
+//####################################
+//# RIO: VIRUSFX
+//####################################
+    case SEQ_CC_VIRUSFX_MODE: return tcc->virusfx_mode;
+    case SEQ_CC_VIRUSFX_SHAPE_DAMPING: return tcc->virusfx_shape_damping;
+    case SEQ_CC_VIRUSFX_CLOCK: return tcc->virusfx_clock;
+    case SEQ_CC_VIRUSFX_COLOR: return tcc->virusfx_color;
+    case SEQ_CC_VIRUSFX_FEEDBACK: return tcc->virusfx_feedback;
+    case SEQ_CC_VIRUSFX_DEPTH_TYPE: return tcc->virusfx_depth_type;
+    case SEQ_CC_VIRUSFX_RATE_DECTIME: return tcc->virusfx_rate_dectime;
+    case SEQ_CC_VIRUSFX_TIME_PREDLY: return tcc->virusfx_time_predly;
+    case SEQ_CC_VIRUSFX_ACTIVE: return tcc->virusfx_active;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_cc.h-->
+
+#include "seq_lfo.h"
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#include "seq_virusfx.h"
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+
+// free: 0x7c..0x7f
+
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#define SEQ_CC_VIRUSFX_ACTIVE                 0x5f
+#define SEQ_CC_VIRUSFX_MODE                   0x77  // EXTERNAL CC 0x70 112
+#define SEQ_CC_VIRUSFX_SHAPE_DAMPING          0x69  // EXTERNAL CC 0x76 118
+#define SEQ_CC_VIRUSFX_CLOCK                  0x6a  // EXTERNAL PP 0x14 20
+#define SEQ_CC_VIRUSFX_COLOR                  0x6b  // EXTERNAL CC 0x77 119
+#define SEQ_CC_VIRUSFX_FEEDBACK               0x6c  // EXTERNAL CC 0x73 115
+#define SEQ_CC_VIRUSFX_DEPTH_TYPE             0x6d  // EXTERNAL CC 0x75 117
+#define SEQ_CC_VIRUSFX_RATE_DECTIME           0x6e  // EXTERNAL CC 0x74 116
+#define SEQ_CC_VIRUSFX_TIME_PREDLY            0x6f  // EXTERNAL CC 0x72 114
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+
+/////////////////////////////////////////////////////////////////////////////
+// Global Types
+/////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+  ..
+  u8       limit_upper;       // for note value limits
+
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  u8  virusfx_mode;
+  u8  virusfx_shape_damping;
+  u8  virusfx_clock;
+  u8  virusfx_color;
+  u8  virusfx_feedback;
+  u8  virusfx_depth_type;
+  u8  virusfx_rate_dectime;
+  u8  virusfx_time_predly;
+  u8  virusfx_active; // Is virusfx activated?
+
+  seq_virusfx_last_values_t virusfx_last_values;
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_core.c-->
+
+..
+#include "seq_humanize.h"
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#include "seq_virusfx.h"
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+s32 SEQ_CORE_Init(u32 mode)
+{
+  ..
+  SEQ_HUMANIZE_Init(0);
+
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  // reset virusFX module
+  SEQ_VIRUSFX_Init(0);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+s32 SEQ_CORE_Tick(u32 bpm_tick, s8 export_track, u8 mute_nonloopback_tracks)
+{
+  ..
+	// check probability if not in drum mode
+	// if probability < 100: play step with given probability
+	// in drum mode, the probability is checked for each individual instrument inside the layer event loop
+	if( tcc->event_mode != SEQ_EVENT_MODE_Drum ) {
+	  u8 rnd_probability;
+	  if( (rnd_probability=SEQ_PAR_ProbabilityGet(track, t->step, 0, layer_muted)) < 100 &&
+	      SEQ_RANDOM_Gen_Range(0, 99) >= rnd_probability )
+	    continue;
+	}
+
+//####################################
+//# RIO: VIRUSFX
+//####################################
+	if (!t->step) SEQ_VIRUSFX_Send(track);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_mixer.c-->
+
+s32 SEQ_MIXER_Send(u8 chn, seq_mixer_par_t par)
+{
+  ..
+    case SEQ_MIXER_PAR_PANORAMA: 
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 10, value-1);
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#if SEQ_MIXER_USE_ALTERNATIVE_PARAM == 0
+    case SEQ_MIXER_PAR_REVERB:   
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 91, value-1);
+    case SEQ_MIXER_PAR_CHORUS:
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 93, value-1);
+#else
+    case SEQ_MIXER_PAR_EXPRESSION:   
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 11, value-1);
+    case SEQ_MIXER_PAR_FXSEND:
+      return value == 0 ? 0 : SEQ_MIXER_SendCC(midi_port, midi_chn, 113, value-1);
+#endif
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_mixer.h-->
+..
+#define SEQ_MIXER_NUM_PARAMETERS 16
+
+//####################################
+//# RIO: VIRUSFX
+//####################################
+// use alternative params (Expression 11, FX Send 113)
+#define SEQ_MIXER_USE_ALTERNATIVE_PARAM 1
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+
+/////////////////////////////////////////////////////////////////////////////
+// Global Types
+/////////////////////////////////////////////////////////////////////////////
+
+typedef enum {
+  ..
+  SEQ_MIXER_PAR_PANORAMA, // CC#10
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#if SEQ_MIXER_USE_ALTERNATIVE_PARAM == 0
+  SEQ_MIXER_PAR_REVERB,   // CC#91
+  SEQ_MIXER_PAR_CHORUS,   // CC#93
+#else
+  SEQ_MIXER_PAR_EXPRESSION, // CC#11
+  SEQ_MIXER_PAR_FXSEND,     // CC#113
+#endif
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_ui.h-->
+..
+extern s32 SEQ_UI_FX_HUMANIZE_Init(u32 mode);
+//####################################
+//# RIO: VIRUSFX
+//####################################
+extern s32 SEQ_UI_FX_VIRUSFX_Init(u32 mode);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_ui_fx.h-->
+..
+// following pages are directly accessible with the GP buttons inside the Fx menu
+static const seq_ui_page_t shortcut_menu_pages[16] = {
+  SEQ_UI_PAGE_FX_ECHO,     // GP1
+  SEQ_UI_PAGE_FX_HUMANIZE, // GP2
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  SEQ_UI_PAGE_FX_VIRUSFX,  // GP3
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_ui_fx_virus.c-->
+
+// $Id$
+/*
+ * Fx VIRUSFX page
+ *
+ * ==========================================================================
+ *
+ *  Copyright (C) 2008 Thorsten Klose (tk@midibox.org)
+ *  Licensed for personal non-commercial use only.
+ *  All other rights reserved.
+ * 
+ * ==========================================================================
+ */
+//####################################
+//# RIO: VIRUSFX
+//####################################
+/////////////////////////////////////////////////////////////////////////////
+// Include files
+/////////////////////////////////////////////////////////////////////////////
+
+#include <mios32.h>
+#include <string.h>
+#include "seq_lcd.h"
+#include "seq_ui.h"
+#include "seq_cc.h"
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Local definitions
+/////////////////////////////////////////////////////////////////////////////
+
+#define NUM_OF_ITEMS                10
+#define ITEM_GXTY                   0
+#define ITEM_VIRUSFX_ACTIVE         1
+#define ITEM_VIRUSFX_MODE           2
+#define ITEM_VIRUSFX_SHAPE_DAMPING  3
+#define ITEM_VIRUSFX_CLOCK          4
+#define ITEM_VIRUSFX_COLOR          5
+#define ITEM_VIRUSFX_FEEDBACK       6
+#define ITEM_VIRUSFX_DEPTH_TYPE     7
+#define ITEM_VIRUSFX_RATE_DECTIME   8
+#define ITEM_VIRUSFX_TIME_PREDLY    9
+
+/////////////////////////////////////////////////////////////////////////////
+// Local LED handler function
+/////////////////////////////////////////////////////////////////////////////
+static s32 LED_Handler(u16 *gp_leds)
+{
+  if( ui_cursor_flash ) // if flashing flag active: no LED flag set
+    return 0;
+
+  u8 visible_track = SEQ_UI_VisibleTrackGet();
+  u8 mode = SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_MODE);
+    
+  switch( ui_selected_item ) {
+    case ITEM_GXTY:                   *gp_leds = 0x0001; break;
+    case ITEM_VIRUSFX_ACTIVE:         *gp_leds = 0x0002; break;
+    case ITEM_VIRUSFX_MODE:           *gp_leds = 0x000C; break;
+    case ITEM_VIRUSFX_SHAPE_DAMPING:  if (mode >= 2 && mode <= 4) *gp_leds = 0x0800; else *gp_leds = 0x0030; break;
+    case ITEM_VIRUSFX_CLOCK:          *gp_leds = 0x0100; break;
+    case ITEM_VIRUSFX_COLOR:          *gp_leds = 0x0200; break;
+    case ITEM_VIRUSFX_FEEDBACK:       if (mode != 2) *gp_leds = 0x0400; break;
+    case ITEM_VIRUSFX_DEPTH_TYPE:     if (mode >= 2 && mode <= 4) *gp_leds = 0x0030; else *gp_leds = 0x0800; break;
+    case ITEM_VIRUSFX_RATE_DECTIME:   *gp_leds = 0x1000; break;
+    case ITEM_VIRUSFX_TIME_PREDLY:    if (!SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_CLOCK)) *gp_leds = 0x2000; break;
+  }
+
+  return 0; // no error
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Local encoder callback function
+// Should return:
+//   1 if value has been changed
+//   0 if value hasn't been changed
+//  -1 if invalid or unsupported encoder
+/////////////////////////////////////////////////////////////////////////////
+static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
+{
+  u8 visible_track = SEQ_UI_VisibleTrackGet();
+  u8 mode = SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_MODE);
+
+  switch( encoder ) {
+    case SEQ_UI_ENCODER_GP1:
+      ui_selected_item = ITEM_GXTY;
+      break;
+
+    case SEQ_UI_ENCODER_GP2:
+      ui_selected_item = ITEM_VIRUSFX_ACTIVE;
+      break;
+
+    case SEQ_UI_ENCODER_GP3:
+    case SEQ_UI_ENCODER_GP4:
+      ui_selected_item = ITEM_VIRUSFX_MODE;
+      break;
+    
+    case SEQ_UI_ENCODER_GP5:
+    case SEQ_UI_ENCODER_GP6:
+      if (mode >= 2 && mode <= 4) ui_selected_item = ITEM_VIRUSFX_DEPTH_TYPE;
+      else                        ui_selected_item = ITEM_VIRUSFX_SHAPE_DAMPING;
+      break;
+
+    case SEQ_UI_ENCODER_GP9:
+      ui_selected_item = ITEM_VIRUSFX_CLOCK;
+      break;
+
+    case SEQ_UI_ENCODER_GP10:
+      ui_selected_item = ITEM_VIRUSFX_COLOR;
+      break;
+
+    case SEQ_UI_ENCODER_GP11:
+      if (mode == 2) return -1; // not mapped
+      ui_selected_item = ITEM_VIRUSFX_FEEDBACK;
+      break;
+      
+    case SEQ_UI_ENCODER_GP12:
+      if (mode >= 2 && mode <= 4) ui_selected_item = ITEM_VIRUSFX_SHAPE_DAMPING;
+      else                        ui_selected_item = ITEM_VIRUSFX_DEPTH_TYPE;
+      break;
+
+    case SEQ_UI_ENCODER_GP13:
+      ui_selected_item = ITEM_VIRUSFX_RATE_DECTIME;
+      break;
+      
+    case SEQ_UI_ENCODER_GP14:
+      if (SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_CLOCK)) return -1; // not mapped
+      ui_selected_item = ITEM_VIRUSFX_TIME_PREDLY;
+      break;
+
+    case SEQ_UI_ENCODER_GP7:
+    case SEQ_UI_ENCODER_GP8:
+    case SEQ_UI_ENCODER_GP16:
+      return -1; // not mapped
+  }
+
+  // for GP encoders and Datawheel
+  switch( ui_selected_item ) {
+  case ITEM_GXTY:                   return SEQ_UI_GxTyInc(incrementer);
+  case ITEM_VIRUSFX_ACTIVE:         return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_ACTIVE, 0, 1, incrementer);
+  case ITEM_VIRUSFX_MODE:           return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_MODE, 0, 25, incrementer);
+  case ITEM_VIRUSFX_SHAPE_DAMPING:  if (mode >= 2 && mode <= 4) mode = 127;
+                                    else {
+                                      if (SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_SHAPE_DAMPING) > 5) {
+                                        SEQ_CC_Set(visible_track, SEQ_CC_VIRUSFX_SHAPE_DAMPING, 5);
+                                        return 0;
+                                      }
+                                      mode = 5;
+                                    }
+                                    return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_SHAPE_DAMPING, 0, mode, incrementer);
+  case ITEM_VIRUSFX_CLOCK:          return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_CLOCK, 0, 16, incrementer);
+  case ITEM_VIRUSFX_COLOR:          return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_COLOR, 0, 127, incrementer);
+  case ITEM_VIRUSFX_FEEDBACK:       return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_FEEDBACK, 0, 127, incrementer);
+  case ITEM_VIRUSFX_DEPTH_TYPE:     if (mode >= 2 && mode <= 4) {
+                                      if (SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_DEPTH_TYPE) > 3) {
+                                        SEQ_CC_Set(visible_track, SEQ_CC_VIRUSFX_DEPTH_TYPE, 3);
+                                        return 0;
+                                      }
+                                      mode = 3; 
+                                    } else mode = 127;
+                                    return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_DEPTH_TYPE, 0, mode, incrementer);
+  case ITEM_VIRUSFX_RATE_DECTIME:   return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_RATE_DECTIME, 0, 127, incrementer);
+  case ITEM_VIRUSFX_TIME_PREDLY:    return SEQ_UI_CC_Inc(SEQ_CC_VIRUSFX_TIME_PREDLY, 0, 127, incrementer);
+  }
+
+  return -1; // invalid or unsupported encoder
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Local button callback function
+// Should return:
+//   1 if value has been changed
+//   0 if value hasn't been changed
+//  -1 if invalid or unsupported button
+/////////////////////////////////////////////////////////////////////////////
+static s32 Button_Handler(seq_ui_button_t button, s32 depressed)
+{
+  if( depressed ) return 0; // ignore when button depressed
+
+#if 0
+  // leads to: comparison is always true due to limited range of data type
+  if( button >= SEQ_UI_BUTTON_GP1 && button <= SEQ_UI_BUTTON_GP16 ) {
+#else
+  if( button <= SEQ_UI_BUTTON_GP16 ) {
+#endif
+    // re-use encoder handler - only select UI item, don't increment
+    return Encoder_Handler((int)button, 0);
+  }
+
+  switch( button ) {
+    case SEQ_UI_BUTTON_Select:
+    case SEQ_UI_BUTTON_Right:
+      if( ++ui_selected_item >= NUM_OF_ITEMS )
+  ui_selected_item = 0;
+
+      return 1; // value always changed
+
+    case SEQ_UI_BUTTON_Left:
+      if( ui_selected_item == 0 )
+  ui_selected_item = NUM_OF_ITEMS-1;
+      else
+  --ui_selected_item;
+      return 1; // value always changed
+
+
+    case SEQ_UI_BUTTON_Up:
+      return Encoder_Handler(SEQ_UI_ENCODER_Datawheel, 1);
+
+    case SEQ_UI_BUTTON_Down:
+      return Encoder_Handler(SEQ_UI_ENCODER_Datawheel, -1);
+  }
+
+  return -1; // invalid or unsupported button
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Local Display Handler function
+// IN: <high_prio>: if set, a high-priority LCD update is requested
+/////////////////////////////////////////////////////////////////////////////
+static s32 LCD_Handler(u8 high_prio)
+{
+  if( high_prio )
+    return 0; // there are no high-priority updates
+
+  // layout:
+  // 00000000001111111111222222222233333333330000000000111111111122222222223333333333
+  // 01234567890123456789012345678901234567890123456789012345678901234567890123456789
+  // <--------------------------------------><-------------------------------------->
+  // Trk.  Intensity     Note Vel/CC Length  
+  // G1T1      0          off   off   off    
+
+    // we want to show vertical bars
+    SEQ_LCD_InitSpecialChars(SEQ_LCD_CHARSET_VBars);
+    
+  u8 visible_track = SEQ_UI_VisibleTrackGet();
+  u8 mode = SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_MODE);
+  u8 clock = SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_CLOCK);
+
+  ///////////////////////////////////////////////////////////////////////////
+  SEQ_LCD_CursorSet(0, 0);
+
+  if (mode >= 2 && mode <= 4) {
+    SEQ_LCD_PrintString("Trk. Enab  Mode      Type               ");
+    if (mode == 2)  SEQ_LCD_PrintString(" Clk  Clr       Dmp  Dcy  ");
+    else            SEQ_LCD_PrintString(" Clk  Clr  Fdb  Dmp  Dcy  ");
+  } else {
+    SEQ_LCD_PrintString("Trk. Enab  Mode      Shape              ");
+    SEQ_LCD_PrintString(" Clk  Clr  Fdb  Dpt  Rte  ");
+  }
+  if      (clock)     SEQ_LCD_PrintString("              ");
+  else if (mode == 2) SEQ_LCD_PrintString("PreDly        ");
+  else                SEQ_LCD_PrintString("Time          ");
+  
+  ///////////////////////////////////////////////////////////////////////////
+  SEQ_LCD_CursorSet(0, 1);
+
+  if( ui_selected_item == ITEM_GXTY && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(4);
+  } else {
+    SEQ_LCD_PrintGxTy(ui_selected_group, ui_selected_tracks);
+  }
+  SEQ_LCD_PrintSpaces(1);
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( ui_selected_item == ITEM_VIRUSFX_ACTIVE && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(4);
+  } else {
+    SEQ_LCD_PrintString( ( SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_ACTIVE) ) ? "  on" : " off" );
+  }
+  SEQ_LCD_PrintSpaces(2);
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( ui_selected_item == ITEM_VIRUSFX_MODE && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(9);
+  } else {
+    switch (mode) {
+      case 0: SEQ_LCD_PrintString( " off     " ); break;
+      case 1: SEQ_LCD_PrintString( "Delay    " ); break;
+      case 2: SEQ_LCD_PrintString( "Reverb   " ); break;
+      case 3: SEQ_LCD_PrintString( "Rev+Fb1  " ); break;
+      case 4: SEQ_LCD_PrintString( "Rev+Fb2  " ); break;
+      case 5: SEQ_LCD_PrintString( "Delay 2:1" ); break;
+      case 6: SEQ_LCD_PrintString( "Delay 4:3" ); break;
+      case 7: SEQ_LCD_PrintString( "Delay 4:1" ); break;
+      case 8: SEQ_LCD_PrintString( "Delay 8:7" ); break;
+      case 9: SEQ_LCD_PrintString( "Patt 1+1 " ); break;
+      case 10: SEQ_LCD_PrintString( "Patt 2+1 " ); break;
+      case 11: SEQ_LCD_PrintString( "Patt 3+1 " ); break;
+      case 12: SEQ_LCD_PrintString( "Patt 4+1 " ); break;
+      case 13: SEQ_LCD_PrintString( "Patt 5+1 " ); break;
+      case 14: SEQ_LCD_PrintString( "Patt 2+3 " ); break;
+      case 15: SEQ_LCD_PrintString( "Patt 2+5 " ); break;
+      case 16: SEQ_LCD_PrintString( "Patt 3+2 " ); break;
+      case 17: SEQ_LCD_PrintString( "Patt 3+3 " ); break;
+      case 18: SEQ_LCD_PrintString( "Patt 3+4 " ); break;
+      case 19: SEQ_LCD_PrintString( "Patt 3+5 " ); break;
+      case 20: SEQ_LCD_PrintString( "Patt 4+3 " ); break;
+      case 21: SEQ_LCD_PrintString( "Patt 4+5 " ); break;
+      case 22: SEQ_LCD_PrintString( "Patt 5+2 " ); break;
+      case 23: SEQ_LCD_PrintString( "Patt 5+3 " ); break;
+      case 24: SEQ_LCD_PrintString( "Patt 5+4 " ); break;
+      case 25: SEQ_LCD_PrintString( "Patt 5+5 " ); break;
+    }
+  }
+  SEQ_LCD_PrintSpaces(1);
+
+  ///////////////////////////////////////////////////////////////////////////
+  if (mode >= 2 && mode <= 4) {
+    if( ui_selected_item == ITEM_VIRUSFX_DEPTH_TYPE && ui_cursor_flash ) {
+      SEQ_LCD_PrintSpaces(9);
+    } else {
+      switch (SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_DEPTH_TYPE)) {
+        case 0: SEQ_LCD_PrintString( "Ambience " ); break;
+        case 1: SEQ_LCD_PrintString( "SmallRoom" ); break;
+        case 2: SEQ_LCD_PrintString( "LargeRoom" ); break;
+        case 3: SEQ_LCD_PrintString( "Hall     " ); break;
+        default: SEQ_LCD_PrintString( "<  ???  >" ); break;
+      }
+    }
+  } else {
+    if( ui_selected_item == ITEM_VIRUSFX_SHAPE_DAMPING && ui_cursor_flash ) {
+      SEQ_LCD_PrintSpaces(9);
+    } else {
+      switch (SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_SHAPE_DAMPING)) {
+        case 0: SEQ_LCD_PrintString( "Sinus    " ); break;
+        case 1: SEQ_LCD_PrintString( "Triangle " ); break;
+        case 2: SEQ_LCD_PrintString( "Sawtooth " ); break;
+        case 3: SEQ_LCD_PrintString( "Square   " ); break;
+        case 4: SEQ_LCD_PrintString( "S&H      " ); break;
+        case 5: SEQ_LCD_PrintString( "S&G    " ); break;
+        default: SEQ_LCD_PrintString( "<  ???  >" ); break;
+      }
+    }
+  }
+
+  SEQ_LCD_CursorSet(40, 1);
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( ui_selected_item == ITEM_VIRUSFX_CLOCK && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(4);
+  } else {
+    switch (SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_CLOCK)) {
+      case 0: SEQ_LCD_PrintString( " off" ); break;
+      case 1: SEQ_LCD_PrintString( "1/64" ); break;
+      case 2: SEQ_LCD_PrintString( "1/32" ); break;
+      case 3: SEQ_LCD_PrintString( "1/16" ); break;
+      case 4: SEQ_LCD_PrintString( " 1/8" ); break;
+      case 5: SEQ_LCD_PrintString( " 1/4" ); break;
+      case 6: SEQ_LCD_PrintString( " 1/2" ); break;
+      case 7: SEQ_LCD_PrintString( "3/64" ); break;
+      case 8: SEQ_LCD_PrintString( "3/32" ); break;
+      case 9: SEQ_LCD_PrintString( "3/16" ); break;
+      case 10: SEQ_LCD_PrintString( " 3/8" ); break;
+      case 11: SEQ_LCD_PrintString( "1/24" ); break;
+      case 12: SEQ_LCD_PrintString( "1/12" ); break;
+      case 13: SEQ_LCD_PrintString( " 1/6" ); break;
+      case 14: SEQ_LCD_PrintString( " 1/3" ); break;
+      case 15: SEQ_LCD_PrintString( " 2/3" ); break;
+      case 16: SEQ_LCD_PrintString( " 3/4" ); break;
+    }
+  }
+  SEQ_LCD_PrintSpaces(1);
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( ui_selected_item == ITEM_VIRUSFX_COLOR && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(4);
+  } else {
+    SEQ_LCD_PrintVBar(SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_COLOR) >> 4);
+    SEQ_LCD_PrintFormattedString("%3d", SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_COLOR));
+  }
+  SEQ_LCD_PrintSpaces(1);
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( (ui_selected_item == ITEM_VIRUSFX_FEEDBACK && ui_cursor_flash) || mode == 2) {
+    SEQ_LCD_PrintSpaces(4);
+  } else {
+    SEQ_LCD_PrintVBar(SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_FEEDBACK) >> 4);
+    SEQ_LCD_PrintFormattedString("%3d", SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_FEEDBACK));
+  }
+  SEQ_LCD_PrintSpaces(1);
+
+  ///////////////////////////////////////////////////////////////////////////
+  if (mode >= 2 && mode <= 4) {
+    if( ui_selected_item == ITEM_VIRUSFX_SHAPE_DAMPING && ui_cursor_flash ) {
+      SEQ_LCD_PrintSpaces(4);
+    } else {
+      SEQ_LCD_PrintVBar(SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_SHAPE_DAMPING) >> 4);
+      SEQ_LCD_PrintFormattedString("%3d", SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_SHAPE_DAMPING));
+    }
+  } else {
+    if( ui_selected_item == ITEM_VIRUSFX_DEPTH_TYPE && ui_cursor_flash ) {
+      SEQ_LCD_PrintSpaces(4);
+    } else {
+      SEQ_LCD_PrintVBar(SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_DEPTH_TYPE) >> 4);
+      SEQ_LCD_PrintFormattedString("%3d", SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_DEPTH_TYPE));
+    }
+  }
+  SEQ_LCD_PrintSpaces(1);  
+
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( ui_selected_item == ITEM_VIRUSFX_RATE_DECTIME && ui_cursor_flash ) {
+    SEQ_LCD_PrintSpaces(4);
+  } else {
+    SEQ_LCD_PrintVBar(SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_RATE_DECTIME) >> 4);
+    SEQ_LCD_PrintFormattedString("%3d", SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_RATE_DECTIME));
+  }
+  SEQ_LCD_PrintSpaces(1);
+
+  ///////////////////////////////////////////////////////////////////////////
+  if( (ui_selected_item == ITEM_VIRUSFX_TIME_PREDLY && ui_cursor_flash) || SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_CLOCK)) {
+    SEQ_LCD_PrintSpaces(8);
+  } else {
+    u8 val = SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_TIME_PREDLY);
+    SEQ_LCD_PrintFormattedString("  %3d ms", (int)(5.464*val));
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+
+
+  SEQ_LCD_PrintSpaces(7);
+
+  return 0; // no error
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Initialisation
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_UI_FX_VIRUSFX_Init(u32 mode)
+{
+  // install callback routines
+  SEQ_UI_InstallButtonCallback(Button_Handler);
+  SEQ_UI_InstallEncoderCallback(Encoder_Handler);
+  SEQ_UI_InstallLEDCallback(LED_Handler);
+  SEQ_UI_InstallLCDCallback(LCD_Handler);
+
+  return 0; // no error
+}
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_ui_mixer-->
+
+static s32 Encoder_Handler(seq_ui_encoder_t encoder, s32 incrementer)
+{
+  ..
+      case SEQ_MIXER_PAR_PANORAMA:
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#if SEQ_MIXER_USE_ALTERNATIVE_PARAM == 0
+      case SEQ_MIXER_PAR_REVERB:
+      case SEQ_MIXER_PAR_CHORUS:
+#else
+      case SEQ_MIXER_PAR_EXPRESSION:
+      case SEQ_MIXER_PAR_FXSEND:
+#endif
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+..
+
+static s32 LCD_Handler(u8 high_prio)
+{
+  ..
+	const char page_name[8][13] = {
+	  "MIDI Port   ",
+	  "MIDI Channel",
+	  "Prog.Change ",
+	  "Volume      ",
+	  "Panorama    ",
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#if SEQ_MIXER_USE_ALTERNATIVE_PARAM == 0
+	  "Reverb      ",
+	  "Chorus      ",
+	  "ModWheel    ",
+#else
+	  "Expression  ",
+	  "FX Send     ",
+	  "Modulation  ",
+#endif
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+	};
+
+
+seq_ui_pages.c-->
+
+static const seq_ui_page_entry_t ui_menu_pages[SEQ_UI_PAGES] = {
+  ..
+  { "FX_HUMANIZER", "Hum. ", "Track Fx: Humanize", 35, (void *)&SEQ_UI_FX_HUMANIZE_Init },
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  { "FX_VIRUSFX",   "VirFX", "Track Fx: Virus FX", 61, (void *)&SEQ_UI_FX_VIRUSFX_Init },
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_ui_pages.h-->
+
+// must be kept in sync with ui_menu_pages table in seq_ui_pages.c
+typedef enum {
+  ..
+  SEQ_UI_PAGE_FX_HUMANIZE,
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  SEQ_UI_PAGE_FX_VIRUSFX,
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_virusfx.c-->
+
+// $Id$
+/*
+ * VirusFX Functions
+ *
+ * ==========================================================================
+ *
+ *  Copyright (C) 2008 Thorsten Klose (tk@midibox.org)
+ *  Licensed for personal non-commercial use only.
+ *  All other rights reserved.
+ * 
+ * ==========================================================================
+ */
+//####################################
+//# RIO: VIRUSFX
+//####################################
+/////////////////////////////////////////////////////////////////////////////
+// Include files
+/////////////////////////////////////////////////////////////////////////////
+
+#include <mios32.h>
+#include "tasks.h"
+
+#include "seq_virusfx.h"
+#include "seq_midi_in.h"
+#include "seq_midi_router.h"
+#include "seq_core.h"
+#include "seq_cc.h"
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Initialisation
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_VIRUSFX_Init(u32 mode)
+{
+  return 0; // no error
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Sends a CC or PP value, considers Bus target
+/////////////////////////////////////////////////////////////////////////////
+static s32 SEQ_VIRUSFX_SendCCPP(mios32_midi_port_t midi_port, mios32_midi_chn_t midi_chn, u8 ccpp, u8 value, u8 isPP)
+{
+  mios32_midi_package_t midi_package;
+
+  midi_package.type  = isPP ? 0xa : 0xb;
+  midi_package.evnt0 = isPP ? 0xa0 | midi_chn : 0xb0 | midi_chn;
+  midi_package.evnt1 = ccpp;
+  midi_package.evnt2 = value;
+
+  if( (midi_port & 0xf0) == 0xf0 ) { // send to bus?
+    // forward to router
+    SEQ_MIDI_ROUTER_Receive(midi_port, midi_package);
+
+    // forward to transposer/arpeggiator/CC parser/etc...
+    SEQ_MIDI_IN_Receive(midi_port, midi_package);
+
+    return 0; // no error
+  }
+
+  return MIOS32_MIDI_SendPackage(midi_port, midi_package);
+}
+
+void SEQ_VIRUSFX_Reset(u8 track)
+{
+  seq_cc_trk_t *tcc = &seq_cc_trk[track];
+
+  // init undefined
+  tcc->virusfx_last_values.MODE = 128;
+  tcc->virusfx_last_values.SHAPE_DAMPING = 128;
+  tcc->virusfx_last_values.CLOCK = 128;
+  tcc->virusfx_last_values.COLOR = 128;
+  tcc->virusfx_last_values.FEEDBACK = 128;
+  tcc->virusfx_last_values.DEPTH_TYPE = 128;
+  tcc->virusfx_last_values.RATE_DECTIME = 128;
+  tcc->virusfx_last_values.TIME_PREDLY = 128;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// sends MIDI data depending on selected virusfx settings
+/////////////////////////////////////////////////////////////////////////////
+s32 SEQ_VIRUSFX_Send(u8 track)
+{
+  seq_cc_trk_t *tcc = &seq_cc_trk[track];
+
+  if (!tcc->virusfx_active) return 0; // nothing to do
+
+  mios32_midi_port_t midi_port  = SEQ_CC_Get(track, SEQ_CC_MIDI_PORT);
+  u8 midi_chn                   = SEQ_CC_Get(track, SEQ_CC_MIDI_CHANNEL);
+
+  if (tcc->virusfx_last_values.MIDI_PORT != midi_port) {
+    tcc->virusfx_last_values.MIDI_PORT = midi_port;
+    SEQ_VIRUSFX_Reset(track);
+  }
+
+  if (tcc->virusfx_last_values.MIDI_CH != midi_chn) {
+    tcc->virusfx_last_values.MIDI_CH = midi_chn;
+    SEQ_VIRUSFX_Reset(track);
+  }
+
+  MUTEX_MIDIOUT_TAKE;
+
+  if (tcc->virusfx_last_values.MODE != tcc->virusfx_mode) {
+    tcc->virusfx_last_values.MODE = tcc->virusfx_mode;
+    SEQ_VIRUSFX_SendCCPP(midi_port, midi_chn, 0x70, tcc->virusfx_mode, 0);
+  }
+
+  if (tcc->virusfx_last_values.SHAPE_DAMPING != tcc->virusfx_shape_damping) {
+    tcc->virusfx_last_values.SHAPE_DAMPING = tcc->virusfx_shape_damping;
+    SEQ_VIRUSFX_SendCCPP(midi_port, midi_chn, 0x76, tcc->virusfx_shape_damping, 0);
+  }
+
+  if (tcc->virusfx_last_values.CLOCK != tcc->virusfx_clock) {
+    tcc->virusfx_last_values.CLOCK = tcc->virusfx_clock;
+    SEQ_VIRUSFX_SendCCPP(midi_port, midi_chn, 0x14, tcc->virusfx_clock, 1);
+  }
+
+  if (tcc->virusfx_last_values.COLOR != tcc->virusfx_color) {
+    tcc->virusfx_last_values.COLOR = tcc->virusfx_color;
+    SEQ_VIRUSFX_SendCCPP(midi_port, midi_chn, 0x77, tcc->virusfx_color, 0);
+  }
+
+  if (tcc->virusfx_last_values.FEEDBACK != tcc->virusfx_feedback) {
+    tcc->virusfx_last_values.FEEDBACK = tcc->virusfx_feedback;
+    SEQ_VIRUSFX_SendCCPP(midi_port, midi_chn, 0x73, tcc->virusfx_feedback, 0);
+  }
+
+  if (tcc->virusfx_last_values.DEPTH_TYPE != tcc->virusfx_depth_type) {
+    tcc->virusfx_last_values.DEPTH_TYPE = tcc->virusfx_depth_type;
+    SEQ_VIRUSFX_SendCCPP(midi_port, midi_chn, 0x75, tcc->virusfx_depth_type, 0);
+  }
+
+  if (tcc->virusfx_last_values.RATE_DECTIME != tcc->virusfx_rate_dectime) {
+    tcc->virusfx_last_values.RATE_DECTIME = tcc->virusfx_rate_dectime;
+    SEQ_VIRUSFX_SendCCPP(midi_port, midi_chn, 0x74, tcc->virusfx_rate_dectime, 0);
+  }
+
+  if (tcc->virusfx_last_values.TIME_PREDLY != tcc->virusfx_time_predly) {
+    tcc->virusfx_last_values.TIME_PREDLY = tcc->virusfx_time_predly;
+    SEQ_VIRUSFX_SendCCPP(midi_port, midi_chn, 0x72, tcc->virusfx_time_predly, 0);
+  }
+
+  MUTEX_MIDIOUT_GIVE;
+
+  //DEBUG_MSG("track: %d", track);
+
+  return 0; // no error
+}
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+seq_virusfx.h-->
+
+// $Id$
+/*
+ * Header file for virusfx routines
+ *
+ * ==========================================================================
+ *
+ *  Copyright (C) 2008 Thorsten Klose (tk@midibox.org)
+ *  Licensed for personal non-commercial use only.
+ *  All other rights reserved.
+ * 
+ * ==========================================================================
+ */
+//####################################
+//# RIO: VIRUSFX
+//####################################
+#ifndef _SEQ_VIRUSFX_H
+#define _SEQ_VIRUSFX_H
+
+/////////////////////////////////////////////////////////////////////////////
+// Global definitions
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Global Types
+/////////////////////////////////////////////////////////////////////////////
+
+typedef union {
+  u8 ALL;
+  struct {
+    u8 MIDI_PORT;
+    u8 MIDI_CH;
+    u8 MODE;
+    u8 SHAPE_DAMPING;
+    u8 CLOCK;
+    u8 COLOR;
+    u8 FEEDBACK;
+    u8 DEPTH_TYPE;
+    u8 RATE_DECTIME;
+    u8 TIME_PREDLY;
+  };
+} seq_virusfx_last_values_t;
+
+/////////////////////////////////////////////////////////////////////////////
+// Prototypes
+/////////////////////////////////////////////////////////////////////////////
+
+extern s32 SEQ_VIRUSFX_Init(u32 mode);
+
+extern void SEQ_VIRUSFX_Reset(u8 track);
+extern s32 SEQ_VIRUSFX_Send(u8 track);
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Export global variables
+/////////////////////////////////////////////////////////////////////////////
+
+#endif /* _SEQ_VIRUSFX_H */
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
+
+Makefile-->
+
+####################################
+# RIO: Added NEW files
+####################################
+
+THUMB_SOURCE    = core/app.c \
+		..
+		core/seq_ui_fx_scale.c \
+		core/seq_ui_fx_virus.c \
+		core/seq_ui_manual.c \
+    ..
+		core/seq_humanize.c \
+		core/seq_virusfx.c \
+		core/seq_lfo.c \
+
+-----------------------------------------------------------------
+
+32. Upload via MIOS_STUDIO (mindestens 2.4.5)
 
 Säubern im verzeichnis in cmd: make clean
 Kompilieren im verzeichnis in cmd: make

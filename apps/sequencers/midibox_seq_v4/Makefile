@@ -48,11 +48,11 @@ THUMB_SOURCE    = core/app.c \
 		core/seq_ui_fx.c \
 		core/seq_ui_fx_echo.c \
 		core/seq_ui_fx_humanize.c \
-		core/seq_ui_fx_robotize.c \
 		core/seq_ui_fx_limit.c \
 		core/seq_ui_fx_lfo.c \
 		core/seq_ui_fx_dupl.c \
 		core/seq_ui_fx_scale.c \
+		core/seq_ui_fx_virus.c \
 		core/seq_ui_manual.c \
 		core/seq_ui_util.c \
 		core/seq_ui_proteus.c \
@@ -91,7 +91,7 @@ THUMB_SOURCE    = core/app.c \
 		core/seq_groove.c \
 		core/seq_morph.c \
 		core/seq_humanize.c \
-		core/seq_robotize.c \
+		core/seq_virusfx.c \
 		core/seq_lfo.c \
 		core/seq_chord.c \
 		core/seq_pattern.c \

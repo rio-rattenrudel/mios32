@@ -367,7 +367,7 @@ static s32 LCD_Handler(u8 high_prio)
     SEQ_LCD_PrintSpaces(4);
   } else {
     SEQ_LCD_PrintVBar(SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_COLOR) >> 4);
-    SEQ_LCD_PrintFormattedString("%3d", SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_COLOR));
+    SEQ_LCD_PrintFormattedString("%3d", SEQ_CC_Get(visible_track, SEQ_CC_VIRUSFX_COLOR)-64);
   }
   SEQ_LCD_PrintSpaces(1);
 

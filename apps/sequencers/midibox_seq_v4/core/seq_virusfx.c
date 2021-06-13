@@ -65,7 +65,10 @@ void SEQ_VIRUSFX_Reset(u8 track)
 {
   seq_cc_trk_t *tcc = &seq_cc_trk[track];
 
-  // init undefined
+  // init default
+  tcc->virusfx_color = 64;
+
+  // init undefined last
   tcc->virusfx_last_values.MODE = 128;
   tcc->virusfx_last_values.SHAPE_DAMPING = 128;
   tcc->virusfx_last_values.CLOCK = 128;

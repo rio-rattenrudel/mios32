@@ -98,6 +98,21 @@ static const u8 seq_layer_preset_table_static[][2] = {
   { SEQ_CC_LFO_CC_PPQN,    6 }, // 96 ppqn
   { SEQ_CC_LIMIT_LOWER,    0 },
   { SEQ_CC_LIMIT_UPPER,    0 },
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  { SEQ_CC_VIRUSFX_MODE,    0x00 },
+  { SEQ_CC_VIRUSFX_SHAPE_DAMPING,    0x00 },
+  { SEQ_CC_VIRUSFX_CLOCK,    0x00 },
+  { SEQ_CC_VIRUSFX_COLOR,    64 },
+  { SEQ_CC_VIRUSFX_FEEDBACK,    0x00 },
+  { SEQ_CC_VIRUSFX_DEPTH_TYPE,  0x00 },
+  { SEQ_CC_VIRUSFX_RATE_DECTIME,    0x00 },
+  { SEQ_CC_VIRUSFX_TIME_PREDLY,    0x00 },
+  { SEQ_CC_VIRUSFX_ACTIVE,    0x00 },
+//####################################
+//# RIO: END MODIFICATION
+//####################################
   { 0xff,                  0xff } // end marker
 };
 

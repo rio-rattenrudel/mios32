@@ -21,7 +21,7 @@ modified size (with IIC Hack):
 -------------------------------------------------------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 422996     960   62944  486900   76df4 project_build/project.elf
+ 423012     960   62944  486916   76e04 project_build/project.elf
 10000000 B __ram_start
 10007ee0 B __ram_end
 2007c000 D __ram_start_ahb
@@ -6798,15 +6798,6 @@ s32 SEQ_CC_Init(u32 mode)
     // clear all CCs
     memset((u8 *)tcc, 0, sizeof(seq_cc_trk_t));
 
-//####################################
-//# RIO: VIRUSFX
-//####################################
-    // init undefined
-    SEQ_VIRUSFX_Reset(track);
-//####################################
-//# RIO: END MODIFICATION
-//####################################
-
 ..
 
 s32 SEQ_CC_Set(u8 track, u8 cc, u8 value)
@@ -7578,6 +7569,29 @@ typedef enum {
 //####################################
 
 
+seq_layer.c -->
+
+static const u8 seq_layer_preset_table_static[][2] = {
+  ..
+  { SEQ_CC_LIMIT_UPPER,    0 },
+//####################################
+//# RIO: VIRUSFX
+//####################################
+  { SEQ_CC_VIRUSFX_MODE,    0x00 },
+  { SEQ_CC_VIRUSFX_SHAPE_DAMPING,    0x00 },
+  { SEQ_CC_VIRUSFX_CLOCK,    0x00 },
+  { SEQ_CC_VIRUSFX_COLOR,    64 },
+  { SEQ_CC_VIRUSFX_FEEDBACK,    0x00 },
+  { SEQ_CC_VIRUSFX_DEPTH_TYPE,  0x00 },
+  { SEQ_CC_VIRUSFX_RATE_DECTIME,    0x00 },
+  { SEQ_CC_VIRUSFX_TIME_PREDLY,    0x00 },
+  { SEQ_CC_VIRUSFX_ACTIVE,    0x00 },
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+  { 0xff,                  0xff } // end marker
+
+
 seq_virusfx.c-->
 
 // $Id$
@@ -7646,9 +7660,6 @@ static s32 SEQ_VIRUSFX_SendCCPP(mios32_midi_port_t midi_port, mios32_midi_chn_t 
 void SEQ_VIRUSFX_Reset(u8 track)
 {
   seq_cc_trk_t *tcc = &seq_cc_trk[track];
-
-  // init default
-  tcc->virusfx_color = 64;
 
   // init undefined last
   tcc->virusfx_last_values.MODE = 128;

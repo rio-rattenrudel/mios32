@@ -171,6 +171,8 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Fixed: Initial Values](https://github.com/rio-rattenrudel/mios32/commit/6650bf8f1e48173ff3635721ebd4300d7195359b)
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c. [Fixed: Initial Values II](https://github.com/rio-rattenrudel/mios32/commit/e6ed99d6b38f43fa02afae8b461af7171de56608)
+
 * This feature allows the configuration of the Access Virus Fx parameters in the Track FX section and is then sent to the selected Ch / Port. This is necessary in order to be able to individually control the Multi-FX parameters in the Virus’s Multi Single mode. The "Fx Send" can then be individually defined in the mixer map. Alternatively you can use the "FX Send 113" and "Expression 11" as standard parameters in the mixer map (via SEQ_MIXER_USE_ALTERNATIVE_PARAM Flag).
 
 * _Note: affects data storage_

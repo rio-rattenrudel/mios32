@@ -169,6 +169,8 @@ This fork contains heavy modifications to the MBSEQ v4 Master Branch. The custom
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. [Fixed: Color Range -64..63](https://github.com/rio-rattenrudel/mios32/commit/f5a391b8c997a43dc8df606998456e4d7432b3ce)
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. [Fixed: Initial Values](https://github.com/rio-rattenrudel/mios32/commit/6650bf8f1e48173ff3635721ebd4300d7195359b)
+
 * This feature allows the configuration of the Access Virus Fx parameters in the Track FX section and is then sent to the selected Ch / Port. This is necessary in order to be able to individually control the Multi-FX parameters in the Virus’s Multi Single mode. The "Fx Send" can then be individually defined in the mixer map. Alternatively you can use the "FX Send 113" and "Expression 11" as standard parameters in the mixer map (via SEQ_MIXER_USE_ALTERNATIVE_PARAM Flag).
 
 * _Note: affects data storage_
@@ -199,7 +201,7 @@ modified size (with IIC Hack):
 -----------------------------
 arm-none-eabi-size project_build/project.elf
    text    data     bss     dec     hex filename
- 422996     960   62944  486900   76df4 project_build/project.elf
+ 423012     960   62944  486916   76e04 project_build/project.elf
 10000000 B __ram_start
 10007ee0 B __ram_end
 2007c000 D __ram_start_ahb

@@ -47,6 +47,15 @@ s32 SEQ_CC_Init(u32 mode)
     // clear all CCs
     memset((u8 *)tcc, 0, sizeof(seq_cc_trk_t));
 
+//####################################
+//# RIO: VIRUSFX
+//####################################
+    // init undefined
+    SEQ_VIRUSFX_Reset(track);
+//####################################
+//# RIO: END MODIFICATION
+//####################################
+
 #ifndef MBSEQV4L
     // set parameters which are not changed by SEQ_LAYER_CopyPreset() function
     tcc->midi_chn = track % 16;

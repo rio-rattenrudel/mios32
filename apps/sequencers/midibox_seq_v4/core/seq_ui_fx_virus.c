@@ -334,6 +334,8 @@ static s32 LCD_Handler(u8 high_prio)
     }
   }
 
+  SEQ_LCD_PrintSpaces(10);
+
   SEQ_LCD_CursorSet(40, 1);
 
   ///////////////////////////////////////////////////////////////////////////
